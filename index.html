@@ -1,0 +1,436 @@
+<!doctype html>
+<html lang="ru">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>GAZOIL CRM</title>
+    <link rel="stylesheet" href="./styles.css" />
+  </head>
+  <body>
+    <div class="app-shell">
+      <aside class="sidebar" aria-label="Основная навигация">
+        <div class="brand">
+          <div class="brand-mark">G</div>
+          <div>
+            <strong>GAZOIL CRM</strong>
+            <span>Коммерческий контур</span>
+          </div>
+        </div>
+
+        <nav class="nav-list">
+          <button class="nav-item is-active" data-view="dashboard">
+            <span class="nav-icon" data-lucide="layout-dashboard"></span>
+            <span>Дашборд</span>
+          </button>
+          <button class="nav-item" data-view="clients">
+            <span class="nav-icon" data-lucide="building-2"></span>
+            <span>Клиенты</span>
+          </button>
+          <button class="nav-item" data-view="appeals">
+            <span class="nav-icon" data-lucide="inbox"></span>
+            <span>Обращения</span>
+          </button>
+          <button class="nav-item" data-view="contracts">
+            <span class="nav-icon" data-lucide="file-signature"></span>
+            <span>Договоры</span>
+          </button>
+          <button class="nav-item" data-view="orders">
+            <span class="nav-icon" data-lucide="fuel"></span>
+            <span>Заказы и выдача</span>
+          </button>
+          <button class="nav-item" data-view="extensions">
+            <span class="nav-icon" data-lucide="refresh-cw"></span>
+            <span>Продления</span>
+          </button>
+          <button class="nav-item" data-view="refunds">
+            <span class="nav-icon" data-lucide="wallet-cards"></span>
+            <span>Возвраты</span>
+          </button>
+          <button class="nav-item" data-view="tenders">
+            <span class="nav-icon" data-lucide="landmark"></span>
+            <span>Госзакупки</span>
+          </button>
+          <button class="nav-item" data-view="reports">
+            <span class="nav-icon" data-lucide="chart-column"></span>
+            <span>Отчеты</span>
+          </button>
+        </nav>
+
+        <div class="sidebar-footer">
+          <span class="health-dot"></span>
+          <div>
+            <strong>Интеграции</strong>
+            <span>1С, WhatsApp, Email</span>
+          </div>
+        </div>
+      </aside>
+
+      <main class="workspace">
+        <header class="topbar">
+          <button class="icon-button mobile-menu" id="mobileMenu" title="Меню" aria-label="Открыть меню">
+            <span data-lucide="menu"></span>
+          </button>
+          <div class="page-title">
+            <span class="eyebrow">Сегодня</span>
+            <h1 id="viewTitle">Дашборд руководителя</h1>
+          </div>
+          <label class="search-box">
+            <span data-lucide="search"></span>
+            <input id="globalSearch" type="search" placeholder="Поиск по клиенту, БИН, договору, заявке" />
+          </label>
+          <div class="top-actions">
+            <button class="icon-button" title="Уведомления" aria-label="Уведомления">
+              <span data-lucide="bell"></span>
+              <b class="counter">7</b>
+            </button>
+            <button class="primary-button" id="newRequestBtn">
+              <span data-lucide="plus"></span>
+              <span>Новая заявка</span>
+            </button>
+          </div>
+        </header>
+
+        <section class="control-strip" aria-label="Фильтры">
+          <div class="segmented-control" role="group" aria-label="Юридическое лицо">
+            <button class="is-selected" data-filter-company="all">Все</button>
+            <button data-filter-company="trade">GAZOIL TRADE</button>
+            <button data-filter-company="ugh">УГХ GAZOIL</button>
+          </div>
+          <div class="segmented-control compact" role="group" aria-label="Период">
+            <button class="is-selected">День</button>
+            <button>Неделя</button>
+            <button>Месяц</button>
+          </div>
+          <button class="ghost-button" id="slaOnly">
+            <span data-lucide="timer-reset"></span>
+            <span>Только просрочки</span>
+          </button>
+        </section>
+
+        <section class="view is-active" id="dashboardView" data-view-panel="dashboard">
+          <div class="metric-grid">
+            <article class="metric-card">
+              <span class="metric-icon is-blue" data-lucide="inbox"></span>
+              <div>
+                <p>Новые обращения</p>
+                <strong>18</strong>
+                <small>5 критичных</small>
+              </div>
+            </article>
+            <article class="metric-card">
+              <span class="metric-icon is-green" data-lucide="fuel"></span>
+              <div>
+                <p>Готово к выдаче</p>
+                <strong>12</strong>
+                <small>83 400 л</small>
+              </div>
+            </article>
+            <article class="metric-card">
+              <span class="metric-icon is-amber" data-lucide="file-clock"></span>
+              <div>
+                <p>Договоры истекают</p>
+                <strong>9</strong>
+                <small>30 дней</small>
+              </div>
+            </article>
+            <article class="metric-card">
+              <span class="metric-icon is-red" data-lucide="circle-alert"></span>
+              <div>
+                <p>Просрочки SLA</p>
+                <strong>7</strong>
+                <small>2 у директора</small>
+              </div>
+            </article>
+          </div>
+
+          <div class="leader-grid">
+            <section class="panel leader-summary-panel">
+              <div class="panel-header">
+                <div>
+                  <span class="eyebrow">Сводка руководителя</span>
+                  <h2>Основные данные месяца</h2>
+                </div>
+                <span class="status-pill is-progress" id="monthLabel">Текущий месяц</span>
+              </div>
+              <div class="leader-summary" id="leaderSummary"></div>
+            </section>
+
+            <section class="panel fuel-sales-panel">
+              <div class="panel-header">
+                <div>
+                  <span class="eyebrow">На сегодняшний день</span>
+                  <h2>Продажи по видам топлива</h2>
+                </div>
+                <button class="text-button" data-action="refresh-dashboard">Обновить</button>
+              </div>
+              <div class="fuel-sales-list" id="fuelSalesToday"></div>
+            </section>
+          </div>
+
+          <div class="report-alert-grid">
+            <section class="panel report-builder-panel">
+              <div class="panel-header">
+                <div>
+                  <span class="eyebrow">Отчетность</span>
+                  <h2>Сформировать отчет за период</h2>
+                </div>
+              </div>
+              <div class="report-form">
+                <label>
+                  С даты
+                  <input type="date" id="reportStart" />
+                </label>
+                <label>
+                  По дату
+                  <input type="date" id="reportEnd" />
+                </label>
+                <button class="primary-button" data-action="build-report">
+                  <span data-lucide="chart-column"></span>
+                  <span>Сформировать</span>
+                </button>
+              </div>
+              <div class="period-report" id="periodReport"></div>
+            </section>
+
+            <section class="panel alerts-panel">
+              <div class="panel-header">
+                <div>
+                  <span class="eyebrow">Важные уведомления</span>
+                  <h2>Динамика и риски продаж</h2>
+                </div>
+                <span class="status-pill is-warn" id="alertCount">0</span>
+              </div>
+              <div class="sales-alerts" id="salesAlerts"></div>
+            </section>
+          </div>
+
+          <div class="dashboard-grid">
+            <section class="panel process-panel">
+              <div class="panel-header">
+                <div>
+                  <span class="eyebrow">Единый контур</span>
+                  <h2>Активные процессы</h2>
+                </div>
+                <button class="icon-button" title="Настроить вид" aria-label="Настроить вид">
+                  <span data-lucide="sliders-horizontal"></span>
+                </button>
+              </div>
+              <div class="process-board" id="processBoard"></div>
+            </section>
+
+            <section class="panel approvals-panel">
+              <div class="panel-header">
+                <div>
+                  <span class="eyebrow">Очередь решений</span>
+                  <h2>Согласования</h2>
+                </div>
+                <button class="text-button">Все</button>
+              </div>
+              <div class="approval-list" id="approvalList"></div>
+            </section>
+          </div>
+
+          <section class="panel">
+            <div class="panel-header">
+              <div>
+                <span class="eyebrow">Операционный список</span>
+                <h2>Заявки в работе</h2>
+              </div>
+              <div class="inline-actions">
+                <button class="ghost-button">
+                  <span data-lucide="download"></span>
+                  <span>Экспорт</span>
+                </button>
+                <button class="ghost-button">
+                  <span data-lucide="filter"></span>
+                  <span>Фильтр</span>
+                </button>
+              </div>
+            </div>
+            <div class="table-wrap">
+              <table class="data-table">
+                <thead>
+                  <tr>
+                    <th>Заявка</th>
+                    <th>Клиент</th>
+                    <th>Процесс</th>
+                    <th>Компания</th>
+                    <th>Стадия</th>
+                    <th>Ответственный</th>
+                    <th>SLA</th>
+                    <th></th>
+                  </tr>
+                </thead>
+                <tbody id="requestTable"></tbody>
+              </table>
+            </div>
+          </section>
+        </section>
+
+        <section class="view" id="clientsView" data-view-panel="clients">
+          <div class="split-layout">
+            <section class="panel">
+              <div class="panel-header">
+                <div>
+                  <span class="eyebrow">Единая база</span>
+                  <h2>Юридические клиенты</h2>
+                </div>
+                <button class="primary-button">
+                  <span data-lucide="building"></span>
+                  <span>Клиент</span>
+                </button>
+              </div>
+              <div class="client-list" id="clientList"></div>
+            </section>
+            <section class="panel client-profile">
+              <div class="profile-head">
+                <div class="company-avatar">К</div>
+                <div>
+                  <span class="eyebrow">Карточка клиента</span>
+                  <h2>Караганда Жол Сервис</h2>
+                  <p>БИН 120640019874 • ГСМ и товарные карты</p>
+                </div>
+              </div>
+              <div class="profile-grid">
+                <div><span>Договоров</span><strong>4</strong></div>
+                <div><span>Заказов</span><strong>38</strong></div>
+                <div><span>Доверенность</span><strong>до 12.08</strong></div>
+                <div><span>Дебиторка</span><strong>0 ₸</strong></div>
+              </div>
+              <div class="timeline">
+                <div><b>09:35</b><span>Счет #1289 отправлен из CRM</span></div>
+                <div><b>Вчера</b><span>Оплата подтверждена в 1С</span></div>
+                <div><b>17 июн</b><span>Продление ТК закрыто успешно</span></div>
+              </div>
+            </section>
+          </div>
+        </section>
+
+        <section class="view" id="genericView" data-view-panel="generic">
+          <section class="panel">
+            <div class="panel-header">
+              <div>
+                <span class="eyebrow" id="genericEyebrow">Раздел</span>
+                <h2 id="genericTitle">Процессы</h2>
+              </div>
+              <button class="primary-button" id="genericAction">
+                <span data-lucide="plus"></span>
+                <span>Создать</span>
+              </button>
+            </div>
+            <div class="module-layout">
+              <div class="stage-column" id="stageColumn"></div>
+              <div class="table-wrap">
+                <table class="data-table">
+                  <thead>
+                    <tr>
+                      <th>Номер</th>
+                      <th>Клиент</th>
+                      <th>Стадия</th>
+                      <th>Сумма / объем</th>
+                      <th>Ответственный</th>
+                      <th>Срок</th>
+                      <th></th>
+                    </tr>
+                  </thead>
+                  <tbody id="genericTable"></tbody>
+                </table>
+              </div>
+            </div>
+          </section>
+        </section>
+      </main>
+    </div>
+
+    <div class="modal-backdrop" id="requestModal" aria-hidden="true">
+      <article class="modal" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
+        <header class="modal-header">
+          <div>
+            <span class="eyebrow">Карточка процесса</span>
+            <h2 id="modalTitle">Заявка</h2>
+          </div>
+          <button class="icon-button" id="closeModal" title="Закрыть" aria-label="Закрыть">
+            <span data-lucide="x"></span>
+          </button>
+        </header>
+        <div class="modal-status">
+          <span class="status-pill is-progress" id="modalProcess">Заказ</span>
+          <span id="modalStage">Оплата подтверждена</span>
+          <b id="modalSla">SLA: сегодня</b>
+        </div>
+        <div class="modal-tabs" role="tablist">
+          <button class="is-selected">Данные</button>
+          <button>Документы</button>
+          <button>Задачи</button>
+          <button>История</button>
+        </div>
+        <div class="detail-grid">
+          <label>
+            Клиент
+            <input id="modalClient" value="Караганда Жол Сервис" />
+          </label>
+          <label>
+            Наша организация
+            <select id="modalCompany">
+              <option>ТОО «GAZOIL TRADE»</option>
+              <option>ТОО «УГХ GAZOIL»</option>
+            </select>
+          </label>
+          <label>
+            Продукт
+            <select>
+              <option>ГСМ</option>
+              <option>Газ</option>
+            </select>
+          </label>
+          <label>
+            Способ поставки
+            <select>
+              <option>Талоны</option>
+              <option>Товарная карта</option>
+              <option>Опт</option>
+            </select>
+          </label>
+          <label>
+            Объем
+            <input value="12 000 л" />
+          </label>
+          <label>
+            Ответственный
+            <input value="Алия С." />
+          </label>
+        </div>
+        <section class="checklist">
+          <div class="check-row is-done">
+            <span data-lucide="check"></span>
+            <b>Договор действует</b>
+            <em>до 31.12.2026</em>
+          </div>
+          <div class="check-row is-done">
+            <span data-lucide="check"></span>
+            <b>Оплата подтверждена</b>
+            <em>1С, 09:15</em>
+          </div>
+          <div class="check-row">
+            <span data-lucide="clock"></span>
+            <b>Доверенность</b>
+            <em>ожидается файл</em>
+          </div>
+        </section>
+        <footer class="modal-footer">
+          <button class="ghost-button">
+            <span data-lucide="message-square"></span>
+            <span>Комментарий</span>
+          </button>
+          <button class="primary-button">
+            <span data-lucide="arrow-right"></span>
+            <span>Следующая стадия</span>
+          </button>
+        </footer>
+      </article>
+    </div>
+
+    <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.min.js"></script>
+    <script src="./app.js"></script>
+  </body>
+</html>

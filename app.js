@@ -839,14 +839,14 @@ function renderRequestTable() {
       const client = clientById(process.clientId);
       return `
         <tr>
-          <td><strong>${process.id}</strong></td>
-          <td>${client.name}</td>
-          <td>${metaFor(process.type).label}</td>
-          <td>${companyLabel(process.companyKey)}</td>
-          <td><span class="status-pill ${statusClass(processTone(process))}">${process.stage}</span></td>
-          <td>${process.owner}</td>
-          <td>${process.due}</td>
-          <td><button class="row-action" data-open="${process.id}">Открыть</button></td>
+          <td data-label="Заявка"><strong>${process.id}</strong></td>
+          <td data-label="Клиент">${client.name}</td>
+          <td data-label="Процесс">${metaFor(process.type).label}</td>
+          <td data-label="Компания">${companyLabel(process.companyKey)}</td>
+          <td data-label="Стадия"><span class="status-pill ${statusClass(processTone(process))}">${process.stage}</span></td>
+          <td data-label="Ответственный">${process.owner}</td>
+          <td data-label="SLA">${process.due}</td>
+          <td data-label=""><button class="row-action" data-open="${process.id}">Открыть</button></td>
         </tr>
       `;
     })
@@ -938,13 +938,13 @@ function renderGeneric(viewName = activeView) {
         const client = clientById(process.clientId);
         return `
           <tr>
-            <td><strong>${process.id}</strong></td>
-            <td>${client.name}</td>
-            <td><span class="status-pill ${statusClass(processTone(process))}">${process.stage}</span></td>
-            <td>${process.amount || process.volume}</td>
-            <td>${process.owner}</td>
-            <td>${process.due}</td>
-            <td><button class="row-action" data-open="${process.id}">Открыть</button></td>
+            <td data-label="Номер"><strong>${process.id}</strong></td>
+            <td data-label="Клиент">${client.name}</td>
+            <td data-label="Стадия"><span class="status-pill ${statusClass(processTone(process))}">${process.stage}</span></td>
+            <td data-label="Сумма / объем">${process.amount || process.volume}</td>
+            <td data-label="Ответственный">${process.owner}</td>
+            <td data-label="Срок">${process.due}</td>
+            <td data-label=""><button class="row-action" data-open="${process.id}">Открыть</button></td>
           </tr>
         `;
       })
@@ -976,13 +976,13 @@ function renderReports() {
     .map(
       ([name, value, note, result]) => `
         <tr>
-          <td><strong>${name}</strong></td>
-          <td>${value}</td>
-          <td><span class="status-pill is-progress">${note}</span></td>
-          <td>${result}</td>
-          <td>CRM</td>
-          <td>Сейчас</td>
-          <td><button class="row-action" data-toast="Детальный отчет будет отдельным экраном">Открыть</button></td>
+          <td data-label="Отчет"><strong>${name}</strong></td>
+          <td data-label="Значение">${value}</td>
+          <td data-label="Показатель"><span class="status-pill is-progress">${note}</span></td>
+          <td data-label="Результат">${result}</td>
+          <td data-label="Источник">CRM</td>
+          <td data-label="Период">Сейчас</td>
+          <td data-label=""><button class="row-action" data-toast="Детальный отчет будет отдельным экраном">Открыть</button></td>
         </tr>
       `,
     )
@@ -1544,7 +1544,7 @@ function switchView(viewName) {
   };
   $("#viewTitle").textContent = titles[viewName] || "GAZOIL CRM";
   if (!["dashboard", "clients"].includes(viewName)) renderGeneric(viewName);
-  document.body.classList.remove("sidebar-open");
+  closeSidebar();
   renderAll();
 }
 
@@ -1576,6 +1576,52 @@ function toast(message, tone = "progress") {
   item.textContent = message;
   stack.appendChild(item);
   setTimeout(() => item.remove(), 3200);
+}
+
+function setSidebar(open) {
+  document.body.classList.toggle("sidebar-open", open);
+  $("#mobileMenu")?.setAttribute("aria-expanded", open ? "true" : "false");
+}
+
+function openSidebar() {
+  setSidebar(true);
+}
+
+function closeSidebar() {
+  setSidebar(false);
+}
+
+function setupMobileGestures() {
+  let startX = 0;
+  let startY = 0;
+  let tracking = false;
+
+  document.addEventListener(
+    "touchstart",
+    (event) => {
+      if (!event.touches.length) return;
+      const touch = event.touches[0];
+      startX = touch.clientX;
+      startY = touch.clientY;
+      tracking = startX < 36 || document.body.classList.contains("sidebar-open");
+    },
+    { passive: true },
+  );
+
+  document.addEventListener(
+    "touchend",
+    (event) => {
+      if (!tracking || !event.changedTouches.length) return;
+      const touch = event.changedTouches[0];
+      const deltaX = touch.clientX - startX;
+      const deltaY = Math.abs(touch.clientY - startY);
+      tracking = false;
+      if (deltaY > 80 || Math.abs(deltaX) < 70) return;
+      if (deltaX > 0 && startX < 36) openSidebar();
+      if (deltaX < 0 && document.body.classList.contains("sidebar-open")) closeSidebar();
+    },
+    { passive: true },
+  );
 }
 
 function escapeAttr(value) {
@@ -1683,16 +1729,17 @@ $("#requestModal").addEventListener("click", (event) => {
   if (event.target.id === "requestModal") closeModal();
 });
 
-$("#mobileMenu").addEventListener("click", () => {
-  document.body.classList.toggle("sidebar-open");
-});
+$("#mobileMenu").addEventListener("click", () => setSidebar(!document.body.classList.contains("sidebar-open")));
+$("#sidebarClose")?.addEventListener("click", closeSidebar);
+$("#mobileBackdrop")?.addEventListener("click", closeSidebar);
 
 document.addEventListener("keydown", (event) => {
   if (event.key === "Escape") {
     closeModal();
-    document.body.classList.remove("sidebar-open");
+    closeSidebar();
   }
 });
 
 enhanceStaticControls();
+setupMobileGestures();
 renderAll();

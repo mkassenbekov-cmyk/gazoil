@@ -5,13 +5,29 @@ const COMPANY = {
   ugh: "ТОО «УГХ GAZOIL»",
 };
 
+const CRM_DICTIONARIES = {
+  organizations: [
+    { key: "trade", label: COMPANY.trade, product: "ГСМ", director: "Хуснутдинов Р. Р.", accounting: "Бухгалтерия GAZOIL TRADE" },
+    { key: "ugh", label: COMPANY.ugh, product: "Газ", director: "Киікбай А.Б.", accounting: "Бухгалтерия УГХ GAZOIL" },
+  ],
+  clientTypes: ["Обычный юридический клиент", "Государственная организация"],
+  products: ["ГСМ", "Газ"],
+  supplyMethods: ["Талоны", "Товарная карта", "Опт"],
+  refundTypes: ["Талоны + деньги", "Товарная карта + деньги", "Только деньги"],
+};
+
 const STAFF = [
   { id: "diana", name: "Диана", role: "Старший менеджер", scope: "both" },
   { id: "olga", name: "Ольга", role: "Госзакупщик", scope: "both" },
   { id: "zhanara", name: "Жанара", role: "Менеджер обслуживания клиентов", scope: "both" },
   { id: "elzhan", name: "Ельжан", role: "Менеджер обслуживания клиентов", scope: "both" },
   { id: "ekaterina", name: "Екатерина", role: "Менеджер обслуживания клиентов", scope: "both" },
-  { id: "madi", name: "Мади", role: "Коммерческий директор", scope: "both" },
+  { id: "madi", name: "Мади", role: "Руководитель коммерческого отдела", scope: "both" },
+  { id: "cash", name: "Касса", role: "Операции с талонами", scope: "both" },
+  { id: "card-manager", name: "Главный менеджер", role: "Операции с товарными картами", scope: "both" },
+  { id: "bank", name: "Бухгалтер по банку", role: "Банковские возвраты", scope: "both" },
+  { id: "trade-accounting", name: "Бухгалтерия GAZOIL TRADE", role: "Финансовая проверка", scope: "trade" },
+  { id: "ugh-accounting", name: "Бухгалтерия УГХ GAZOIL", role: "Финансовая проверка", scope: "ugh" },
   { id: "kiikbay", name: "Киікбай А.Б.", role: "Директор УГХ GAZOIL", scope: "ugh" },
   { id: "khusnutdinov", name: "Хуснутдинов Р. Р.", role: "Директор GAZOIL TRADE", scope: "trade" },
 ];
@@ -92,6 +108,7 @@ const REPORTS = [
 const DEFAULT_STATE = {
   selectedClientId: "cli-1",
   counters: { APP: 5520, AGR: 712, ORD: 1289, EXT: 337, REF: 441, TEN: 188 },
+  dictionaries: CRM_DICTIONARIES,
   users: STAFF,
   fuels: FUEL_TYPES,
   sales: DEMO_SALES,
@@ -296,11 +313,12 @@ function loadState() {
   } catch (error) {
     console.warn("State restore failed", error);
   }
-  return structuredClone(DEFAULT_STATE);
+  return migrateState(structuredClone(DEFAULT_STATE));
 }
 
 function migrateState(saved) {
   const next = { ...structuredClone(DEFAULT_STATE), ...saved };
+  next.dictionaries = structuredClone(CRM_DICTIONARIES);
   next.users = STAFF;
   next.fuels = FUEL_TYPES;
   next.sales = saved.sales?.length ? saved.sales : structuredClone(DEMO_SALES);
@@ -317,15 +335,38 @@ function migrateState(saved) {
     "Директор GAZOIL TRADE": "Хуснутдинов Р. Р.",
     "Директор УГХ": "Киікбай А.Б.",
   };
+  next.clients = (saved.clients || DEFAULT_STATE.clients).map((client) => ({
+    ...client,
+    type: client.type === "Обычный клиент" ? "Обычный юридический клиент" : client.type || "Обычный юридический клиент",
+    buysGsm: client.buysGsm ?? String(client.products || "").includes("ГСМ"),
+    buysGas: client.buysGas ?? String(client.products || "").includes("Газ"),
+    powerFile: client.powerFile || "",
+    powerPerson: client.powerPerson || "",
+  }));
   next.processes = (saved.processes || []).map((process) => {
     const fuel = process.fuel || inferFuel(process);
     const owner = ownerMap[process.owner] || process.owner || defaultOwnerFor(process.type);
+    const client = next.clients.find((item) => item.id === process.clientId);
+    const stagePosition = metaFor(process.type).stages.indexOf(process.stage);
     return {
       ...process,
       fuel,
       product: productByFuel(fuel),
       companyKey: companyByFuel(fuel),
+      direction: companyByFuel(fuel),
+      clientType: process.clientType || client?.type || "Обычный юридический клиент",
       owner,
+      organizationLocked: process.organizationLocked ?? stagePosition > 0,
+      overpayment: process.overpayment || "unknown",
+      linkedProcessIds: process.linkedProcessIds || [],
+      integration: {
+        source: "1С",
+        invoiceNumber: "",
+        invoiceDate: "",
+        paymentStatus: process.checks?.payment ? "Оплата подтверждена" : "Ожидается",
+        paymentDate: "",
+        ...(process.integration || {}),
+      },
       checks: { ...defaultChecks(process.type), ...(process.checks || {}) },
       documents: process.documents || [],
       tasks: (process.tasks || []).map((task) => ({ ...task, owner: ownerMap[task.owner] || task.owner || owner })),
@@ -415,6 +456,10 @@ function companyLabel(key) {
   return COMPANY[key] || COMPANY.trade;
 }
 
+function organizationFor(key) {
+  return CRM_DICTIONARIES.organizations.find((item) => item.key === key) || CRM_DICTIONARIES.organizations[0];
+}
+
 function companyByFuel(fuel) {
   return fuel === "Автогаз" ? "ugh" : "trade";
 }
@@ -438,11 +483,43 @@ function fuelOptions(selected = "") {
   return FUEL_TYPES.map((fuel) => `<option value="${fuel}" ${fuel === selected ? "selected" : ""}>${fuel}</option>`).join("");
 }
 
-function defaultOwnerFor(type) {
-  if (type === "tenders") return "Ольга";
+function supplyOptions(type, selected = "") {
+  const values =
+    type === "refunds"
+      ? CRM_DICTIONARIES.refundTypes
+      : type === "tenders"
+        ? ["Госзакупка"]
+        : type === "appeals"
+          ? ["WhatsApp", "Телефония", "Email", "Офис", "Руководитель", "Иное"]
+          : CRM_DICTIONARIES.supplyMethods;
+  return values.map((value) => `<option ${value === selected ? "selected" : ""}>${value}</option>`).join("");
+}
+
+function defaultOwnerFor(type, clientType = "Обычный юридический клиент") {
+  if (type === "tenders" || clientType === "Государственная организация") return "Ольга";
   if (type === "contracts") return "Диана";
   if (type === "refunds" || type === "extensions") return "Ольга";
   return "Жанара";
+}
+
+function isOrganizationLocked(process) {
+  const firstStage = metaFor(process.type).stages[0];
+  return Boolean(process.organizationLocked || process.stage !== firstStage);
+}
+
+function hasActiveContract(process) {
+  return state.processes.some(
+    (item) =>
+      item.type === "contracts" &&
+      item.clientId === process.clientId &&
+      item.companyKey === process.companyKey &&
+      item.product === process.product &&
+      ["Действует", "Скоро истекает"].includes(item.stage),
+  );
+}
+
+function accountingOwner(process) {
+  return organizationFor(process.companyKey).accounting;
 }
 
 function statusClass(status) {
@@ -458,7 +535,7 @@ function statusClass(status) {
 }
 
 function processTone(process) {
-  if (process.stage.toLowerCase().includes("закрыто") || process.stage.includes("Решено") || process.stage.includes("подписан")) return "ok";
+  if (process.stage.toLowerCase().includes("закрыт") || process.stage.includes("Решено") || process.stage.includes("подписан")) return "ok";
   if (process.dueState === "danger") return "danger";
   if (process.dueState === "warn" || process.approvalState === "pending") return "warn";
   if (process.dueState === "new") return "new";
@@ -1013,52 +1090,271 @@ function stageIndex(process) {
   return metaFor(process.type).stages.indexOf(process.stage);
 }
 
-function canAdvance(process) {
-  if (process.type === "orders" && process.stage === "Ожидается доверенность" && requiresPower(process) && !process.checks.power) {
-    return "Нельзя перейти к выдаче: нужна действующая доверенность.";
-  }
-  if (process.type === "refunds" && process.stage === "Проверка бухгалтерией" && !process.checks.accounting) {
-    return "Сначала бухгалтерия должна завершить финансовую проверку.";
-  }
-  if (process.type === "refunds" && process.stage === "На согласовании у директора" && process.approvalState !== "approved") {
-    return "Нужна отметка директора: согласовано.";
-  }
-  if (process.type === "extensions" && process.stage === "На согласовании у директора" && process.approvalState !== "approved") {
-    return "Продление невозможно без решения директора.";
-  }
-  if (process.type === "tenders" && process.stage === "Подготовка заявки" && !process.checks.bidReady) {
-    return "Отметьте готовность заявки перед подачей.";
-  }
-  return "";
-}
-
 function requiresPower(process) {
   if (process.product === "Газ") return true;
   return process.product === "ГСМ" && process.supply === "Талоны";
 }
 
+function transition(key, label, to, options = {}) {
+  return { key, label, to, tone: "primary", requirements: [], ...options };
+}
+
+function linearTransition(process, options = {}) {
+  const stages = metaFor(process.type).stages;
+  const index = stageIndex(process);
+  const to = stages[index + 1];
+  return to ? [transition(`to-${index + 1}`, options.label || "Следующая стадия", to, options)] : [];
+}
+
+function availableTransitions(process) {
+  const { type, stage } = process;
+
+  if (type === "appeals") {
+    if (stage === "Требуется классификация") return [transition("classify", "Начать работу", "В работе", { requirements: ["classified"] })];
+    if (stage === "В работе") {
+      return [
+        transition("appeal-transfer", "Передать в профильный процесс", "Передано в профильный процесс", { requirements: ["linked"] }),
+        transition("appeal-wait", "Ожидать клиента", "Ожидается клиент", { tone: "secondary" }),
+        transition("appeal-resolve", "Решить обращение", "Решено", { tone: "success" }),
+      ];
+    }
+    if (stage === "Ожидается клиент") return [transition("appeal-resume", "Ответ получен", "В работе", { requirements: ["clientAnswer"] })];
+  }
+
+  if (type === "contracts" && stage === "Подписанный договор получен") {
+    return [transition("contract-activate", "Активировать договор", "Действует", { requirements: ["signed"], tone: "success" })];
+  }
+  if (type === "contracts" && stage === "Получены реквизиты") {
+    return [transition("contract-draft", "Начать подготовку", "Подготовка договора", { requirements: ["requisites"] })];
+  }
+  if (type === "contracts" && stage === "Подготовка договора") {
+    return [transition("contract-send", "Отправить клиенту", "Отправлен клиенту", { requirements: ["project"] })];
+  }
+
+  if (type === "orders") {
+    if (stage === "Проверка договора") return [transition("order-contract-ok", "Договор проверен", "Подготовка счета", { requirements: ["activeContract"] })];
+    if (stage === "Подготовка счета") return [transition("order-invoice", "Счёт получен из 1С", "Счет сформирован", { requirements: ["invoice"] })];
+    if (stage === "Ожидание оплаты") return [transition("order-paid", "Оплата подтверждена", "Оплата подтверждена", { requirements: ["payment"] })];
+    if (stage === "Оплата подтверждена") {
+      return [
+        requiresPower(process) && !process.checks.power
+          ? transition("order-power", "Запросить доверенность", "Ожидается доверенность", { tone: "secondary" })
+          : transition("order-ready", "Подготовить к выдаче", "Готово к выдаче", { tone: "success" }),
+      ];
+    }
+    if (stage === "Ожидается доверенность") return [transition("order-power-ready", "Доверенность получена", "Готово к выдаче", { requirements: ["power"] })];
+    if (stage === "Ожидается ЭСФ") return [transition("order-close", "Закрыть выдачу", "Закрыто успешно", { requirements: ["docs", "esf"], tone: "success" })];
+  }
+
+  if (type === "extensions") {
+    if (stage === "Ожидаются документы от клиента") {
+      return [transition("extension-director", "Передать директору", "На согласовании у директора", { requirements: ["clientLetter", "contractData"] })];
+    }
+    if (stage === "На согласовании у директора") return [];
+    if (stage === "Ожидается ответ клиента") {
+      return [
+        transition("extension-accepted", "Клиент согласен", "Передано коммерческому отделу", { requirements: ["clientAnswer"], tone: "success" }),
+        transition("extension-refund", "Отказ — оформить возврат", "Закрыто - передано в возврат", {
+          requirements: ["clientAnswer"],
+          action: "createRefund",
+          tone: "secondary",
+        }),
+        transition("extension-declined", "Отказ без возврата", "Закрыто без продления", { requirements: ["clientAnswer"], tone: "secondary" }),
+      ];
+    }
+    if (stage === "Продление в работе" && process.checks.cash) {
+      return [transition("extension-finish", "Продление выполнено", "Закрыто успешно", { requirements: ["extensionDone"], tone: "success" })];
+    }
+    if (stage === "Принято кассой") return [transition("extension-cash-finish", "Закрыть продление", "Закрыто успешно", { requirements: ["extensionDone", "cash"], tone: "success" })];
+  }
+
+  if (type === "refunds") {
+    if (stage === "Ожидаются документы / данные от клиента") {
+      if (process.supply === "Только деньги") return [transition("refund-accounting-direct", "Передать в бухгалтерию", "Проверка бухгалтерией", { requirements: ["clientLetter"] })];
+      if (process.supply.includes("карт")) return [transition("refund-annul-card", "Аннулировать топливо на карте", "Аннулирование топлива по товарной карте", { requirements: ["clientLetter"] })];
+      return [transition("refund-annul-coupons", "Передать талоны на аннулирование", "Аннулирование талонов", { requirements: ["clientLetter"] })];
+    }
+    if (stage === "Аннулирование талонов" || stage === "Аннулирование топлива по товарной карте") {
+      return [transition("refund-accounting", "Передать в бухгалтерию", "Проверка бухгалтерией", { requirements: ["annulment"] })];
+    }
+    if (stage === "Проверка бухгалтерией") {
+      if (process.overpayment === "yes") {
+        return [transition("refund-overpayment", "Запросить акт и письмо", "Ожидается подписанный акт сверки / письмо на возврат ДС", { requirements: ["accounting"] })];
+      }
+      if (process.overpayment === "no") {
+        return [transition("refund-no-overpayment", "Закрыть без банковского возврата", "Закрыто без возврата денежных средств", {
+          requirements: process.supply === "Только деньги" ? ["accounting"] : ["accounting", "annulment"],
+          tone: "secondary",
+        })];
+      }
+      return [];
+    }
+    if (stage === "Ожидается подписанный акт сверки / письмо на возврат ДС") {
+      return [transition("refund-director", "Передать директору", "На согласовании у директора", { requirements: ["reconciliation", "clientLetter"] })];
+    }
+    if (stage === "На согласовании у директора") return [];
+    if (stage === "Возврат произведен") {
+      return [transition("refund-close", "Закрыть возврат", "Закрыто успешно", { requirements: ["paymentOrder"], tone: "success" })];
+    }
+  }
+
+  if (type === "tenders") {
+    if (stage === "Ожидание завершения обсуждения") {
+      return [transition("tender-discussion", "Обсуждение завершено", "Готово к согласованию", { requirements: ["discussion"] })];
+    }
+    if (stage === "Готово к согласованию") {
+      return [transition("tender-director", "Передать директору", "На решении директора", { requirements: ["discussion"] })];
+    }
+    if (stage === "На решении директора") return [];
+    if (stage === "Подготовка заявки") return [transition("tender-submit", "Подать заявку", "Заявка подана", { requirements: ["bidReady", "submitted"] })];
+    if (stage === "Ожидание итогов") {
+      return [
+        transition("tender-won", "Выиграли", "Выиграли", { tone: "success" }),
+        transition("tender-single", "Из одного источника", "Из одного источника", { tone: "secondary" }),
+        transition("tender-lost", "Проиграли", "Проиграли", { tone: "secondary" }),
+        transition("tender-rejected", "Заявка отклонена", "Заявка отклонена", { tone: "secondary" }),
+        transition("tender-cancelled", "Тендер отменён", "Тендер отменен / не состоялся", { tone: "secondary" }),
+      ];
+    }
+    if (stage === "Выиграли") {
+      return [transition("tender-contract", "Создать связанный договор", "Договор на подготовке", { action: "createContract", tone: "success" })];
+    }
+    if (stage === "Из одного источника") {
+      return [transition("tender-reopen", "Вернуть в работу", "Проверка госзакупщиком")];
+    }
+  }
+
+  const terminal = ["Решено", "Закрыт", "Проиграли", "Заявка отклонена", "Тендер отменен"].some((value) => stage.includes(value));
+  if (terminal) return [];
+  return linearTransition(process);
+}
+
+function validateTransition(process, target) {
+  const messages = {
+    classified: "Сначала классифицируйте обращение.",
+    linked: "Сначала создайте и свяжите профильный процесс.",
+    clientAnswer: "Зафиксируйте ответ клиента.",
+    signed: "Нужен файл подписанного договора.",
+    requisites: "Сначала заполните реквизиты клиента.",
+    project: "Перед отправкой нужен файл проекта договора.",
+    activeContract: "Заказ заблокирован: у клиента нет действующего договора по этому продукту и юрлицу.",
+    invoice: "Счёт ещё не получен из 1С.",
+    payment: "Оплата ещё не подтверждена в 1С.",
+    power: "Нужна действующая доверенность.",
+    docs: "Не подтверждён комплект документов выдачи.",
+    esf: "Не подтверждено оформление ЭСФ.",
+    extensionDone: "Не подтверждён факт продления.",
+    cash: "Касса ещё не подтвердила приём.",
+    accounting: "Бухгалтерия не завершила финансовую проверку.",
+    annulment: "Аннулирование не подтверждено.",
+    reconciliation: "Нет подписанного акта сверки.",
+    clientLetter: "Не приложено письмо клиента.",
+    paymentOrder: "Нет даты, номера или файла платёжного поручения.",
+    discussion: "Не завершено обсуждение или не заполнен срок подачи.",
+    contractData: "Не заполнены договор, объём, цены или условия.",
+    bidReady: "Заявка ещё не готова.",
+    submitted: "Не зафиксированы дата, время и подтверждение подачи.",
+  };
+  for (const requirement of target.requirements || []) {
+    const passed = requirement === "activeContract" ? hasActiveContract(process) : process.checks?.[requirement];
+    if (!passed) return messages[requirement] || `Не выполнено условие: ${requirement}`;
+  }
+  return "";
+}
+
+function createLinkedProcess(source, targetType) {
+  const existingId = source.linkedProcessIds?.find((id) => processById(id)?.type === targetType);
+  if (existingId) return processById(existingId);
+  const meta = metaFor(targetType);
+  state.counters[meta.prefix] = (state.counters[meta.prefix] || 0) + 1;
+  const id = `${meta.prefix}-${String(state.counters[meta.prefix]).padStart(4, "0")}`;
+  const clientType = source.clientType || clientById(source.clientId).type;
+  const linked = {
+    id,
+    type: targetType,
+    clientId: source.clientId,
+    clientType,
+    companyKey: source.companyKey,
+    direction: source.companyKey,
+    product: source.product,
+    fuel: source.fuel,
+    supply: targetType === "refunds" ? (source.supply.includes("карт") ? "Товарная карта + деньги" : "Талоны + деньги") : source.supply,
+    stage: meta.stages[0],
+    owner: defaultOwnerFor(targetType, clientType),
+    due: "1 рабочий день",
+    dueState: "new",
+    priority: source.priority,
+    volume: source.volume,
+    amount: source.amount,
+    approvalState: "none",
+    organizationLocked: true,
+    overpayment: "unknown",
+    linkedProcessIds: [source.id],
+    integration: { source: "1С", invoiceNumber: "", invoiceDate: "", paymentStatus: "Ожидается", paymentDate: "" },
+    checks: defaultChecks(targetType),
+    documents: [],
+    tasks: [{ id: uid("task"), title: `Проверить связанную карточку из ${source.id}`, owner: defaultOwnerFor(targetType, clientType), due: "Сегодня", done: false }],
+    comments: [{ author: "Система", text: `Карточка создана автоматически из ${source.id}.`, time: "сейчас" }],
+    history: [`Автоматически создано из ${source.id} без повторного ввода данных.`],
+  };
+  source.linkedProcessIds ||= [];
+  source.linkedProcessIds.push(id);
+  source.checks.linked = true;
+  state.processes.unshift(linked);
+  return linked;
+}
+
+function applyTransition(process, target) {
+  const error = validateTransition(process, target);
+  if (error) {
+    toast(error, "warn");
+    openProcessModal(process.id, "data");
+    return false;
+  }
+  const previousStage = process.stage;
+  process.stage = target.to;
+  process.organizationLocked = true;
+  process.direction = process.companyKey;
+  process.approvalState = target.to.toLowerCase().includes("директор") ? "pending" : process.approvalState === "pending" ? "none" : process.approvalState;
+
+  if (target.to.includes("бухгалтер")) process.owner = accountingOwner(process);
+  if (target.to.includes("директор")) process.owner = organizationFor(process.companyKey).director;
+  if (target.to.includes("касс") || target.to === "Аннулирование талонов") process.owner = "Касса";
+  if (target.to.includes("товарной карте")) process.owner = "Главный менеджер";
+  if (target.to.includes("банковского возврата")) process.owner = "Бухгалтер по банку";
+  if (target.action === "createContract") createLinkedProcess(process, "contracts");
+  if (target.action === "createRefund") createLinkedProcess(process, "refunds");
+
+  if (target.to.toLowerCase().includes("закрыт") || target.to === "Решено") process.dueState = "ok";
+  process.history.push(`Маршрут: «${previousStage}» → «${target.to}» (${target.label}).`);
+  saveState();
+  renderAll();
+  if (currentModalId === process.id) openProcessModal(process.id, modalTab);
+  toast(`${process.id}: ${target.to}`, target.tone === "success" ? "ok" : "progress");
+  return true;
+}
+
+function performTransition(id, key) {
+  const process = processById(id);
+  if (!process) return;
+  const target = availableTransitions(process).find((item) => item.key === key);
+  if (!target) return toast("Этот переход больше недоступен.", "warn");
+  applyTransition(process, target);
+}
+
 function advanceProcess(id) {
   const process = processById(id);
   if (!process) return;
-  const error = canAdvance(process);
-  if (error) {
-    toast(error, "warn");
+  const options = availableTransitions(process);
+  if (!options.length) {
     openProcessModal(id, "data");
-    return;
+    return toast("Для этой стадии нужен выбор решения или выполнены не все условия.", "warn");
   }
-  const stages = metaFor(process.type).stages;
-  const index = stageIndex(process);
-  if (index < 0 || index >= stages.length - 1) {
-    toast("У карточки нет следующей стадии.", "warn");
-    return;
+  if (options.length > 1) {
+    openProcessModal(id, "data");
+    return toast("Выберите один из доступных маршрутов в карточке.", "progress");
   }
-  process.stage = stages[index + 1];
-  if (process.stage.toLowerCase().includes("закрыто") || process.stage.includes("Решено")) process.dueState = "ok";
-  process.history.push(`Переход на стадию «${process.stage}»`);
-  saveState();
-  renderAll();
-  if (currentModalId === id) openProcessModal(id, modalTab);
-  toast(`Карточка ${id} переведена: ${process.stage}`, "ok");
+  applyTransition(process, options[0]);
 }
 
 function previousProcess(id) {
@@ -1077,14 +1373,22 @@ function previousProcess(id) {
 function approveProcess(id) {
   const process = processById(id);
   if (!process) return;
+  if (process.type === "refunds" && (!process.checks.accounting || !process.checks.reconciliation)) {
+    openProcessModal(id, "data");
+    return toast("Для согласования возврата нужны финансовая проверка и подписанный акт сверки.", "warn");
+  }
   process.approvalState = "approved";
   process.checks.director = true;
   process.history.push("Директор согласовал заявку");
-  const currentIndex = stageIndex(process);
-  const next = metaFor(process.type).stages[currentIndex + 1];
-  if (next && (process.stage.toLowerCase().includes("директор") || process.stage.toLowerCase().includes("соглас"))) {
-    process.stage = next;
+  if (process.type === "tenders") process.stage = "Участвуем";
+  else if (process.type === "extensions") process.stage = "Ожидается ответ клиента";
+  else if (process.type === "refunds") process.stage = "Ожидает банковского возврата";
+  else {
+    const next = metaFor(process.type).stages[stageIndex(process) + 1];
+    if (next) process.stage = next;
   }
+  process.organizationLocked = true;
+  process.owner = process.type === "refunds" ? "Бухгалтер по банку" : process.clientType === "Государственная организация" ? "Ольга" : defaultOwnerFor(process.type, process.clientType);
   process.comments.unshift({ author: "Директор", text: "Согласовано. Передать на следующий этап.", time: "сейчас" });
   saveState();
   renderAll();
@@ -1114,6 +1418,7 @@ function openProcessModal(id, tab = "data") {
   currentModalId = id;
   modalTab = tab;
   const client = clientById(process.clientId);
+  const routes = availableTransitions(process);
   const modal = $("#requestModal");
   modal.innerHTML = `
     <article class="modal is-wide" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
@@ -1143,7 +1448,12 @@ function openProcessModal(id, tab = "data") {
       <footer class="modal-footer">
         <button class="ghost-button" data-prev="${process.id}"><span data-lucide="arrow-left"></span><span>Назад</span></button>
         ${process.approvalState === "pending" || process.stage.toLowerCase().includes("директор") ? `<button class="ghost-button" data-return="${process.id}"><span data-lucide="undo-2"></span><span>Вернуть</span></button><button class="ghost-button is-success" data-approve="${process.id}"><span data-lucide="check"></span><span>Согласовать</span></button>` : ""}
-        <button class="primary-button" data-next="${process.id}"><span data-lucide="arrow-right"></span><span>Следующая стадия</span></button>
+        ${routes
+          .map(
+            (route) =>
+              `<button class="${route.tone === "success" ? "ghost-button is-success" : route.tone === "secondary" ? "ghost-button" : "primary-button"}" data-transition-id="${process.id}" data-transition-key="${route.key}"><span data-lucide="arrow-right"></span><span>${route.label}</span></button>`,
+          )
+          .join("")}
       </footer>
     </article>
   `;
@@ -1159,36 +1469,70 @@ function renderModalTab(process, tab) {
   return renderDataTab(process);
 }
 
+function isIntegrationCheck(process, key) {
+  return process.type === "orders" && ["contract", "invoice", "payment"].includes(key);
+}
+
+function checkSource(process, key) {
+  if (process.type === "orders" && key === "contract") return "Источник: связанные договоры CRM";
+  if (process.type === "orders" && ["invoice", "payment"].includes(key)) return "Источник: 1С · только чтение";
+  return "";
+}
+
+function routeWaitingMessage(process) {
+  if (process.stage.toLowerCase().includes("директор")) return "Ожидается решение директора";
+  if (process.type === "refunds" && process.stage === "Проверка бухгалтерией" && process.overpayment === "unknown") {
+    return "Бухгалтерия должна определить наличие переплаты";
+  }
+  if (process.stage.toLowerCase().includes("закрыт") || process.stage === "Решено") return "Процесс завершён";
+  return "Выполните обязательные проверки текущей стадии";
+}
+
 function renderDataTab(process) {
   const client = clientById(process.clientId);
-  const stages = metaFor(process.type).stages;
+  const locked = isOrganizationLocked(process);
+  const organization = organizationFor(process.companyKey);
+  const routes = availableTransitions(process);
   const checks = Object.entries(process.checks || {})
     .map(
-      ([key, value]) => `
+      ([key, value]) => {
+        const checked = key === "contract" ? hasActiveContract(process) : value;
+        return `
         <label class="toggle-row">
-          <input type="checkbox" data-check="${key}" ${value ? "checked" : ""} />
-          <span>${checkLabel(key)}</span>
+          <input type="checkbox" data-check="${key}" ${checked ? "checked" : ""} ${isIntegrationCheck(process, key) ? "disabled" : ""} />
+          <span>${checkLabel(key)}${checkSource(process, key) ? `<small>${checkSource(process, key)}</small>` : ""}</span>
         </label>
-      `,
+      `;
+      },
     )
     .join("");
   return `
+    <section class="architecture-strip">
+      <div><span>Категория</span><strong>${organization.label}</strong></div>
+      <div><span>Тип клиента</span><strong>${process.clientType}</strong></div>
+      <div><span>Маршрут</span><strong>${process.product} · ${process.supply}</strong></div>
+      <div><span>Доступ</span><strong>${locked ? "Юрлицо зафиксировано" : "Стартовая стадия"}</strong></div>
+    </section>
     <div class="detail-grid">
       <label>Клиент<input id="modalClientName" value="${escapeAttr(client.name)}" /></label>
+      <label>Тип клиента
+        <select id="modalClientType">
+          ${CRM_DICTIONARIES.clientTypes.map((type) => `<option ${type === process.clientType ? "selected" : ""}>${type}</option>`).join("")}
+        </select>
+      </label>
       <label>Наша организация
-        <select id="modalCompanyKey">
+        <select id="modalCompanyKey" ${locked ? "disabled" : ""}>
           <option value="trade" ${process.companyKey === "trade" ? "selected" : ""}>${COMPANY.trade}</option>
           <option value="ugh" ${process.companyKey === "ugh" ? "selected" : ""}>${COMPANY.ugh}</option>
         </select>
+        ${locked ? '<small class="field-note">Заблокировано после выхода со стартовой стадии</small>' : ""}
       </label>
-      <label>Стадия
-        <select id="modalStageSelect">${stages.map((stage) => `<option ${stage === process.stage ? "selected" : ""}>${stage}</option>`).join("")}</select>
-      </label>
+      <label>Стадия<input id="modalStageSelect" value="${escapeAttr(process.stage)}" readonly /></label>
       <label>Ответственный
         <select id="modalOwner">${staffOptions(process.owner, process.companyKey)}</select>
       </label>
       <label>Вид топлива
-        <select id="modalFuel">${fuelOptions(process.fuel)}</select>
+        <select id="modalFuel" ${locked ? "disabled" : ""}>${fuelOptions(process.fuel)}</select>
       </label>
       <label>Продукт
         <input id="modalProduct" value="${escapeAttr(process.product)}" readonly />
@@ -1202,7 +1546,37 @@ function renderDataTab(process) {
           ${["Обычная", "Высокая", "Критическая"].map((priority) => `<option ${priority === process.priority ? "selected" : ""}>${priority}</option>`).join("")}
         </select>
       </label>
+      ${
+        process.type === "refunds"
+          ? `<label>Переплата подтверждена
+              <select id="modalOverpayment">
+                <option value="unknown" ${process.overpayment === "unknown" ? "selected" : ""}>Не определено</option>
+                <option value="yes" ${process.overpayment === "yes" ? "selected" : ""}>Да — требуется банковский возврат</option>
+                <option value="no" ${process.overpayment === "no" ? "selected" : ""}>Нет — закрыть без возврата ДС</option>
+              </select>
+            </label>`
+          : ""
+      }
     </div>
+    ${
+      process.type === "orders"
+        ? `<section class="integration-card">
+            <div>
+              <span class="eyebrow">Источник финансового факта</span>
+              <strong>1С · поля защищены от ручного редактирования</strong>
+              <p>Счёт: ${process.integration.invoiceNumber || "не получен"} · Оплата: ${process.integration.paymentStatus || "ожидается"}</p>
+            </div>
+            <button class="ghost-button" data-sync-one-c="${process.id}"><span data-lucide="refresh-cw"></span><span>Получить демо-ответ 1С</span></button>
+          </section>`
+        : ""
+    }
+    <section class="route-panel">
+      <div>
+        <span class="eyebrow">Доступные переходы</span>
+        <strong>${routes.length ? routes.map((route) => route.label).join(" · ") : routeWaitingMessage(process)}</strong>
+      </div>
+      <p>Стадия меняется только через маршрут — ручное переключение отключено.</p>
+    </section>
     <section class="checklist">
       <div class="checklist-header">
         <strong>Проверки текущего маршрута</strong>
@@ -1295,6 +1669,7 @@ function checkLabel(key) {
     payment: "Оплата подтверждена",
     power: "Доверенность действует",
     docs: "Документы оформлены",
+    esf: "ЭСФ оформлена / поставлена на контроль",
     annulment: "Аннулирование подтверждено",
     accounting: "Бухгалтерия завершила проверку",
     reconciliation: "Акт сверки подписан",
@@ -1322,19 +1697,28 @@ function saveProcessFromModal(id) {
   const process = processById(id);
   if (!process) return;
   const client = clientById(process.clientId);
+  const locked = isOrganizationLocked(process);
   const name = $("#modalClientName")?.value.trim();
   if (name) client.name = name;
-  const selectedFuel = $("#modalFuel")?.value || process.fuel;
+  const selectedFuel = locked ? process.fuel : $("#modalFuel")?.value || process.fuel;
   process.fuel = selectedFuel;
-  process.companyKey = companyByFuel(selectedFuel);
-  process.stage = $("#modalStageSelect")?.value || process.stage;
+  if (!locked) {
+    process.companyKey = companyByFuel(selectedFuel);
+    process.direction = process.companyKey;
+  }
+  process.clientType = $("#modalClientType")?.value || process.clientType;
+  client.type = process.clientType;
   process.owner = $("#modalOwner")?.value || process.owner;
+  if (process.clientType === "Государственная организация" && !["Ольга", organizationFor(process.companyKey).director, accountingOwner(process), "Касса", "Главный менеджер", "Бухгалтер по банку"].includes(process.owner)) {
+    process.owner = "Ольга";
+  }
   process.product = productByFuel(selectedFuel);
   process.supply = $("#modalSupply")?.value.trim() || process.supply;
   process.volume = $("#modalVolume")?.value.trim() || process.volume;
   process.amount = $("#modalAmount")?.value.trim() || process.amount;
   process.due = $("#modalDue")?.value.trim() || process.due;
   process.priority = $("#modalPriority")?.value || process.priority;
+  process.overpayment = $("#modalOverpayment")?.value || process.overpayment;
   process.dueState = process.priority === "Критическая" ? "danger" : process.priority === "Высокая" ? "warn" : process.dueState === "danger" ? "warn" : "progress";
   $$("[data-check]").forEach((checkbox) => {
     process.checks[checkbox.dataset.check] = checkbox.checked;
@@ -1344,6 +1728,26 @@ function saveProcessFromModal(id) {
   renderAll();
   openProcessModal(id, "data");
   toast("Изменения сохранены", "ok");
+}
+
+function simulate1CSync(id) {
+  const process = processById(id);
+  if (!process || process.type !== "orders") return;
+  process.checks.invoice = true;
+  process.checks.payment = true;
+  process.integration = {
+    ...process.integration,
+    invoiceNumber: process.integration.invoiceNumber || `СЧ-${process.id.replace(/\D/g, "")}`,
+    invoiceDate: todayISO(),
+    paymentStatus: "Оплата подтверждена",
+    paymentDate: todayISO(),
+  };
+  process.history.push("1С передала номер счёта и подтверждение оплаты. Поля обновлены автоматически.");
+  process.comments.unshift({ author: "Интеграция 1С", text: "Счёт и оплата синхронизированы.", time: "сейчас" });
+  saveState();
+  renderAll();
+  openProcessModal(id, "data");
+  toast("Демо-ответ 1С получен", "ok");
 }
 
 function addDocument(id) {
@@ -1398,7 +1802,8 @@ function toggleTask(processId, taskId, done) {
 
 function openCreateModal(defaultType = activeView) {
   const type = PROCESS_META[defaultType] ? defaultType : "appeals";
-  const defaultOwner = defaultOwnerFor(type);
+  const initialClient = state.clients[0];
+  const defaultOwner = defaultOwnerFor(type, initialClient?.type);
   const modal = $("#requestModal");
   modal.innerHTML = `
     <article class="modal" role="dialog" aria-modal="true" aria-labelledby="createTitle">
@@ -1416,6 +1821,11 @@ function openCreateModal(defaultType = activeView) {
         <label>Клиент
           <select id="createClient">${state.clients.map((client) => `<option value="${client.id}">${client.name}</option>`).join("")}<option value="new">+ Новый клиент</option></select>
         </label>
+        <label>Тип клиента
+          <select id="createClientType">
+            ${CRM_DICTIONARIES.clientTypes.map((clientType) => `<option ${clientType === initialClient?.type ? "selected" : ""}>${clientType}</option>`).join("")}
+          </select>
+        </label>
         <label>Новый клиент<input id="createClientName" placeholder="Заполнить, если клиента нет в базе" /></label>
         <label>БИН<input id="createClientBin" placeholder="Например, 123456789012" /></label>
         <label>Вид топлива
@@ -1424,7 +1834,9 @@ function openCreateModal(defaultType = activeView) {
         <label>Маршрут
           <input id="createRoute" value="${COMPANY.trade} · директор ${COMPANY_DIRECTOR.trade}" readonly />
         </label>
-        <label>Способ / предмет<input id="createSupply" value="Талоны" /></label>
+        <label>Способ поставки
+          <select id="createSupply">${supplyOptions(type, "Талоны")}</select>
+        </label>
         <label>Ответственный
           <select id="createOwner">${staffOptions(defaultOwner)}</select>
         </label>
@@ -1455,7 +1867,8 @@ function createProcess() {
   const meta = metaFor(type);
   const fuel = $("#createFuel").value;
   const companyKey = companyByFuel(fuel);
-  const owner = $("#createOwner").value || "Жанара";
+  const clientType = $("#createClientType").value;
+  const owner = clientType === "Государственная организация" ? "Ольга" : $("#createOwner").value || defaultOwnerFor(type, clientType);
   let clientId = $("#createClient").value;
   if (clientId === "new") {
     const name = $("#createClientName").value.trim();
@@ -1464,11 +1877,15 @@ function createProcess() {
       id: uid("cli"),
       name,
       bin: $("#createClientBin").value.trim() || "Не указан",
-      type: "Обычный клиент",
+      type: clientType,
       contacts: "Не заполнено",
       products: `${productByFuel(fuel)}, ${fuel}`,
+      buysGsm: productByFuel(fuel) === "ГСМ",
+      buysGas: productByFuel(fuel) === "Газ",
       debt: "0 ₸",
       powerUntil: "Нет",
+      powerFile: "",
+      powerPerson: "",
     };
     state.clients.unshift(client);
     clientId = client.id;
@@ -1480,7 +1897,9 @@ function createProcess() {
     id,
     type,
     clientId,
+    clientType,
     companyKey,
+    direction: companyKey,
     product: productByFuel(fuel),
     fuel,
     supply: $("#createSupply").value.trim() || "Не указано",
@@ -1491,7 +1910,11 @@ function createProcess() {
     priority,
     volume: $("#createVolume").value.trim() || "Не указан",
     amount: $("#createAmount").value.trim() || "Не указана",
-    approvalState: type === "extensions" || type === "tenders" ? "pending" : "none",
+    approvalState: "none",
+    organizationLocked: false,
+    overpayment: "unknown",
+    linkedProcessIds: [],
+    integration: { source: "1С", invoiceNumber: "", invoiceDate: "", paymentStatus: "Ожидается", paymentDate: "" },
     checks: defaultChecks(type),
     documents: [],
     tasks: [{ id: uid("task"), title: `Первичная проверка: ${meta.label.toLowerCase()}`, owner, due: $("#createDue").value.trim() || "Сегодня", done: false }],
@@ -1511,9 +1934,9 @@ function defaultChecks(type) {
   return {
     appeals: { classified: false, linked: false, clientAnswer: false },
     contracts: { requisites: false, project: false, signed: false, expiryTask: false },
-    orders: { contract: false, invoice: false, payment: false, power: false, docs: false },
+    orders: { contract: false, invoice: false, payment: false, power: false, docs: false, esf: false },
     extensions: { clientLetter: false, contractData: false, director: false, clientAnswer: false, extensionDone: false, cash: true },
-    refunds: { annulment: false, accounting: false, reconciliation: false, director: false, paymentOrder: false },
+    refunds: { annulment: false, accounting: false, reconciliation: false, clientLetter: false, director: false, paymentOrder: false },
     tenders: { discussion: false, director: false, bidReady: false, submitted: false, protocol: false, contract: false },
   }[type] || {};
 }
@@ -1558,7 +1981,7 @@ function exportState() {
 }
 
 function resetDemo() {
-  state = structuredClone(DEFAULT_STATE);
+  state = migrateState(structuredClone(DEFAULT_STATE));
   saveState();
   renderAll();
   toast("Демо-данные восстановлены", "ok");
@@ -1647,6 +2070,7 @@ document.addEventListener("click", (event) => {
 
   if (button.matches("[data-open]")) openProcessModal(button.dataset.open, "data");
   if (button.matches("[data-next]")) advanceProcess(button.dataset.next);
+  if (button.matches("[data-transition-id]")) performTransition(button.dataset.transitionId, button.dataset.transitionKey);
   if (button.matches("[data-prev]")) previousProcess(button.dataset.prev);
   if (button.matches("[data-approve]")) approveProcess(button.dataset.approve);
   if (button.matches("[data-return]")) returnProcess(button.dataset.return);
@@ -1656,6 +2080,7 @@ document.addEventListener("click", (event) => {
   if (button.matches("[data-add-doc]")) addDocument(button.dataset.addDoc);
   if (button.matches("[data-add-task]")) addTask(button.dataset.addTask);
   if (button.matches("[data-add-comment]")) addComment(button.dataset.addComment);
+  if (button.matches("[data-sync-one-c]")) simulate1CSync(button.dataset.syncOneC);
   if (button.matches("[data-create-process]")) createProcess();
   if (button.matches("[data-client]")) {
     state.selectedClientId = button.dataset.client;
@@ -1693,7 +2118,19 @@ document.addEventListener("change", (event) => {
     $("#createRoute").value = `${companyLabel(companyKey)} · директор ${COMPANY_DIRECTOR[companyKey]}`;
   }
   if (event.target.matches("#createType")) {
-    $("#createOwner").innerHTML = staffOptions(defaultOwnerFor(event.target.value));
+    const clientType = $("#createClientType")?.value || "Обычный юридический клиент";
+    $("#createOwner").innerHTML = staffOptions(defaultOwnerFor(event.target.value, clientType));
+    $("#createSupply").innerHTML = supplyOptions(event.target.value);
+  }
+  if (event.target.matches("#createClient")) {
+    const client = clientById(event.target.value);
+    if (event.target.value !== "new" && client) {
+      $("#createClientType").value = client.type;
+      $("#createOwner").innerHTML = staffOptions(defaultOwnerFor($("#createType").value, client.type));
+    }
+  }
+  if (event.target.matches("#createClientType")) {
+    $("#createOwner").innerHTML = staffOptions(defaultOwnerFor($("#createType").value, event.target.value));
   }
   if (event.target.matches("#modalFuel")) {
     const companyKey = companyByFuel(event.target.value);

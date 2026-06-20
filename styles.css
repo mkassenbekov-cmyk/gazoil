@@ -1166,12 +1166,85 @@ h2 {
 
 .modal-footer {
   justify-content: flex-end;
+  flex-wrap: wrap;
   border-top: 1px solid var(--line);
   border-bottom: 0;
 }
 
 .modal-body {
   min-height: 220px;
+}
+
+.architecture-strip {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 8px;
+  padding: 14px 16px 0;
+}
+
+.architecture-strip div,
+.integration-card,
+.route-panel {
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: rgba(245, 245, 247, 0.72);
+}
+
+.architecture-strip div {
+  min-width: 0;
+  padding: 10px;
+}
+
+.architecture-strip span,
+.field-note {
+  display: block;
+  color: var(--muted);
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: none;
+}
+
+.architecture-strip strong {
+  display: block;
+  margin-top: 5px;
+  overflow: hidden;
+  font-size: 13px;
+  text-overflow: ellipsis;
+}
+
+.detail-grid input[readonly],
+.detail-grid select:disabled {
+  background: rgba(118, 118, 128, 0.08);
+  color: var(--muted);
+  cursor: not-allowed;
+}
+
+.integration-card,
+.route-panel {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  margin: 0 16px 14px;
+  padding: 12px;
+}
+
+.integration-card p,
+.route-panel p {
+  margin-top: 5px;
+  color: var(--muted);
+  font-size: 12px;
+}
+
+.route-panel {
+  align-items: flex-start;
+  border-color: rgba(0, 113, 227, 0.22);
+  background: var(--blue-soft);
+}
+
+.route-panel p {
+  max-width: 280px;
+  text-align: right;
 }
 
 .modal-section {
@@ -1265,6 +1338,18 @@ h2 {
 .toggle-row input {
   width: 18px;
   height: 18px;
+}
+
+.toggle-row small {
+  display: block;
+  margin-top: 3px;
+  color: var(--muted);
+  font-size: 10px;
+  font-weight: 600;
+}
+
+.toggle-row:has(input:disabled) {
+  background: rgba(118, 118, 128, 0.06);
 }
 
 .mini-heading {
@@ -1437,6 +1522,21 @@ body.sidebar-open .mobile-backdrop {
     grid-template-columns: 1fr;
   }
 
+  .architecture-strip {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .integration-card,
+  .route-panel {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .route-panel p {
+    max-width: none;
+    text-align: left;
+  }
+
   .primary-button span:last-child,
   .ghost-button span:last-child {
     max-width: 160px;
@@ -1539,6 +1639,10 @@ body.sidebar-open .mobile-backdrop {
   .modal-status b {
     width: 100%;
     margin-left: 0;
+  }
+
+  .architecture-strip {
+    grid-template-columns: 1fr;
   }
 
   .check-row {

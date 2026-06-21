@@ -6,14 +6,63 @@
     <title>GAZOIL CRM</title>
     <link rel="stylesheet" href="./styles.css" />
   </head>
-  <body>
+  <body class="session-locked">
+    <section class="login-screen" id="loginScreen" aria-label="Вход в GAZOIL CRM">
+      <div class="login-card">
+        <div class="login-brand">
+          <img class="brand-logo login-logo" src="./gazoil-logo.jpg" alt="GAZOIL" />
+          <div>
+            <strong>GAZOIL</strong>
+            <span data-i18n="corporateSystem">Корпоративная система</span>
+          </div>
+          <div class="language-switch login-language" role="group" aria-label="Язык">
+            <button type="button" data-lang="kk">ҚАЗ</button>
+            <button type="button" class="is-selected" data-lang="ru">РУС</button>
+          </div>
+        </div>
+        <div class="login-copy">
+          <span class="eyebrow" data-i18n="authorization">Авторизация</span>
+          <h1 data-i18n="systemTitle">Единая система управления GAZOIL</h1>
+          <p data-i18n="loginDescription">Войдите в рабочий контур, используя корпоративный логин и пароль.</p>
+        </div>
+        <form class="login-form" id="loginForm">
+          <label>
+            <span data-i18n="loginLabel">Логин</span>
+            <span class="login-input">
+              <span data-lucide="user"></span>
+              <input id="loginUsername" name="username" type="text" autocomplete="username" placeholder="Введите логин" data-i18n-placeholder="loginPlaceholder" required />
+            </span>
+          </label>
+          <label>
+            <span data-i18n="passwordLabel">Пароль</span>
+            <span class="login-input">
+              <span data-lucide="lock-keyhole"></span>
+              <input id="loginPassword" name="password" type="password" autocomplete="current-password" placeholder="Введите пароль" data-i18n-placeholder="passwordPlaceholder" required />
+              <button type="button" class="password-toggle" id="passwordToggle" aria-label="Показать пароль" title="Показать пароль">
+                <span data-lucide="eye"></span>
+              </button>
+            </span>
+          </label>
+          <p class="login-error" id="loginError" role="alert" aria-live="polite"></p>
+          <button class="login-submit" type="submit">
+            <span data-i18n="signIn">Войти в систему</span>
+            <span data-lucide="arrow-right"></span>
+          </button>
+        </form>
+        <div class="login-security">
+          <span data-lucide="shield-check"></span>
+          <span data-i18n="secureAccess">Защищённый доступ к корпоративным данным</span>
+        </div>
+      </div>
+    </section>
+
     <div class="app-shell">
       <aside class="sidebar" aria-label="Основная навигация">
         <div class="brand">
-          <div class="brand-mark">G</div>
+          <img class="brand-logo" src="./gazoil-logo.jpg" alt="GAZOIL" />
           <div>
             <strong>GAZOIL CRM</strong>
-            <span>Коммерческий контур</span>
+            <span data-i18n="commercialContour">Коммерческий контур</span>
           </div>
           <button class="icon-button sidebar-close" id="sidebarClose" title="Закрыть меню" aria-label="Закрыть меню">
             <span data-lucide="x"></span>
@@ -23,49 +72,85 @@
         <nav class="nav-list">
           <button class="nav-item is-active" data-view="dashboard">
             <span class="nav-icon" data-lucide="layout-dashboard"></span>
-            <span>Дашборд</span>
+            <span data-i18n="dashboard">Дашборд</span>
+          </button>
+          <button class="nav-item" data-view="assistant">
+            <span class="nav-icon" data-lucide="sparkles"></span>
+            <span data-i18n="assistant">ИИ-помощник</span>
+          </button>
+          <button class="nav-item" data-view="messages">
+            <span class="nav-icon" data-lucide="messages-square"></span>
+            <span data-i18n="messages">Сообщения</span>
           </button>
           <button class="nav-item" data-view="clients">
             <span class="nav-icon" data-lucide="building-2"></span>
-            <span>Клиенты</span>
+            <span data-i18n="clients">Клиенты</span>
           </button>
           <button class="nav-item" data-view="appeals">
             <span class="nav-icon" data-lucide="inbox"></span>
-            <span>Обращения</span>
+            <span data-i18n="appeals">Обращения</span>
           </button>
           <button class="nav-item" data-view="contracts">
             <span class="nav-icon" data-lucide="file-signature"></span>
-            <span>Договоры</span>
+            <span data-i18n="contracts">Договоры</span>
           </button>
           <button class="nav-item" data-view="orders">
             <span class="nav-icon" data-lucide="fuel"></span>
-            <span>Заказы и выдача</span>
+            <span data-i18n="orders">Заказы и выдача</span>
           </button>
           <button class="nav-item" data-view="extensions">
             <span class="nav-icon" data-lucide="refresh-cw"></span>
-            <span>Продления</span>
+            <span data-i18n="extensions">Продления</span>
           </button>
           <button class="nav-item" data-view="refunds">
             <span class="nav-icon" data-lucide="wallet-cards"></span>
-            <span>Возвраты</span>
+            <span data-i18n="refunds">Возвраты</span>
           </button>
           <button class="nav-item" data-view="tenders">
             <span class="nav-icon" data-lucide="landmark"></span>
-            <span>Госзакупки</span>
+            <span data-i18n="tenders">Госзакупки</span>
+          </button>
+          <button class="nav-item" data-view="tasks">
+            <span class="nav-icon" data-lucide="list-checks"></span>
+            <span data-i18n="tasks">Задачи</span>
+          </button>
+          <button class="nav-item" data-view="documents">
+            <span class="nav-icon" data-lucide="folder-open"></span>
+            <span data-i18n="documents">Документы</span>
           </button>
           <button class="nav-item" data-view="reports">
             <span class="nav-icon" data-lucide="chart-column"></span>
-            <span>Отчеты</span>
+            <span data-i18n="reports">Отчеты</span>
+          </button>
+          <button class="nav-item" data-view="users">
+            <span class="nav-icon" data-lucide="users-round"></span>
+            <span data-i18n="users">Пользователи и роли</span>
+          </button>
+          <button class="nav-item" data-view="audit">
+            <span class="nav-icon" data-lucide="history"></span>
+            <span data-i18n="audit">Журнал действий</span>
+          </button>
+          <button class="nav-item" data-view="settings">
+            <span class="nav-icon" data-lucide="settings-2"></span>
+            <span data-i18n="settings">Справочники</span>
           </button>
         </nav>
 
-        <div class="sidebar-footer">
-          <span class="health-dot"></span>
+        <div class="sidebar-integrations">
+          <span class="integration-dot is-planned"></span>
           <div>
-            <strong>Интеграции</strong>
-            <span>1С, WhatsApp, Email</span>
+            <strong data-i18n="integrationsLater">Интеграции позже</strong>
+            <span data-i18n="integrationsList">1С, WhatsApp, Email, телефония</span>
           </div>
         </div>
+        <button class="sidebar-user" data-action="profile">
+          <span class="user-avatar" id="sidebarAvatar">М</span>
+          <span>
+            <strong id="sidebarUserName">Мади</strong>
+            <small id="sidebarUserRole">Руководитель коммерческого отдела</small>
+          </span>
+          <span data-lucide="chevrons-up-down"></span>
+        </button>
       </aside>
       <button class="mobile-backdrop" id="mobileBackdrop" aria-label="Закрыть меню"></button>
 
@@ -75,7 +160,7 @@
             <span data-lucide="menu"></span>
           </button>
           <div class="page-title">
-            <span class="eyebrow">Сегодня</span>
+            <span class="eyebrow" data-i18n="today">Сегодня</span>
             <h1 id="viewTitle">Дашборд руководителя</h1>
           </div>
           <label class="search-box">
@@ -83,9 +168,20 @@
             <input id="globalSearch" type="search" placeholder="Поиск по клиенту, БИН, договору, заявке" />
           </label>
           <div class="top-actions">
-            <button class="icon-button" title="Уведомления" aria-label="Уведомления">
+            <div class="language-switch top-language" role="group" aria-label="Язык">
+              <button type="button" data-lang="kk">ҚАЗ</button>
+              <button type="button" class="is-selected" data-lang="ru">РУС</button>
+            </div>
+            <button class="icon-button" data-action="notifications" title="Уведомления" aria-label="Уведомления">
               <span data-lucide="bell"></span>
               <b class="counter">7</b>
+            </button>
+            <button class="top-user" data-action="profile" title="Профиль">
+              <span class="user-avatar" id="topUserAvatar">М</span>
+              <span class="top-user-copy">
+                <strong id="topUserName">Мади</strong>
+                <small id="topUserRole">Руководитель</small>
+              </span>
             </button>
             <button class="primary-button" id="newRequestBtn">
               <span data-lucide="plus"></span>
@@ -96,22 +192,24 @@
 
         <section class="control-strip" aria-label="Фильтры">
           <div class="segmented-control" role="group" aria-label="Юридическое лицо">
-            <button class="is-selected" data-filter-company="all">Все</button>
+            <button class="is-selected" data-filter-company="all" data-i18n="all">Все</button>
             <button data-filter-company="trade">GAZOIL TRADE</button>
             <button data-filter-company="ugh">УГХ GAZOIL</button>
           </div>
           <div class="segmented-control compact" role="group" aria-label="Период">
-            <button class="is-selected">День</button>
-            <button>Неделя</button>
-            <button>Месяц</button>
+            <button class="is-selected" data-i18n="day">День</button>
+            <button data-i18n="week">Неделя</button>
+            <button data-i18n="month">Месяц</button>
           </div>
           <button class="ghost-button" id="slaOnly">
             <span data-lucide="timer-reset"></span>
-            <span>Только просрочки</span>
+            <span data-i18n="overdueOnly">Только просрочки</span>
           </button>
         </section>
 
         <section class="view is-active" id="dashboardView" data-view-panel="dashboard">
+          <section class="executive-hero" id="executiveHero"></section>
+
           <div class="metric-grid">
             <article class="metric-card">
               <span class="metric-icon is-blue" data-lucide="inbox"></span>
@@ -147,12 +245,36 @@
             </article>
           </div>
 
+          <div class="management-grid" id="managementGrid">
+            <section class="panel decision-panel">
+              <div class="panel-header">
+                <div>
+                  <span class="eyebrow">Требует моего внимания</span>
+                  <h2 data-i18n="priorityQueue">Приоритетная очередь</h2>
+                </div>
+                <button class="text-button" data-dashboard-queue="all" data-i18n="allProcesses">Все процессы</button>
+              </div>
+              <div class="management-queue" id="managementQueue"></div>
+            </section>
+
+            <section class="panel team-panel">
+              <div class="panel-header">
+                <div>
+                  <span class="eyebrow" data-i18n="team">Команда</span>
+                  <h2 data-i18n="loadAndOverdue">Загрузка и просрочки</h2>
+                </div>
+                <span class="status-pill is-progress">Обе компании</span>
+              </div>
+              <div class="team-load" id="teamLoad"></div>
+            </section>
+          </div>
+
           <div class="leader-grid">
             <section class="panel leader-summary-panel">
               <div class="panel-header">
                 <div>
-                  <span class="eyebrow">Сводка руководителя</span>
-                  <h2>Основные данные месяца</h2>
+                  <span class="eyebrow" data-i18n="managerSummary">Сводка руководителя</span>
+                  <h2 data-i18n="monthMainData">Основные данные месяца</h2>
                 </div>
                 <span class="status-pill is-progress" id="monthLabel">Текущий месяц</span>
               </div>
@@ -162,10 +284,10 @@
             <section class="panel fuel-sales-panel">
               <div class="panel-header">
                 <div>
-                  <span class="eyebrow">На сегодняшний день</span>
-                  <h2>Продажи по видам топлива</h2>
+                  <span class="eyebrow" data-i18n="asOfToday">На сегодняшний день</span>
+                  <h2 data-i18n="fuelSales">Продажи по видам топлива</h2>
                 </div>
-                <button class="text-button" data-action="refresh-dashboard">Обновить</button>
+                <button class="text-button" data-action="refresh-dashboard" data-i18n="refresh">Обновить</button>
               </div>
               <div class="fuel-sales-list" id="fuelSalesToday"></div>
             </section>
@@ -175,8 +297,8 @@
             <section class="panel report-builder-panel">
               <div class="panel-header">
                 <div>
-                  <span class="eyebrow">Отчетность</span>
-                  <h2>Сформировать отчет за период</h2>
+                  <span class="eyebrow" data-i18n="reporting">Отчетность</span>
+                  <h2 data-i18n="buildPeriodReport">Сформировать отчет за период</h2>
                 </div>
               </div>
               <div class="report-form">
@@ -199,8 +321,8 @@
             <section class="panel alerts-panel">
               <div class="panel-header">
                 <div>
-                  <span class="eyebrow">Важные уведомления</span>
-                  <h2>Динамика и риски продаж</h2>
+                  <span class="eyebrow" data-i18n="importantNotifications">Важные уведомления</span>
+                  <h2 data-i18n="salesRisks">Динамика и риски продаж</h2>
                 </div>
                 <span class="status-pill is-warn" id="alertCount">0</span>
               </div>
@@ -212,8 +334,8 @@
             <section class="panel process-panel">
               <div class="panel-header">
                 <div>
-                  <span class="eyebrow">Единый контур</span>
-                  <h2>Активные процессы</h2>
+                  <span class="eyebrow" data-i18n="unifiedContour">Единый контур</span>
+                  <h2 data-i18n="activeProcesses">Активные процессы</h2>
                 </div>
                 <button class="icon-button" title="Настроить вид" aria-label="Настроить вид">
                   <span data-lucide="sliders-horizontal"></span>
@@ -225,8 +347,8 @@
             <section class="panel approvals-panel">
               <div class="panel-header">
                 <div>
-                  <span class="eyebrow">Очередь решений</span>
-                  <h2>Согласования</h2>
+                  <span class="eyebrow" data-i18n="decisionQueue">Очередь решений</span>
+                  <h2 data-i18n="approvals">Согласования</h2>
                 </div>
                 <button class="text-button">Все</button>
               </div>
@@ -234,11 +356,11 @@
             </section>
           </div>
 
-          <section class="panel">
+          <section class="panel operational-panel">
             <div class="panel-header">
               <div>
-                <span class="eyebrow">Операционный список</span>
-                <h2>Заявки в работе</h2>
+                <span class="eyebrow" data-i18n="operationalList">Операционный список</span>
+                <h2 data-i18n="requestsInWork">Заявки в работе</h2>
               </div>
               <div class="inline-actions">
                 <button class="ghost-button">
@@ -279,7 +401,7 @@
                   <span class="eyebrow">Единая база</span>
                   <h2>Юридические клиенты</h2>
                 </div>
-                <button class="primary-button">
+                <button class="primary-button" data-action="create-client">
                   <span data-lucide="building"></span>
                   <span>Клиент</span>
                 </button>
@@ -322,7 +444,7 @@
                 <span>Создать</span>
               </button>
             </div>
-            <div class="module-layout">
+            <div class="module-layout" id="genericStandardLayout">
               <div class="stage-column" id="stageColumn"></div>
               <div class="table-wrap">
                 <table class="data-table">
@@ -341,6 +463,7 @@
                 </table>
               </div>
             </div>
+            <div class="custom-module-content" id="customModuleContent" hidden></div>
           </section>
         </section>
       </main>

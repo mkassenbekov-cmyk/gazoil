@@ -1,4 +1,168 @@
 const STORAGE_KEY = "gazoil-crm-state-v2";
+const SESSION_KEY = "gazoil-crm-session-v2";
+const LANGUAGE_KEY = "gazoil-crm-language-v1";
+const DEFAULT_PASSWORD_HASH = "c4318372f98f4c46ed3a32c16ee4d7a76c832886d887631c0294b3314f34edf1";
+
+const UI_TEXT = {
+  ru: {
+    corporateSystem: "Корпоративная система",
+    authorization: "Авторизация",
+    systemTitle: "Единая система управления GAZOIL",
+    loginDescription: "Войдите в рабочий контур, используя корпоративный логин и пароль.",
+    loginLabel: "Логин",
+    passwordLabel: "Пароль",
+    loginPlaceholder: "Введите логин",
+    passwordPlaceholder: "Введите пароль",
+    signIn: "Войти в систему",
+    secureAccess: "Защищённый доступ к корпоративным данным",
+    commercialContour: "Коммерческий контур",
+    dashboard: "Дашборд",
+    assistant: "ИИ-помощник",
+    messages: "Сообщения",
+    clients: "Клиенты",
+    appeals: "Обращения",
+    contracts: "Договоры",
+    orders: "Заказы и выдача",
+    extensions: "Продления",
+    refunds: "Возвраты",
+    tenders: "Госзакупки",
+    tasks: "Задачи",
+    documents: "Документы",
+    reports: "Отчеты",
+    users: "Пользователи и роли",
+    audit: "Журнал действий",
+    settings: "Справочники",
+    integrationsLater: "Интеграции позже",
+    integrationsList: "1С, WhatsApp, Email, телефония",
+    today: "Сегодня",
+    all: "Все",
+    day: "День",
+    week: "Неделя",
+    month: "Месяц",
+    overdueOnly: "Только просрочки",
+    priorityQueue: "Приоритетная очередь",
+    allProcesses: "Все процессы",
+    team: "Команда",
+    loadAndOverdue: "Загрузка и просрочки",
+    managerSummary: "Сводка руководителя",
+    monthMainData: "Основные данные месяца",
+    asOfToday: "На сегодняшний день",
+    fuelSales: "Продажи по видам топлива",
+    refresh: "Обновить",
+    reporting: "Отчетность",
+    buildPeriodReport: "Сформировать отчет за период",
+    importantNotifications: "ИИ-сигналы",
+    salesRisks: "Риски и рекомендации",
+    unifiedContour: "Единый контур",
+    activeProcesses: "Активные процессы",
+    decisionQueue: "Очередь решений",
+    approvals: "Согласования",
+    operationalList: "Операционный список",
+    requestsInWork: "Заявки в работе",
+    dashboardTitle: "Дашборд руководителя",
+    assistantTitle: "Персональный ИИ-помощник",
+    messagesTitle: "Корпоративные сообщения",
+    clientsTitle: "Клиенты",
+    appealsTitle: "Обращения клиентов",
+    contractsTitle: "Договоры",
+    ordersTitle: "Заказы и выдача топлива",
+    extensionsTitle: "Продление талонов и ТК",
+    refundsTitle: "Возвраты денежных средств",
+    tendersTitle: "Тендеры и госзакупки",
+    tasksTitle: "Задачи и согласования",
+    documentsTitle: "Документы",
+    reportsTitle: "Отчеты и аналитика",
+    usersTitle: "Пользователи и роли",
+    auditTitle: "Журнал действий",
+    settingsTitle: "Настройки справочников",
+    wrongCredentials: "Неверный логин или пароль.",
+    showPassword: "Показать пароль",
+    hidePassword: "Скрыть пароль",
+    waitingDecision: "Ждут моего решения",
+    overdue: "Просрочено",
+    distribute: "Нужно распределить",
+    expiringContracts: "Договоры истекают",
+  },
+  kk: {
+    corporateSystem: "Корпоративтік жүйе",
+    authorization: "Авторизация",
+    systemTitle: "GAZOIL бірыңғай басқару жүйесі",
+    loginDescription: "Корпоративтік логин мен құпиясөзді пайдаланып жұмыс жүйесіне кіріңіз.",
+    loginLabel: "Логин",
+    passwordLabel: "Құпиясөз",
+    loginPlaceholder: "Логинді енгізіңіз",
+    passwordPlaceholder: "Құпиясөзді енгізіңіз",
+    signIn: "Жүйеге кіру",
+    secureAccess: "Корпоративтік деректерге қорғалған қолжетімділік",
+    commercialContour: "Коммерциялық контур",
+    dashboard: "Басқару тақтасы",
+    assistant: "ЖИ-көмекші",
+    messages: "Хабарламалар",
+    clients: "Клиенттер",
+    appeals: "Өтініштер",
+    contracts: "Шарттар",
+    orders: "Тапсырыстар және беру",
+    extensions: "Ұзартулар",
+    refunds: "Қайтарымдар",
+    tenders: "Мемлекеттік сатып алу",
+    tasks: "Тапсырмалар",
+    documents: "Құжаттар",
+    reports: "Есептер",
+    users: "Пайдаланушылар мен рөлдер",
+    audit: "Әрекеттер журналы",
+    settings: "Анықтамалықтар",
+    integrationsLater: "Интеграциялар кейін",
+    integrationsList: "1С, WhatsApp, Email, телефония",
+    today: "Бүгін",
+    all: "Барлығы",
+    day: "Күн",
+    week: "Апта",
+    month: "Ай",
+    overdueOnly: "Тек мерзімі өткендер",
+    priorityQueue: "Басымдық кезегі",
+    allProcesses: "Барлық процестер",
+    team: "Команда",
+    loadAndOverdue: "Жүктеме және кешігулер",
+    managerSummary: "Басшының қорытындысы",
+    monthMainData: "Айдың негізгі деректері",
+    asOfToday: "Бүгінгі жағдай бойынша",
+    fuelSales: "Отын түрлері бойынша сатылым",
+    refresh: "Жаңарту",
+    reporting: "Есептілік",
+    buildPeriodReport: "Кезең бойынша есеп құру",
+    importantNotifications: "ЖИ-сигналдар",
+    salesRisks: "Тәуекелдер мен ұсыныстар",
+    unifiedContour: "Бірыңғай контур",
+    activeProcesses: "Белсенді процестер",
+    decisionQueue: "Шешімдер кезегі",
+    approvals: "Келісулер",
+    operationalList: "Операциялық тізім",
+    requestsInWork: "Жұмыстағы өтінімдер",
+    dashboardTitle: "Басшының басқару тақтасы",
+    assistantTitle: "Жеке ЖИ-көмекші",
+    messagesTitle: "Корпоративтік хабарламалар",
+    clientsTitle: "Клиенттер",
+    appealsTitle: "Клиент өтініштері",
+    contractsTitle: "Шарттар",
+    ordersTitle: "Тапсырыстар және отын беру",
+    extensionsTitle: "Талондар мен тауар карталарын ұзарту",
+    refundsTitle: "Ақшалай қаражатты қайтару",
+    tendersTitle: "Тендерлер және мемлекеттік сатып алу",
+    tasksTitle: "Тапсырмалар және келісулер",
+    documentsTitle: "Құжаттар",
+    reportsTitle: "Есептер және талдау",
+    usersTitle: "Пайдаланушылар мен рөлдер",
+    auditTitle: "Әрекеттер журналы",
+    settingsTitle: "Анықтамалықтарды баптау",
+    wrongCredentials: "Логин немесе құпиясөз қате.",
+    showPassword: "Құпиясөзді көрсету",
+    hidePassword: "Құпиясөзді жасыру",
+    waitingDecision: "Менің шешімімді күтуде",
+    overdue: "Мерзімі өткен",
+    distribute: "Бөлу қажет",
+    expiringContracts: "Шарттардың мерзімі аяқталады",
+  },
+};
 
 const COMPANY = {
   trade: "ТОО «GAZOIL TRADE»",
@@ -7,8 +171,8 @@ const COMPANY = {
 
 const CRM_DICTIONARIES = {
   organizations: [
-    { key: "trade", label: COMPANY.trade, product: "ГСМ", director: "Хуснутдинов Р. Р.", accounting: "Бухгалтерия GAZOIL TRADE" },
-    { key: "ugh", label: COMPANY.ugh, product: "Газ", director: "Киікбай А.Б.", accounting: "Бухгалтерия УГХ GAZOIL" },
+    { key: "trade", label: COMPANY.trade, product: "ГСМ", director: "Хуснутдинов Р. Р.", accounting: "Татьяна" },
+    { key: "ugh", label: COMPANY.ugh, product: "Газ", director: "Киікбай А. Б.", accounting: "Айнура" },
   ],
   clientTypes: ["Обычный юридический клиент", "Государственная организация"],
   products: ["ГСМ", "Газ"],
@@ -17,26 +181,306 @@ const CRM_DICTIONARIES = {
 };
 
 const STAFF = [
-  { id: "diana", name: "Диана", role: "Старший менеджер", scope: "both" },
-  { id: "olga", name: "Ольга", role: "Госзакупщик", scope: "both" },
-  { id: "zhanara", name: "Жанара", role: "Менеджер обслуживания клиентов", scope: "both" },
-  { id: "elzhan", name: "Ельжан", role: "Менеджер обслуживания клиентов", scope: "both" },
-  { id: "ekaterina", name: "Екатерина", role: "Менеджер обслуживания клиентов", scope: "both" },
-  { id: "madi", name: "Мади", role: "Руководитель коммерческого отдела", scope: "both" },
+  {
+    id: "madi",
+    name: "Мади",
+    login: "Мади",
+    loginAliases: ["комдир"],
+    role: "Коммерческий директор / Администратор",
+    roleId: "ADMIN_COMMERCIAL_DIRECTOR",
+    scope: "both",
+    email: "madi@gazoil.kz",
+    passwordHash: DEFAULT_PASSWORD_HASH,
+    mustChangePassword: true,
+    active: true,
+  },
+  {
+    id: "khusnutdinov",
+    name: "Хуснутдинов Р. Р.",
+    login: "Рашид",
+    loginAliases: ["RR"],
+    role: "Директор GAZOIL TRADE",
+    roleId: "DIRECTOR_GAZOIL_TRADE",
+    scope: "trade",
+    email: "rr@gazoil.kz",
+    passwordHash: DEFAULT_PASSWORD_HASH,
+    mustChangePassword: true,
+    active: true,
+  },
+  {
+    id: "kiikbay",
+    name: "Киікбай А. Б.",
+    login: "Арсен",
+    loginAliases: ["AB"],
+    role: "Директор УГХ GAZOIL",
+    roleId: "DIRECTOR_UGH_GAZOIL",
+    scope: "ugh",
+    email: "ab@gazoil.kz",
+    passwordHash: DEFAULT_PASSWORD_HASH,
+    mustChangePassword: true,
+    active: true,
+  },
+  { id: "diana", name: "Диана", login: "Диана", role: "Старший менеджер", roleId: "SENIOR_MANAGER", scope: "both", passwordHash: DEFAULT_PASSWORD_HASH, mustChangePassword: true, active: true },
+  { id: "elzhan", name: "Ельжан", login: "Ельжан", role: "Менеджер обслуживания", roleId: "SERVICE_MANAGER", scope: "both", passwordHash: DEFAULT_PASSWORD_HASH, mustChangePassword: true, active: true },
+  { id: "zhanara", name: "Жанара", login: "Жанара", role: "Менеджер обслуживания", roleId: "SERVICE_MANAGER", scope: "both", passwordHash: DEFAULT_PASSWORD_HASH, mustChangePassword: true, active: true },
+  { id: "ekaterina", name: "Екатерина", login: "Екатерина", role: "Менеджер обслуживания", roleId: "SERVICE_MANAGER", scope: "both", passwordHash: DEFAULT_PASSWORD_HASH, mustChangePassword: true, active: true },
+  { id: "olga", name: "Ольга", login: "Ольга", role: "Госзакупщик", roleId: "PROCUREMENT_MANAGER", scope: "both", passwordHash: DEFAULT_PASSWORD_HASH, mustChangePassword: true, active: true },
+  { id: "pavel", name: "Павел", login: "Павел", role: "Менеджер продаж", roleId: "SALES_MANAGER", scope: "both", passwordHash: DEFAULT_PASSWORD_HASH, mustChangePassword: true, active: true },
+  { id: "ilyas", name: "Ильяс", login: "Ильяс", role: "Менеджер опта", roleId: "WHOLESALE_MANAGER", scope: "both", passwordHash: DEFAULT_PASSWORD_HASH, mustChangePassword: true, active: true },
+  { id: "founder", name: "Учредитель", login: "Учредитель", role: "Учредитель / Наблюдатель", roleId: "FOUNDER_VIEWER", scope: "both", passwordHash: DEFAULT_PASSWORD_HASH, mustChangePassword: true, active: true },
+  { id: "tatyana", name: "Татьяна", login: "Татьяна", role: "Бухгалтер GAZOIL TRADE", roleId: "ACCOUNTANT_GAZOIL_TRADE", scope: "trade", passwordHash: DEFAULT_PASSWORD_HASH, mustChangePassword: true, active: true },
+  { id: "ainura", name: "Айнура", login: "Айнура", role: "Бухгалтер УГХ GAZOIL", roleId: "ACCOUNTANT_UGH_GAZOIL", scope: "ugh", passwordHash: DEFAULT_PASSWORD_HASH, mustChangePassword: true, active: true },
   { id: "cash", name: "Касса", role: "Операции с талонами", scope: "both" },
   { id: "card-manager", name: "Главный менеджер", role: "Операции с товарными картами", scope: "both" },
   { id: "bank", name: "Бухгалтер по банку", role: "Банковские возвраты", scope: "both" },
-  { id: "trade-accounting", name: "Бухгалтерия GAZOIL TRADE", role: "Финансовая проверка", scope: "trade" },
-  { id: "ugh-accounting", name: "Бухгалтерия УГХ GAZOIL", role: "Финансовая проверка", scope: "ugh" },
-  { id: "kiikbay", name: "Киікбай А.Б.", role: "Директор УГХ GAZOIL", scope: "ugh" },
-  { id: "khusnutdinov", name: "Хуснутдинов Р. Р.", role: "Директор GAZOIL TRADE", scope: "trade" },
 ];
+
+const ROLE_POLICIES = {
+  ADMIN_COMMERCIAL_DIRECTOR: {
+    label: "Коммерческий директор / Администратор",
+    companies: ["trade", "ugh"],
+    views: ["dashboard", "clients", "appeals", "contracts", "orders", "extensions", "refunds", "tenders", "tasks", "documents", "reports", "users", "audit", "settings"],
+    canCreate: true,
+    canApprove: true,
+    canSeeFinancials: true,
+    canSeeTeam: true,
+    canSubstituteDirectors: true,
+    canEditProcesses: true,
+    canReassign: true,
+    canManageUsers: true,
+    canResetPasswords: true,
+    canConfirm1C: true,
+    canViewAudit: true,
+    roleType: "commercialDirector",
+  },
+  DIRECTOR_GAZOIL_TRADE: {
+    label: "Директор GAZOIL TRADE",
+    companies: ["trade"],
+    views: ["dashboard", "extensions", "refunds", "tenders", "tasks", "reports"],
+    canCreate: false,
+    canApprove: true,
+    canSeeFinancials: true,
+    canSeeTeam: false,
+    canSubstituteDirectors: false,
+    canEditProcesses: false,
+    canReassign: false,
+    canManageUsers: false,
+    canResetPasswords: false,
+    canConfirm1C: false,
+    canViewAudit: false,
+    roleType: "companyDirector",
+  },
+  DIRECTOR_UGH_GAZOIL: {
+    label: "Директор УГХ GAZOIL",
+    companies: ["ugh"],
+    views: ["dashboard", "extensions", "refunds", "tenders", "tasks", "reports"],
+    canCreate: false,
+    canApprove: true,
+    canSeeFinancials: true,
+    canSeeTeam: false,
+    canSubstituteDirectors: false,
+    canEditProcesses: false,
+    canReassign: false,
+    canManageUsers: false,
+    canResetPasswords: false,
+    canConfirm1C: false,
+    canViewAudit: false,
+    roleType: "companyDirector",
+  },
+  SENIOR_MANAGER: {
+    label: "Старший менеджер",
+    companies: ["trade", "ugh"],
+    views: ["dashboard", "clients", "appeals", "contracts", "orders", "extensions", "refunds", "tenders", "tasks", "documents", "reports"],
+    canCreate: true,
+    canApprove: false,
+    canSeeFinancials: true,
+    canSeeTeam: true,
+    canSubstituteDirectors: false,
+    canEditProcesses: true,
+    canReassign: true,
+    canManageUsers: false,
+    canResetPasswords: false,
+    canConfirm1C: false,
+    canViewAudit: false,
+    roleType: "seniorManager",
+  },
+  SERVICE_MANAGER: {
+    label: "Менеджер обслуживания",
+    companies: ["trade", "ugh"],
+    views: ["dashboard", "clients", "appeals", "contracts", "orders", "extensions", "refunds", "tasks", "documents"],
+    canCreate: true,
+    canApprove: false,
+    canSeeFinancials: false,
+    canSeeTeam: false,
+    canSubstituteDirectors: false,
+    canEditProcesses: true,
+    canReassign: false,
+    canManageUsers: false,
+    canResetPasswords: false,
+    canConfirm1C: false,
+    canViewAudit: false,
+    roleType: "assignedManager",
+  },
+  SALES_MANAGER: {
+    label: "Менеджер продаж",
+    companies: ["trade", "ugh"],
+    views: ["dashboard", "clients", "appeals", "contracts", "orders", "tasks", "documents"],
+    canCreate: true,
+    canApprove: false,
+    canSeeFinancials: false,
+    canSeeTeam: false,
+    canSubstituteDirectors: false,
+    canEditProcesses: true,
+    canReassign: false,
+    canManageUsers: false,
+    canResetPasswords: false,
+    canConfirm1C: false,
+    canViewAudit: false,
+    roleType: "salesManager",
+  },
+  WHOLESALE_MANAGER: {
+    label: "Менеджер опта",
+    companies: ["trade", "ugh"],
+    views: ["dashboard", "clients", "appeals", "contracts", "orders", "tasks", "documents", "reports"],
+    canCreate: true,
+    canApprove: false,
+    canSeeFinancials: true,
+    canSeeTeam: false,
+    canSubstituteDirectors: false,
+    canEditProcesses: true,
+    canReassign: false,
+    canManageUsers: false,
+    canResetPasswords: false,
+    canConfirm1C: false,
+    canViewAudit: false,
+    roleType: "wholesaleManager",
+  },
+  PROCUREMENT_MANAGER: {
+    label: "Госзакупщик",
+    companies: ["trade", "ugh"],
+    views: ["dashboard", "clients", "contracts", "extensions", "refunds", "tenders", "tasks", "documents", "reports"],
+    canCreate: true,
+    canApprove: false,
+    canSeeFinancials: true,
+    canSeeTeam: false,
+    canSubstituteDirectors: false,
+    canEditProcesses: true,
+    canReassign: false,
+    canManageUsers: false,
+    canResetPasswords: false,
+    canConfirm1C: false,
+    canViewAudit: false,
+    roleType: "procurementManager",
+  },
+  FOUNDER_VIEWER: {
+    label: "Учредитель / Наблюдатель",
+    companies: ["trade", "ugh"],
+    views: ["dashboard", "reports"],
+    canCreate: false,
+    canApprove: false,
+    canSeeFinancials: true,
+    canSeeTeam: false,
+    canSubstituteDirectors: false,
+    canEditProcesses: false,
+    canReassign: false,
+    canManageUsers: false,
+    canResetPasswords: false,
+    canConfirm1C: false,
+    canViewAudit: false,
+    roleType: "founder",
+  },
+  CASHIER: {
+    label: "Кассир",
+    companies: ["trade", "ugh"],
+    views: ["dashboard", "orders", "extensions", "refunds", "tasks", "documents"],
+    canCreate: false,
+    canApprove: false,
+    canSeeFinancials: false,
+    canSeeTeam: false,
+    canSubstituteDirectors: false,
+    canEditProcesses: true,
+    canReassign: false,
+    canManageUsers: false,
+    canResetPasswords: false,
+    canConfirm1C: false,
+    canViewAudit: false,
+    roleType: "cashier",
+  },
+  ACCOUNTANT_GAZOIL_TRADE: {
+    label: "Бухгалтер GAZOIL TRADE",
+    companies: ["trade"],
+    views: ["dashboard", "contracts", "orders", "refunds", "tasks", "documents", "reports"],
+    canCreate: false,
+    canApprove: false,
+    canSeeFinancials: true,
+    canSeeTeam: false,
+    canSubstituteDirectors: false,
+    canEditProcesses: true,
+    canReassign: false,
+    canManageUsers: false,
+    canResetPasswords: false,
+    canConfirm1C: true,
+    canViewAudit: false,
+    roleType: "accountant",
+  },
+  ACCOUNTANT_UGH_GAZOIL: {
+    label: "Бухгалтер УГХ GAZOIL",
+    companies: ["ugh"],
+    views: ["dashboard", "contracts", "orders", "refunds", "tasks", "documents", "reports"],
+    canCreate: false,
+    canApprove: false,
+    canSeeFinancials: true,
+    canSeeTeam: false,
+    canSubstituteDirectors: false,
+    canEditProcesses: true,
+    canReassign: false,
+    canManageUsers: false,
+    canResetPasswords: false,
+    canConfirm1C: true,
+    canViewAudit: false,
+    roleType: "accountant",
+  },
+  BANK_ACCOUNTANT: {
+    label: "Бухгалтер по банку",
+    companies: ["trade", "ugh"],
+    views: ["dashboard", "refunds", "tasks", "documents", "reports"],
+    canCreate: false,
+    canApprove: false,
+    canSeeFinancials: true,
+    canSeeTeam: false,
+    canSubstituteDirectors: false,
+    canEditProcesses: true,
+    canReassign: false,
+    canManageUsers: false,
+    canResetPasswords: false,
+    canConfirm1C: true,
+    canViewAudit: false,
+    roleType: "bankAccountant",
+  },
+  SYSTEM_ADMIN: {
+    label: "Системный администратор",
+    companies: ["trade", "ugh"],
+    views: ["dashboard", "users", "audit", "settings"],
+    canCreate: false,
+    canApprove: false,
+    canSeeFinancials: false,
+    canSeeTeam: false,
+    canSubstituteDirectors: false,
+    canEditProcesses: false,
+    canReassign: false,
+    canManageUsers: true,
+    canResetPasswords: true,
+    canConfirm1C: false,
+    canViewAudit: true,
+    roleType: "systemAdmin",
+  },
+};
 
 const FUEL_TYPES = ["АИ-92", "АИ-95", "АИ-98", "ДТ лето", "ДТ зима", "Автогаз"];
 
 const COMPANY_DIRECTOR = {
   trade: "Хуснутдинов Р. Р.",
-  ugh: "Киікбай А.Б.",
+  ugh: "Киікбай А. Б.",
 };
 
 const FUEL_PRICE = {
@@ -49,6 +493,7 @@ const FUEL_PRICE = {
 };
 
 const MONTHLY_REVENUE_PLAN = 180000000;
+const COMPANY_MONTHLY_PLAN = { trade: 150000000, ugh: 30000000 };
 const DEMO_SALES = makeDemoSales();
 
 const PROCESS_META = {
@@ -96,6 +541,66 @@ const PROCESS_META = {
   },
 };
 
+const PROCESS_NAMES_KK = {
+  appeals: { label: "Өтініш", plural: "Клиент өтініштері" },
+  contracts: { label: "Шарт", plural: "Шарттар" },
+  orders: { label: "Тапсырыс", plural: "Тапсырыстар және отын беру" },
+  extensions: { label: "Ұзарту", plural: "Талондар мен тауар карталарын ұзарту" },
+  refunds: { label: "Қайтарым", plural: "Ақшалай қаражатты қайтару" },
+  tenders: { label: "Тендер", plural: "Тендерлер және мемлекеттік сатып алу" },
+};
+
+const PROCESS_FIELD_SCHEMAS = {
+  appeals: [
+    ["source", "Источник обращения", "select", ["WhatsApp", "Телефония", "Email", "Офис", "Сайт", "Руководитель", "Тендерная площадка", "Иное"]],
+    ["topic", "Тема обращения", "select", ["Договор", "Счёт", "Выдача топлива", "Оплата", "Талоны", "Топливная карта", "Акт сверки", "Возврат", "Продление", "Документы", "Опт", "Госзакупки", "Другое"]],
+    ["closeReason", "Причина закрытия без решения", "textarea"],
+  ],
+  contracts: [
+    ["contractNumber", "Номер договора", "text"],
+    ["contractDate", "Дата договора", "date"],
+    ["startDate", "Дата начала", "date"],
+    ["endDate", "Дата окончания", "date"],
+    ["paymentTerms", "Условия оплаты", "textarea"],
+    ["pricing", "Цена / скидка / ценообразование", "textarea"],
+  ],
+  orders: [
+    ["paidVolume", "Оплаченный объём, л", "number"],
+    ["issuedVolume", "Объём к выдаче / выдано, л", "number"],
+    ["deliveryDate", "Дата выдачи", "date"],
+    ["esfStatus", "Статус ЭСФ", "select", ["Не требуется", "Ожидается", "Оформлена", "Ошибка"]],
+  ],
+  extensions: [
+    ["extensionSubject", "Что продлеваем", "select", ["Талоны", "Топливная карта"]],
+    ["purchasePrice", "Цена покупки топлива", "number"],
+    ["currentPrice", "Текущая цена топлива", "number"],
+    ["discount", "Индивидуальная скидка", "number"],
+    ["recalculation", "Сумма перерасчёта", "number"],
+    ["newExpiry", "Новый срок действия", "date"],
+    ["reason", "Основание для продления", "textarea"],
+  ],
+  refunds: [
+    ["refundReason", "Причина возврата", "textarea"],
+    ["preliminaryAmount", "Предварительная сумма возврата", "number"],
+    ["overpaymentAmount", "Сумма переплаты", "number"],
+    ["returnAmount", "Сумма к возврату", "number"],
+    ["clientDebt", "Задолженность клиента", "number"],
+    ["paymentOrderNumber", "Номер платёжного поручения", "text"],
+    ["paymentDate", "Дата возврата", "date"],
+  ],
+  tenders: [
+    ["platform", "Тендерная площадка", "select", ["Госзакуп", "Самрук", "ЕТС", "Kaspi Tender", "MITWORK", "E-alan", "Другое"]],
+    ["url", "Ссылка на тендер", "url"],
+    ["announcementNumber", "Номер объявления", "text"],
+    ["lotNumber", "Номер лота", "text"],
+    ["customer", "Заказчик", "text"],
+    ["deadline", "Срок подачи", "datetime-local"],
+    ["bidSubmittedAt", "Дата и время подачи", "datetime-local"],
+    ["result", "Результат", "text"],
+    ["signedContractNumber", "Номер подписанного договора", "text"],
+  ],
+};
+
 const REPORTS = [
   ["Продажи", "Объемы по ГСМ, газу, талонам, ТК и опту"],
   ["Сроки", "Договоры, доверенности, ЭСФ и дедлайны"],
@@ -107,12 +612,27 @@ const REPORTS = [
 
 const DEFAULT_STATE = {
   selectedClientId: "cli-1",
-  counters: { APP: 5520, AGR: 712, ORD: 1289, EXT: 337, REF: 441, TEN: 188 },
+  counters: { APP: 5521, AGR: 713, ORD: 1290, EXT: 337, REF: 441, TEN: 188 },
   dictionaries: CRM_DICTIONARIES,
   users: STAFF,
   fuels: FUEL_TYPES,
   sales: DEMO_SALES,
   reportPeriod: { start: monthStartISO(), end: todayISO() },
+  auditLog: [],
+  notifications: [],
+  founderTasks: [],
+  aiChats: {},
+  communications: {
+    groups: [
+      { id: "group-general", name: "Общий GAZOIL", description: "Общие объявления и обсуждения", memberIds: ["madi", "khusnutdinov", "kiikbay", "diana", "elzhan", "zhanara", "ekaterina", "olga", "pavel", "ilyas", "founder", "tatyana", "ainura"], createdBy: "madi" },
+      { id: "group-commercial", name: "Коммерческий отдел", description: "Продажи, обслуживание, опт и госзакупки", memberIds: ["madi", "diana", "elzhan", "zhanara", "ekaterina", "olga", "pavel", "ilyas"], createdBy: "madi" },
+      { id: "group-leadership", name: "Руководство", description: "Учредитель, коммерческий директор и директора компаний", memberIds: ["founder", "madi", "khusnutdinov", "kiikbay"], createdBy: "madi" },
+      { id: "group-accounting", name: "Бухгалтерия", description: "Финансовые проверки и возвраты", memberIds: ["madi", "tatyana", "ainura"], createdBy: "madi" },
+    ],
+    messages: [
+      { id: "msg-welcome", channelType: "group", channelId: "group-general", authorId: "madi", text: "Добро пожаловать в корпоративное пространство GAZOIL.", createdAt: new Date().toISOString(), readBy: ["madi"] },
+    ],
+  },
   clients: [
     {
       id: "cli-1",
@@ -244,7 +764,7 @@ const DEFAULT_STATE = {
       checks: { discussion: true, director: true, bidReady: false, submitted: false, protocol: false, contract: false },
       documents: [{ id: "doc-5", type: "Техспецификация", name: "Техническая спецификация.docx", status: "Проверяется" }],
       tasks: [{ id: "task-4", title: "Подать заявку до дедлайна", owner: "Айгерим Т.", due: "Через 3 часа", done: false }],
-      comments: [{ author: "Киікбай А.Б.", text: "Участвуем, подготовить заявку без задержки.", time: "10:30" }],
+      comments: [{ author: "Киікбай А. Б.", text: "Участвуем, подготовить заявку без задержки.", time: "10:30" }],
       history: ["Тендер найден", "Решение участвовать согласовано", "Создана задача на подачу"],
     },
     {
@@ -291,20 +811,124 @@ const DEFAULT_STATE = {
       comments: [{ author: "WhatsApp", text: "Клиент просит счет на 5 000 литров ДТ.", time: "11:12" }],
       history: ["Создано из WhatsApp"],
     },
+    {
+      id: "APP-5521",
+      type: "appeals",
+      clientId: "cli-3",
+      companyKey: "trade",
+      product: "ГСМ",
+      fuel: "АИ-95",
+      supply: "Телефония",
+      stage: "Новое обращение",
+      owner: "Павел",
+      due: "Сегодня 15:30",
+      dueState: "new",
+      priority: "Высокая",
+      volume: "Новый клиент / первичная продажа",
+      amount: "На квалификации",
+      approvalState: "none",
+      checks: { classified: false, linked: false, clientAnswer: false },
+      documents: [],
+      tasks: [{ id: "task-sales-1", title: "Квалифицировать потребность и подготовить КП", owner: "Павел", due: "Сегодня 15:30", done: false }],
+      comments: [{ author: "Телефония", text: "Запросили условия поставки АИ-95 по талонам.", time: "12:05" }],
+      history: ["Создано из входящего звонка"],
+    },
+    {
+      id: "ORD-1290",
+      type: "orders",
+      clientId: "cli-4",
+      companyKey: "trade",
+      product: "ГСМ",
+      fuel: "ДТ лето",
+      supply: "Опт",
+      stage: "Ожидание оплаты",
+      owner: "Ильяс",
+      due: "Завтра 10:00",
+      dueState: "progress",
+      priority: "Высокая",
+      volume: "25 000 л",
+      amount: "14 250 000 ₸",
+      approvalState: "none",
+      checks: { contract: true, invoice: true, payment: false, power: true, docs: false, esf: false },
+      documents: [{ id: "doc-wholesale-1", type: "Счет", name: "Счет ORD-1290.pdf", status: "Получен из 1С" }],
+      tasks: [{ id: "task-wholesale-1", title: "Контролировать оплату оптового счёта", owner: "Ильяс", due: "Завтра 10:00", done: false }],
+      comments: [{ author: "Ильяс", text: "Счёт отправлен, клиент подтвердил получение.", time: "Сегодня" }],
+      history: ["Создан оптовый заказ", "Счёт сформирован в 1С", "Счёт отправлен клиенту"],
+    },
+    {
+      id: "AGR-0713",
+      type: "contracts",
+      clientId: "cli-4",
+      companyKey: "trade",
+      product: "ГСМ",
+      fuel: "ДТ лето",
+      supply: "Опт",
+      stage: "Ожидается подписание",
+      owner: "Екатерина",
+      due: "2 рабочих дня",
+      dueState: "progress",
+      priority: "Обычная",
+      volume: "Рамочный договор",
+      amount: "Индивидуальная цена",
+      approvalState: "none",
+      checks: { requisites: true, project: true, signed: false, expiryTask: false },
+      documents: [{ id: "doc-service-1", type: "Договор", name: "Проект договора Qaz Logistic.docx", status: "Отправлен клиенту" }],
+      tasks: [{ id: "task-service-1", title: "Получить подписанный договор", owner: "Екатерина", due: "2 рабочих дня", done: false }],
+      comments: [{ author: "Екатерина", text: "Проект согласован и отправлен клиенту.", time: "Сегодня" }],
+      history: ["Реквизиты получены", "Проект договора подготовлен", "Отправлено клиенту"],
+    },
   ],
 };
 
 let state = loadState();
+let currentUserId = localStorage.getItem(SESSION_KEY) || "";
+let currentLanguage = localStorage.getItem(LANGUAGE_KEY) === "kk" ? "kk" : "ru";
 let activeView = "dashboard";
 let currentCompany = "all";
 let slaOnly = false;
 let activeStage = "";
 let modalTab = "data";
 let currentModalId = "";
+let currentFounderSignalKey = "";
+let activeChatType = "group";
+let activeChatId = "group-general";
 
 const $ = (selector) => document.querySelector(selector);
 const $$ = (selector) => Array.from(document.querySelectorAll(selector));
 const uid = (prefix) => `${prefix}-${Date.now()}-${Math.floor(Math.random() * 1000)}`;
+
+function t(key) {
+  return UI_TEXT[currentLanguage]?.[key] || UI_TEXT.ru[key] || key;
+}
+
+function applyLanguage() {
+  document.documentElement.lang = currentLanguage === "kk" ? "kk" : "ru";
+  $$("[data-i18n]").forEach((element) => {
+    element.textContent = t(element.dataset.i18n);
+  });
+  $$("[data-i18n-placeholder]").forEach((element) => {
+    element.setAttribute("placeholder", t(element.dataset.i18nPlaceholder));
+  });
+  $$("[data-lang]").forEach((button) => {
+    button.classList.toggle("is-selected", button.dataset.lang === currentLanguage);
+  });
+  const passwordInput = $("#loginPassword");
+  const passwordToggle = $("#passwordToggle");
+  if (passwordInput && passwordToggle) {
+    const label = passwordInput.type === "password" ? t("showPassword") : t("hidePassword");
+    passwordToggle.setAttribute("aria-label", label);
+    passwordToggle.setAttribute("title", label);
+  }
+  updateViewTitle();
+}
+
+function setLanguage(language) {
+  if (!["ru", "kk"].includes(language)) return;
+  currentLanguage = language;
+  localStorage.setItem(LANGUAGE_KEY, language);
+  applyLanguage();
+  renderAll();
+}
 
 function loadState() {
   try {
@@ -319,11 +943,39 @@ function loadState() {
 function migrateState(saved) {
   const next = { ...structuredClone(DEFAULT_STATE), ...saved };
   next.dictionaries = structuredClone(CRM_DICTIONARIES);
-  next.users = STAFF;
+  const savedUsers = Array.isArray(saved.users) ? saved.users : [];
+  const seedIds = new Set(STAFF.map((user) => user.id));
+  next.users = STAFF.map((seed) => {
+    const existing = savedUsers.find((user) => user.id === seed.id);
+    return {
+      ...seed,
+      ...(existing || {}),
+      roleId: existing?.roleId || seed.roleId,
+      passwordHash: existing?.passwordHash || seed.passwordHash,
+      login: existing?.login || seed.login,
+      active: existing?.active ?? seed.active,
+    };
+  }).concat(savedUsers.filter((user) => !seedIds.has(user.id) && user.roleId));
   next.fuels = FUEL_TYPES;
   next.sales = saved.sales?.length ? saved.sales : structuredClone(DEMO_SALES);
   next.reportPeriod = saved.reportPeriod || { start: monthStartISO(), end: todayISO() };
-  next.counters = { ...DEFAULT_STATE.counters, ...(saved.counters || {}) };
+  next.auditLog = Array.isArray(saved.auditLog) ? saved.auditLog : [];
+  next.notifications = Array.isArray(saved.notifications) ? saved.notifications : [];
+  next.founderTasks = Array.isArray(saved.founderTasks) ? saved.founderTasks : [];
+  next.aiChats = saved.aiChats && typeof saved.aiChats === "object" ? saved.aiChats : {};
+  next.communications = {
+    groups: Array.isArray(saved.communications?.groups) ? saved.communications.groups : structuredClone(DEFAULT_STATE.communications.groups),
+    messages: Array.isArray(saved.communications?.messages) ? saved.communications.messages : structuredClone(DEFAULT_STATE.communications.messages),
+  };
+  const generalGroup = next.communications.groups.find((group) => group.id === "group-general");
+  if (generalGroup) {
+    next.users.filter((user) => user.roleId && user.active !== false).forEach((user) => {
+      if (!generalGroup.memberIds.includes(user.id)) generalGroup.memberIds.push(user.id);
+    });
+  }
+  next.counters = Object.fromEntries(
+    Object.entries(DEFAULT_STATE.counters).map(([key, value]) => [key, Math.max(value, saved.counters?.[key] || 0)]),
+  );
   const ownerMap = {
     "Алия С.": "Жанара",
     "Дина Б.": "Ольга",
@@ -333,7 +985,11 @@ function migrateState(saved) {
     "Дежурный менеджер": "Жанара",
     "Система": "Ельжан",
     "Директор GAZOIL TRADE": "Хуснутдинов Р. Р.",
-    "Директор УГХ": "Киікбай А.Б.",
+    "Директор УГХ": "Киікбай А. Б.",
+    "Киікбай А.Б.": "Киікбай А. Б.",
+    "Бухгалтерия GAZOIL TRADE": "Татьяна",
+    "Бухгалтерия УГХ GAZOIL": "Айнура",
+    "Бухгалтерия УГХ": "Айнура",
   };
   next.clients = (saved.clients || DEFAULT_STATE.clients).map((client) => ({
     ...client,
@@ -342,20 +998,34 @@ function migrateState(saved) {
     buysGas: client.buysGas ?? String(client.products || "").includes("Газ"),
     powerFile: client.powerFile || "",
     powerPerson: client.powerPerson || "",
+    legalAddress: client.legalAddress || "",
+    bankDetails: client.bankDetails || "",
+    phone: client.phone || "",
+    email: client.email || "",
+    status: client.status || "Активный",
+    responsible: client.responsible || "",
+    supplyMethods: client.supplyMethods || String(client.products || "").split(",").map((item) => item.trim()).filter(Boolean),
   }));
-  next.processes = (saved.processes || []).map((process) => {
+  const savedProcesses = saved.processes?.length ? saved.processes : structuredClone(DEFAULT_STATE.processes);
+  const savedProcessIds = new Set(savedProcesses.map((process) => process.id));
+  const processSource = savedProcesses.concat(structuredClone(DEFAULT_STATE.processes).filter((process) => !savedProcessIds.has(process.id)));
+  next.processes = processSource.map((process) => {
     const fuel = process.fuel || inferFuel(process);
     const owner = ownerMap[process.owner] || process.owner || defaultOwnerFor(process.type);
     const client = next.clients.find((item) => item.id === process.clientId);
-    const stagePosition = metaFor(process.type).stages.indexOf(process.stage);
+    const migrateTenderApproval = process.id === "TEN-0188" && process.stage === "Подготовка заявки" && process.approvalState === "approved";
+    const stage = migrateTenderApproval ? "На решении директора" : process.stage;
+    const stagePosition = metaFor(process.type).stages.indexOf(stage);
     return {
       ...process,
+      stage,
       fuel,
       product: productByFuel(fuel),
       companyKey: companyByFuel(fuel),
       direction: companyByFuel(fuel),
       clientType: process.clientType || client?.type || "Обычный юридический клиент",
-      owner,
+      owner: migrateTenderApproval ? "Киікбай А. Б." : owner,
+      approvalState: migrateTenderApproval ? "pending" : process.approvalState,
       organizationLocked: process.organizationLocked ?? stagePosition > 0,
       overpayment: process.overpayment || "unknown",
       linkedProcessIds: process.linkedProcessIds || [],
@@ -367,9 +1037,18 @@ function migrateState(saved) {
         paymentDate: "",
         ...(process.integration || {}),
       },
-      checks: { ...defaultChecks(process.type), ...(process.checks || {}) },
+      details: { ...defaultProcessDetails(process.type, process), ...(process.details || {}) },
+      checks: { ...defaultChecks(process.type), ...(process.checks || {}), ...(migrateTenderApproval ? { director: false } : {}) },
       documents: process.documents || [],
-      tasks: (process.tasks || []).map((task) => ({ ...task, owner: ownerMap[task.owner] || task.owner || owner })),
+      tasks: (process.tasks || []).map((task) => ({
+        priority: process.priority || "Обычная",
+        status: task.done ? "Выполнена" : "В работе",
+        createdBy: "Система",
+        createdAt: new Date().toISOString(),
+        result: "",
+        ...task,
+        owner: ownerMap[task.owner] || task.owner || owner,
+      })),
       comments: process.comments || [],
       history: process.history || ["Карточка импортирована из демо-состояния"],
     };
@@ -436,6 +1115,111 @@ function saveState() {
   localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
 }
 
+function audit(action, objectType, objectId, oldValue = "", newValue = "", actor = currentUser()) {
+  state.auditLog ||= [];
+  state.auditLog.unshift({
+    id: uid("audit"),
+    userId: actor?.id || "system",
+    user: actor?.name || "Система",
+    role: actor?.role || "Система",
+    action,
+    objectType,
+    objectId,
+    oldValue: typeof oldValue === "string" ? oldValue : JSON.stringify(oldValue),
+    newValue: typeof newValue === "string" ? newValue : JSON.stringify(newValue),
+    createdAt: new Date().toISOString(),
+    device: navigator.userAgent.slice(0, 120),
+  });
+  state.auditLog = state.auditLog.slice(0, 1000);
+}
+
+function notify(userId, title, text, tone = "progress", processId = "") {
+  state.notifications ||= [];
+  state.notifications.unshift({
+    id: uid("notification"),
+    userId,
+    title,
+    text,
+    tone,
+    processId,
+    createdAt: new Date().toISOString(),
+    read: false,
+  });
+  state.notifications = state.notifications.slice(0, 500);
+}
+
+function userNotifications() {
+  return (state.notifications || []).filter((item) => !item.userId || item.userId === currentUserId);
+}
+
+function unreadCommunicationsCount() {
+  const groupIds = new Set((state.communications?.groups || []).filter((group) => group.memberIds.includes(currentUserId)).map((group) => group.id));
+  return (state.communications?.messages || []).filter((message) => {
+    const available = message.channelType === "group" ? groupIds.has(message.channelId) : message.channelId.split("--").includes(currentUserId);
+    return available && message.authorId !== currentUserId && !(message.readBy || []).includes(currentUserId);
+  }).length;
+}
+
+function runAutomations() {
+  const now = new Date();
+  let changed = false;
+  state.processes.forEach((process) => {
+    process.automationFlags ||= {};
+    if (process.type === "contracts" && process.details?.endDate) {
+      const end = new Date(`${process.details.endDate}T23:59:59`);
+      const days = Math.ceil((end - now) / 86400000);
+      if (days >= 0 && days <= 15 && !["Закрыт без подписания", "На перезаключении"].includes(process.stage)) {
+        const previous = process.stage;
+        process.stage = "Скоро истекает";
+        process.checks.expiryTask = true;
+        if (!process.tasks.some((task) => task.automationKey === "contract-expiry")) {
+          process.tasks.unshift({ id: uid("task"), automationKey: "contract-expiry", title: "Перезаключить договор", owner: process.owner, due: `Через ${days} дн.`, priority: "Высокая", status: "Новая", createdBy: "Автоматизация", createdAt: new Date().toISOString(), result: "", done: false });
+        }
+        if (!process.automationFlags.expiry15) {
+          notify("madi", "Договор скоро истекает", `${process.id}: осталось ${days} дней`, "warn", process.id);
+          notify("diana", "Договор скоро истекает", `${process.id}: создать перезаключение`, "warn", process.id);
+          audit("Автоматизация: договор скоро истекает", process.type, process.id, previous, process.stage, { id: "system", name: "Система", role: "Автоматизация" });
+          process.automationFlags.expiry15 = true;
+        }
+        changed = true;
+      }
+    }
+    if (process.type === "tenders") {
+      const deadline = process.details?.deadline ? new Date(process.details.deadline) : null;
+      const hours = deadline && Number.isFinite(deadline.getTime()) ? (deadline - now) / 3600000 : /3 ч/i.test(process.due) ? 3 : null;
+      if (hours !== null && hours <= 3 && hours > 0 && !process.automationFlags.tender3h) {
+        notify("olga", "До дедлайна тендера менее 3 часов", `${process.id}: проверьте готовность заявки`, "danger", process.id);
+        process.automationFlags.tender3h = true;
+        changed = true;
+      }
+      if (hours !== null && hours <= 0.5 && hours > 0 && !process.automationFlags.tender30m) {
+        notify("olga", "До дедлайна тендера менее 30 минут", `${process.id}: требуется немедленное действие`, "danger", process.id);
+        notify("madi", "Критический дедлайн тендера", process.id, "danger", process.id);
+        notify(process.companyKey === "trade" ? "khusnutdinov" : "kiikbay", "Критический дедлайн тендера", process.id, "danger", process.id);
+        process.automationFlags.tender30m = true;
+        changed = true;
+      }
+      if (hours !== null && hours < 0 && !process.checks?.submitted && !process.automationFlags.tenderExpired) {
+        process.dueState = "danger";
+        notify("olga", "Тендер просрочен", `${process.id}: заявка не подана`, "danger", process.id);
+        notify("madi", "Тендер просрочен", `${process.id}: заявка не подана`, "danger", process.id);
+        process.automationFlags.tenderExpired = true;
+        audit("Просрочка тендера", process.type, process.id, "Срок подачи", "Истёк без подачи", { id: "system", name: "Система", role: "Автоматизация" });
+        changed = true;
+      }
+    }
+    if (process.dueState === "danger" && !process.automationFlags.overdueNotice) {
+      notify("madi", "Просрочка процесса", `${process.id}: ${process.stage}`, "danger", process.id);
+      notify("diana", "Просрочка процесса", `${process.id}: ответственный ${process.owner}`, "danger", process.id);
+      const ownerId = state.users.find((user) => user.name === process.owner)?.id;
+      if (ownerId) notify(ownerId, "Просрочена задача", `${process.id}: ${process.stage}`, "danger", process.id);
+      process.automationFlags.overdueNotice = true;
+      changed = true;
+    }
+  });
+  if (changed) saveState();
+}
+
 function iconRefresh() {
   if (window.lucide) window.lucide.createIcons();
 }
@@ -448,8 +1232,72 @@ function processById(id) {
   return state.processes.find((process) => process.id === id);
 }
 
+function currentUser() {
+  return state.users.find((user) => user.id === currentUserId) || state.users.find((user) => user.id === "madi");
+}
+
+function currentPolicy() {
+  const policy = ROLE_POLICIES[currentUser().roleId] || {
+    companies: ["trade", "ugh"],
+    views: ["dashboard"],
+    canCreate: false,
+    canApprove: false,
+    canSeeFinancials: false,
+    canSeeTeam: false,
+  };
+  return { ...policy, views: [...new Set([...(policy.views || []), "assistant", "messages"])] };
+}
+
+function isDirectorApprovalStage(process) {
+  return process.approvalState === "pending" || process.stage.toLowerCase().includes("директор");
+}
+
+function accessibleProcesses() {
+  const policy = currentPolicy();
+  const user = currentUser();
+  return state.processes.filter((process) => {
+    if (!policy.companies.includes(process.companyKey)) return false;
+    if (policy.roleType === "assignedManager") return process.owner === user.name || process.tasks?.some((task) => task.owner === user.name);
+    if (policy.roleType === "salesManager") {
+      return process.owner === user.name || ["appeals", "contracts", "orders"].includes(process.type) && ["Новое обращение", "Требуется классификация", "В работе", "Получены реквизиты", "Подготовка договора", "Новый запрос", "Проверка договора"].includes(process.stage);
+    }
+    if (policy.roleType === "wholesaleManager") return process.owner === user.name || String(process.supply).toLowerCase().includes("опт");
+    if (policy.roleType === "procurementManager") {
+      const client = clientById(process.clientId);
+      return process.owner === user.name || process.type === "tenders" || client?.type === "Государственная организация";
+    }
+    if (policy.roleType === "cashier") return process.owner === user.name || process.owner === "Касса" || /касс|аннулирование талонов/i.test(process.stage);
+    if (policy.roleType === "accountant") return ["contracts", "orders", "refunds"].includes(process.type) && (process.owner === user.name || /бухгалтер|оплат|счет|счёт|финанс/i.test(process.stage));
+    if (policy.roleType === "bankAccountant") return process.type === "refunds" && (process.owner === user.name || process.owner === "Бухгалтер по банку" || /банковского возврата|возврат произведен/i.test(process.stage));
+    if (policy.roleType === "systemAdmin") return false;
+    return true;
+  });
+}
+
+function canAccessProcess(process) {
+  return Boolean(process && accessibleProcesses().some((item) => item.id === process.id));
+}
+
+function accessibleClients() {
+  const policy = currentPolicy();
+  if (["commercialDirector", "seniorManager", "founder"].includes(policy.roleType)) return state.clients;
+  const clientIds = new Set(accessibleProcesses().map((process) => process.clientId));
+  return state.clients.filter((client) => clientIds.has(client.id) || policy.roleType === "procurementManager" && client.type === "Государственная организация");
+}
+
+function visibleFuelTypes() {
+  const companies = currentPolicy().companies;
+  return FUEL_TYPES.filter((fuel) => companies.includes(companyByFuel(fuel)));
+}
+
 function metaFor(type) {
   return PROCESS_META[type] || PROCESS_META.orders;
+}
+
+function processName(type, plural = false) {
+  const meta = currentLanguage === "kk" ? PROCESS_NAMES_KK[type] : PROCESS_META[type];
+  const fallback = metaFor(type);
+  return (meta || fallback)[plural ? "plural" : "label"];
 }
 
 function companyLabel(key) {
@@ -474,7 +1322,11 @@ function inferFuel(process) {
 }
 
 function staffOptions(selected = "", scope = "both") {
-  return STAFF.filter((user) => user.scope === "both" || user.scope === scope)
+  if (currentUserId && !currentPolicy().canReassign) {
+    const user = currentUser();
+    return `<option value="${escapeAttr(user.name)}" ${user.name === selected ? "selected" : ""}>${user.name} — ${user.role}</option>`;
+  }
+  return state.users.filter((user) => user.scope === "both" || user.scope === scope)
     .map((user) => `<option value="${user.name}" ${user.name === selected ? "selected" : ""}>${user.name} — ${user.role}</option>`)
     .join("");
 }
@@ -500,6 +1352,16 @@ function defaultOwnerFor(type, clientType = "Обычный юридически
   if (type === "contracts") return "Диана";
   if (type === "refunds" || type === "extensions") return "Ольга";
   return "Жанара";
+}
+
+function allowedCreateTypes() {
+  const roleType = currentPolicy().roleType;
+  if (["commercialDirector", "seniorManager"].includes(roleType)) return Object.keys(PROCESS_META);
+  if (roleType === "procurementManager") return ["tenders", "contracts", "extensions", "refunds"];
+  if (roleType === "salesManager") return ["appeals", "contracts", "orders"];
+  if (roleType === "wholesaleManager") return ["appeals", "contracts", "orders"];
+  if (roleType === "assignedManager") return ["appeals", "contracts", "orders", "extensions", "refunds"];
+  return [];
 }
 
 function isOrganizationLocked(process) {
@@ -551,7 +1413,7 @@ function processSearchText(process) {
 
 function filteredProcesses(type = "") {
   const query = $("#globalSearch")?.value.trim().toLowerCase() || "";
-  return state.processes.filter((process) => {
+  return accessibleProcesses().filter((process) => {
     const typeMatch = !type || process.type === type;
     const companyMatch = currentCompany === "all" || process.companyKey === currentCompany;
     const slaMatch = !slaOnly || process.dueState === "danger";
@@ -571,23 +1433,56 @@ function formatCount(value, one, few, many) {
 }
 
 function countBy(predicate) {
-  return state.processes.filter(predicate).length;
+  return accessibleProcesses().filter(predicate).length;
 }
 
 function renderMetrics() {
-  const month = aggregateSales(salesInPeriod(monthStartISO(), todayISO()));
-  const today = aggregateSales(salesInPeriod(todayISO(), todayISO()));
+  const policy = currentPolicy();
+  const approvals = countBy((item) => item.approvalState === "pending" || item.stage.toLowerCase().includes("директор"));
   const overdue = countBy((item) => item.dueState === "danger");
+  const incoming = countBy((item) => item.type === "appeals" && ["Новое обращение", "Требуется классификация"].includes(item.stage));
+  const expiring = countBy((item) => item.type === "contracts" && item.stage === "Скоро истекает");
+  const approvalAmount = accessibleProcesses()
+    .filter(isDirectorApprovalStage)
+    .reduce((sum, process) => sum + (Number(String(process.amount).replace(/[^\d]/g, "")) || 0), 0);
+  const today = aggregateSales(salesInPeriod(todayISO(), todayISO()));
+  const month = aggregateSales(salesInPeriod(monthStartISO(), todayISO()));
+  const activeTasks = accessibleProcesses().flatMap((process) => process.tasks || []).filter((task) => !task.done).length;
+  let metrics;
+  if (policy.roleType === "companyDirector") {
+    metrics = [
+      ["stamp", "is-amber", currentLanguage === "kk" ? "Менің шешімімді күтуде" : "Ждут моего решения", approvals, companyLabel(policy.companies[0]), "approvals"],
+      ["circle-alert", "is-red", currentLanguage === "kk" ? "Шұғыл шешімдер" : "Срочные решения", overdue, currentLanguage === "kk" ? "мерзімі бұзылған келісулер" : "процессы с нарушенным сроком", "overdue"],
+      ["banknote", "is-blue", currentLanguage === "kk" ? "Келісу сомасы" : "Сумма на согласовании", formatMoney(approvalAmount), currentLanguage === "kk" ? "қолжетімді карточкалар бойынша" : "по карточкам на решении", "approvals"],
+      ["chart-no-axes-combined", "is-green", currentLanguage === "kk" ? "Бүгінгі сатылым" : "Продажи сегодня", formatMoney(today.revenue), formatLiters(today.liters), "all"],
+    ];
+  } else if (policy.roleType === "founder") {
+    metrics = [
+      ["chart-no-axes-combined", "is-green", "Продажи месяца", formatMoney(month.revenue), formatLiters(month.liters), "all"],
+      ["building-2", "is-blue", "Компании", 2, "GAZOIL TRADE и УГХ GAZOIL", "all"],
+      ["wallet-cards", "is-amber", "Возвраты в работе", countBy((item) => item.type === "refunds" && !item.stage.includes("Закрыто")), sumAmounts("refunds"), "all"],
+      ["triangle-alert", "is-red", "Важные риски", overdue, "просрочки и критические сигналы", "overdue"],
+    ];
+  } else if (["assignedManager", "salesManager", "wholesaleManager", "procurementManager"].includes(policy.roleType)) {
+    metrics = [
+      ["list-checks", "is-blue", "Мои активные задачи", activeTasks, "назначенные процессы", "all"],
+      ["circle-alert", "is-red", "Мои просрочки", overdue, "требуют действия сегодня", "overdue"],
+      ["building-2", "is-green", "Доступные клиенты", accessibleClients().length, "в моей зоне ответственности", "all"],
+      [policy.roleType === "procurementManager" ? "landmark" : "badge-check", "is-amber", policy.roleType === "procurementManager" ? "Тендеры" : "Активные процессы", accessibleProcesses().length, "рабочий контур", "all"],
+    ];
+  } else {
+    metrics = [
+      ["stamp", "is-amber", t("waitingDecision"), approvals, currentLanguage === "kk" ? "келісулер мен директор шешімдері" : "согласования и решения директоров", "approvals"],
+      ["circle-alert", "is-red", t("overdue"), overdue, currentLanguage === "kk" ? "SLA мерзімі бұзылған карточкалар" : "карточки с нарушенным SLA", "overdue"],
+      ["inbox", "is-blue", t("distribute"), incoming, currentLanguage === "kk" ? "жаңа және жіктелмеген өтініштер" : "новые и неклассифицированные обращения", "incoming"],
+      ["file-clock", "is-green", t("expiringContracts"), expiring, currentLanguage === "kk" ? "қайта жасасуды талап етеді" : "требуют перезаключения", "expiring"],
+    ];
+  }
 
-  $(".metric-grid").innerHTML = [
-    ["banknote", "is-green", "Выручка месяца", formatMoney(month.revenue), `${formatPercent(month.revenue / MONTHLY_REVENUE_PLAN)} от плана`],
-    ["fuel", "is-blue", "Продано сегодня", formatLiters(today.liters), `${formatMoney(today.revenue)} выручки`],
-    ["handshake", "is-amber", "Сделки месяца", month.deals, `${countBy((item) => item.type === "orders")} заказов в CRM`],
-    ["circle-alert", "is-red", "Важные риски", overdue, `${countBy((item) => item.approvalState === "pending")} на согласовании`],
-  ]
+  $(".metric-grid").innerHTML = metrics
     .map(
-      ([icon, tone, label, value, hint]) => `
-        <article class="metric-card">
+      ([icon, tone, label, value, hint, queue]) => `
+        <article class="metric-card" data-dashboard-queue="${queue}" role="button" tabindex="0">
           <span class="metric-icon ${tone}" data-lucide="${icon}"></span>
           <div>
             <p>${label}</p>
@@ -601,7 +1496,7 @@ function renderMetrics() {
 }
 
 function sumVolumes(type) {
-  const total = state.processes
+  const total = accessibleProcesses()
     .filter((process) => process.type === type)
     .map((process) => Number(String(process.volume).replace(/[^\d]/g, "")))
     .filter(Boolean)
@@ -610,7 +1505,8 @@ function sumVolumes(type) {
 }
 
 function salesInPeriod(start, end) {
-  return (state.sales || []).filter((row) => row.date >= start && row.date <= end);
+  const companies = currentPolicy().companies;
+  return (state.sales || []).filter((row) => row.date >= start && row.date <= end && companies.includes(row.companyKey));
 }
 
 function aggregateSales(rows) {
@@ -638,7 +1534,10 @@ function aggregateSales(rows) {
 
 function previousSevenDayAverage(fuel) {
   const today = todayISO();
-  const rows = (state.sales || []).filter((row) => row.fuel === fuel && row.date < today && row.date >= addDaysISO(today, -7));
+  const companies = currentPolicy().companies;
+  const rows = (state.sales || []).filter(
+    (row) => row.fuel === fuel && companies.includes(row.companyKey) && row.date < today && row.date >= addDaysISO(today, -7),
+  );
   const total = rows.reduce((sum, row) => sum + row.liters, 0);
   return rows.length ? total / rows.length : 0;
 }
@@ -697,7 +1596,7 @@ function renderBoard() {
           const client = clientById(process.clientId);
           return `
             <article class="process-card">
-              <span class="status-pill ${statusClass(processTone(process))}">${metaFor(process.type).label}</span>
+              <span class="status-pill ${statusClass(processTone(process))}">${processName(process.type)}</span>
               <strong>${client.name}</strong>
               <small>${process.stage} · ${process.due}</small>
               <div class="card-actions">
@@ -719,7 +1618,7 @@ function renderBoard() {
 }
 
 function renderApprovals() {
-  const items = state.processes.filter((process) => process.approvalState === "pending" || process.stage.toLowerCase().includes("директор"));
+  const items = accessibleProcesses().filter((process) => process.approvalState === "pending" || process.stage.toLowerCase().includes("директор"));
   $("#approvalList").innerHTML =
     items
       .slice(0, 6)
@@ -728,14 +1627,18 @@ function renderApprovals() {
         return `
           <article class="approval-item">
             <header>
-              <strong>${metaFor(process.type).label}: ${client.name}</strong>
+              <strong>${processName(process.type)}: ${client.name}</strong>
               <span class="status-pill ${statusClass(processTone(process))}">${process.due}</span>
             </header>
             <p>${companyLabel(process.companyKey)} · ${process.stage}</p>
-            <div class="approval-actions">
-              <button data-approve="${process.id}">Согласовать</button>
-              <button data-return="${process.id}">Вернуть</button>
-            </div>
+            ${
+              currentPolicy().canApprove
+                ? `<div class="approval-actions">
+                    <button data-approve="${process.id}">Согласовать</button>
+                    <button data-return="${process.id}">Вернуть</button>
+                  </div>`
+                : `<button class="text-button" data-open="${process.id}">Открыть карточку</button>`
+            }
           </article>
         `;
       })
@@ -743,47 +1646,462 @@ function renderApprovals() {
 }
 
 function renderExecutiveDashboard() {
+  renderUserShell();
+  renderExecutiveHero();
+  renderManagementQueue();
+  renderTeamLoad();
   renderLeaderSummary();
   renderFuelSalesToday();
   renderPeriodReport();
   renderSalesAlerts();
 }
 
+function founderAnalytics() {
+  const today = aggregateSales(salesInPeriod(todayISO(), todayISO()));
+  const previousRows = salesInPeriod(addDaysISO(todayISO(), -7), addDaysISO(todayISO(), -1));
+  const previous = aggregateSales(previousRows);
+  const previousDailyRevenue = previous.revenue / 7;
+  const revenueDelta = previousDailyRevenue ? (today.revenue - previousDailyRevenue) / previousDailyRevenue : 0;
+  const month = aggregateSales(salesInPeriod(monthStartISO(), todayISO()));
+  const fuelTrends = visibleFuelTypes()
+    .map((fuel) => {
+      const row = today.byFuel[fuel] || { liters: 0, revenue: 0 };
+      const trend = trendInfo(row.liters, previousSevenDayAverage(fuel));
+      return { fuel, ...row, ...trend };
+    })
+    .sort((a, b) => b.pct - a.pct);
+  const growth = fuelTrends.find((item) => item.pct > 0) || fuelTrends[0];
+  const decline = [...fuelTrends].reverse().find((item) => item.pct < 0) || fuelTrends.at(-1);
+  const directorOverdue = accessibleProcesses().filter(
+    (process) => isDirectorApprovalStage(process) && process.dueState === "danger",
+  );
+  return { today, month, previousDailyRevenue, revenueDelta, fuelTrends, growth, decline, directorOverdue };
+}
+
+function founderSignalByKey(key) {
+  const analytics = founderAnalytics();
+  if (key === "sales-month") return { key, title: "Продажи за месяц", value: formatMoney(analytics.month.revenue), detail: `${formatLiters(analytics.month.liters)} · ${analytics.month.deals} сделок` };
+  if (key === "sales-today") return { key, title: "Динамика продаж сегодня", value: `${analytics.revenueDelta >= 0 ? "+" : ""}${Math.round(analytics.revenueDelta * 100)}%`, detail: `${formatMoney(analytics.today.revenue)} против среднего ${formatMoney(analytics.previousDailyRevenue)}` };
+  if (key === "sales-growth") return { key, title: `Рост продаж: ${analytics.growth?.fuel || "нет данных"}`, value: analytics.growth ? `${analytics.growth.pct >= 0 ? "+" : ""}${Math.round(analytics.growth.pct * 100)}%` : "0%", detail: analytics.growth ? `${formatLiters(analytics.growth.liters)} сегодня` : "Нет данных" };
+  if (key === "sales-decline") return { key, title: `Падение продаж: ${analytics.decline?.fuel || "нет данных"}`, value: analytics.decline ? `${Math.round(analytics.decline.pct * 100)}%` : "0%", detail: analytics.decline ? `${formatLiters(analytics.decline.liters)} сегодня` : "Нет данных" };
+  if (key === "director-overdue") return { key, title: "Просрочки директоров", value: String(analytics.directorOverdue.length), detail: analytics.directorOverdue.map((process) => `${COMPANY_DIRECTOR[process.companyKey]} · ${process.id}`).join(", ") || "Просрочек нет" };
+  if (key === "refunds-summary") {
+    const refunds = accessibleProcesses().filter((process) => process.type === "refunds" && !process.stage.includes("Закрыто"));
+    return { key, title: "Возвраты в работе", value: String(refunds.length), detail: sumAmounts("refunds") };
+  }
+  if (key === "tenders-summary") {
+    const tenders = accessibleProcesses().filter((process) => process.type === "tenders");
+    return { key, title: "Тендеры", value: String(tenders.length), detail: `${tenders.filter((process) => process.dueState === "danger").length} критичных` };
+  }
+  if (key.startsWith("fuel:")) {
+    const fuel = key.slice(5);
+    const item = analytics.fuelTrends.find((row) => row.fuel === fuel);
+    return { key, title: `Продажи ${fuel}`, value: item ? formatLiters(item.liters) : "0 л", detail: item ? `${formatMoney(item.revenue)} · динамика ${item.pct >= 0 ? "+" : ""}${Math.round(item.pct * 100)}%` : "Нет данных" };
+  }
+  if (key.startsWith("company:")) {
+    const companyKey = key.slice(8);
+    const company = analytics.month.byCompany[companyKey] || { revenue: 0, liters: 0 };
+    return { key, title: `Продажи ${companyLabel(companyKey)}`, value: formatMoney(company.revenue), detail: `${formatLiters(company.liters)} за текущий месяц` };
+  }
+  if (key.startsWith("director:")) {
+    const process = processById(key.slice(9));
+    return process
+      ? { key, title: `Просрочка директора: ${process.id}`, value: process.due, detail: `${COMPANY_DIRECTOR[process.companyKey]} · ${clientById(process.clientId).name} · ${process.stage}` }
+      : null;
+  }
+  return null;
+}
+
+function renderFounderDashboard() {
+  const analytics = founderAnalytics();
+  const planPct = Math.min(100, Math.round((analytics.month.revenue / MONTHLY_REVENUE_PLAN) * 100));
+  $("#executiveHero").innerHTML = `
+    <div>
+      <span class="eyebrow">Кабинет учредителя · ${new Date().toLocaleDateString("ru-RU", { day: "numeric", month: "long" })}</span>
+      <h2>Ключевая картина бизнеса без операционной перегрузки</h2>
+      <p>Продажи, рост и падение по продуктам, аналитические сигналы и только просроченные решения директоров.</p>
+    </div>
+    <div class="hero-statuses">
+      <div class="hero-status"><span>Продажи месяца</span><strong>${formatMoney(analytics.month.revenue)}</strong></div>
+      <div class="hero-status"><span>Сегодня</span><strong>${formatMoney(analytics.today.revenue)}</strong></div>
+      <div class="hero-status"><span>Выполнение плана</span><strong>${planPct}%</strong></div>
+      <div class="hero-status"><span>Просрочки директоров</span><strong>${analytics.directorOverdue.length}</strong></div>
+    </div>
+  `;
+  const metrics = [
+    ["sales-month", "chart-no-axes-combined", "is-green", "Продажи за месяц", formatMoney(analytics.month.revenue), `${formatLiters(analytics.month.liters)} · нажмите, чтобы поставить задачу`],
+    ["sales-today", analytics.revenueDelta >= 0 ? "trending-up" : "trending-down", analytics.revenueDelta >= 0 ? "is-green" : "is-red", "Динамика сегодня", `${analytics.revenueDelta >= 0 ? "+" : ""}${Math.round(analytics.revenueDelta * 100)}%`, `к среднему за 7 дней · ${formatMoney(analytics.today.revenue)}`],
+    ["sales-growth", "arrow-up-right", "is-blue", "Лидер роста", analytics.growth?.fuel || "—", analytics.growth ? `+${Math.max(0, Math.round(analytics.growth.pct * 100))}% · ${formatLiters(analytics.growth.liters)}` : "нет данных"],
+    ["sales-decline", "arrow-down-right", "is-red", "Главное падение", analytics.decline?.fuel || "—", analytics.decline ? `${Math.round(analytics.decline.pct * 100)}% · требует внимания` : "нет данных"],
+  ];
+  $(".metric-grid").innerHTML = metrics
+    .map(
+      ([key, icon, tone, label, value, hint]) => `
+        <article class="metric-card founder-signal-card" data-founder-signal="${escapeAttr(key)}" role="button" tabindex="0">
+          <span class="metric-icon ${tone}" data-lucide="${icon}"></span>
+          <div><p>${label}</p><strong>${value}</strong><small>${hint}</small></div>
+        </article>
+      `,
+    )
+    .join("");
+
+  const decisionPanel = $(".decision-panel");
+  decisionPanel.hidden = false;
+  decisionPanel.querySelector(".eyebrow").textContent = "Контроль руководства";
+  decisionPanel.querySelector("h2").textContent = "Просрочки директоров";
+  decisionPanel.querySelector(".text-button").hidden = true;
+  $("#managementQueue").innerHTML =
+    analytics.directorOverdue
+      .map(
+        (process) => `
+          <article class="management-item">
+            <div>
+              <strong>${COMPANY_DIRECTOR[process.companyKey]} · ${process.id}</strong>
+              <p>${companyLabel(process.companyKey)} · ${clientById(process.clientId).name} · ${process.stage}</p>
+            </div>
+            <div class="management-item-actions">
+              <span class="status-pill is-danger">${process.due}</span>
+              <button data-founder-signal="director:${process.id}">Задать вопрос</button>
+            </div>
+          </article>
+        `,
+      )
+      .join("") || '<div class="empty-state founder-clean-state"><strong>Просрочек у директоров нет</strong><span>Все решения находятся в допустимых сроках.</span></div>';
+
+  const teamPanel = $(".team-panel");
+  teamPanel.hidden = false;
+  teamPanel.querySelector(".eyebrow").textContent = "Поручения учредителя";
+  teamPanel.querySelector("h2").textContent = "Задачи из аналитики";
+  teamPanel.querySelector(".status-pill").textContent = `${state.founderTasks.filter((task) => task.status !== "Выполнена").length} активных`;
+  $("#teamLoad").innerHTML =
+    state.founderTasks
+      .slice(0, 6)
+      .map((task) => {
+        const assignee = state.users.find((user) => user.id === task.assigneeId);
+        return `<article class="team-row founder-task-row"><div><strong>${task.title}</strong><p>${assignee?.name || "Не назначен"} · ${task.due} · ${task.question}</p></div><span class="status-pill ${task.priority === "Критическая" ? "is-danger" : "is-progress"}">${task.status}</span></article>`;
+      })
+      .join("") || '<div class="empty-state">Нажмите на любой показатель, чтобы поставить связанную задачу.</div>';
+
+  $("#leaderSummary").innerHTML = `
+    <div class="summary-hero">
+      <div><span>Выручка за месяц</span><strong>${formatMoney(analytics.month.revenue)}</strong><p>План ${formatMoney(MONTHLY_REVENUE_PLAN)} · выполнено ${planPct}%</p></div>
+      <div class="plan-ring" style="--value:${planPct}%"><b>${planPct}%</b><span>плана</span></div>
+    </div>
+    <div class="summary-split">
+      ${["trade", "ugh"].map((companyKey) => {
+        const company = analytics.month.byCompany[companyKey] || { revenue: 0, liters: 0 };
+        return `<div data-founder-signal="company:${companyKey}"><span>${companyLabel(companyKey)}</span><strong>${formatMoney(company.revenue)}</strong><p>${formatLiters(company.liters)}</p></div>`;
+      }).join("")}
+    </div>
+  `;
+  $(".leader-summary-panel .eyebrow").textContent = "Продажи";
+  $(".leader-summary-panel h2").textContent = "Результат месяца по компаниям";
+  $(".fuel-sales-panel .eyebrow").textContent = "Динамика";
+  $(".fuel-sales-panel h2").textContent = "Рост и падение по видам топлива";
+  $("#fuelSalesToday").querySelectorAll(".fuel-row").forEach((row) => {
+    const fuel = row.querySelector("strong")?.textContent;
+    if (fuel) {
+      row.dataset.founderSignal = `fuel:${fuel}`;
+      row.setAttribute("role", "button");
+      row.tabIndex = 0;
+    }
+  });
+  $(".alerts-panel .eyebrow").textContent = "Аналитика";
+  $(".alerts-panel h2").textContent = "Сигналы роста и падения";
+  renderFounderAlerts();
+  iconRefresh();
+}
+
+function renderFounderAlerts() {
+  const analytics = founderAnalytics();
+  const alerts = analytics.fuelTrends
+    .filter((item) => Math.abs(item.pct) >= 0.08)
+    .map((item) => ({
+      tone: item.pct < 0 ? "danger" : "ok",
+      icon: item.pct < 0 ? "trending-down" : "trending-up",
+      title: `${item.pct < 0 ? "Падение" : "Рост"}: ${item.fuel}`,
+      text: `${item.pct >= 0 ? "+" : ""}${Math.round(item.pct * 100)}% к среднему за 7 дней · сегодня ${formatLiters(item.liters)}.`,
+      key: `fuel:${item.fuel}`,
+    }));
+  $("#alertCount").textContent = alerts.length;
+  $("#salesAlerts").innerHTML =
+    alerts
+      .map(
+        (alert) => `
+          <article class="alert-item ${alert.tone} founder-alert" data-founder-signal="${escapeAttr(alert.key)}" role="button" tabindex="0">
+            <span data-lucide="${alert.icon}"></span>
+            <div><strong>${alert.title}</strong><p>${alert.text}</p><small>Нажмите, чтобы задать вопрос или поставить задачу</small></div>
+          </article>
+        `,
+      )
+      .join("") || '<div class="empty-state">Существенных изменений продаж сегодня нет.</div>';
+}
+
+function openFounderSignalModal(key) {
+  if (currentPolicy().roleType !== "founder") return;
+  const signal = founderSignalByKey(key);
+  if (!signal) return toast("Показатель больше недоступен.", "warn");
+  currentFounderSignalKey = key;
+  let defaultAssignee = "madi";
+  if (key.startsWith("director:")) {
+    const process = processById(key.slice(9));
+    defaultAssignee = process?.companyKey === "trade" ? "khusnutdinov" : "kiikbay";
+  }
+  const assignees = state.users.filter((user) => ["madi", "khusnutdinov", "kiikbay", "diana"].includes(user.id));
+  const modal = $("#requestModal");
+  modal.innerHTML = `
+    <article class="modal profile-modal founder-signal-modal" role="dialog" aria-modal="true" aria-labelledby="founderSignalTitle">
+      <header class="modal-header">
+        <div><span class="eyebrow">Показатель аналитики</span><h2 id="founderSignalTitle">${signal.title}</h2></div>
+        <button class="icon-button" data-close-modal title="Закрыть" aria-label="Закрыть"><span data-lucide="x"></span></button>
+      </header>
+      <section class="founder-signal-summary">
+        <strong>${signal.value}</strong>
+        <p>${signal.detail}</p>
+      </section>
+      <div class="detail-grid">
+        <label class="field-wide">Вопрос / комментарий<textarea id="founderTaskQuestion" placeholder="Например: почему произошло падение и какие меры предлагаете?"></textarea></label>
+        <label class="field-wide">Название задачи<input id="founderTaskTitle" value="${escapeAttr(`Разобраться: ${signal.title}`)}" /></label>
+        <label>Ответственный
+          <select id="founderTaskAssignee">${assignees.map((user) => `<option value="${user.id}" ${user.id === defaultAssignee ? "selected" : ""}>${user.name} — ${user.role}</option>`).join("")}</select>
+        </label>
+        <label>Срок<input id="founderTaskDue" type="date" value="${addDaysISO(todayISO(), 1)}" /></label>
+        <label>Приоритет<select id="founderTaskPriority"><option>Обычная</option><option selected>Высокая</option><option>Критическая</option></select></label>
+      </div>
+      <footer class="modal-footer">
+        <button class="ghost-button" data-close-modal>Отмена</button>
+        <button class="primary-button" data-save-founder-task><span data-lucide="list-plus"></span><span>Поставить задачу</span></button>
+      </footer>
+    </article>
+  `;
+  modal.classList.add("is-open");
+  modal.setAttribute("aria-hidden", "false");
+  iconRefresh();
+}
+
+function saveFounderTask() {
+  if (currentPolicy().roleType !== "founder") return toast("Действие недоступно.", "warn");
+  const signal = founderSignalByKey(currentFounderSignalKey);
+  const question = $("#founderTaskQuestion")?.value.trim();
+  const title = $("#founderTaskTitle")?.value.trim();
+  const assigneeId = $("#founderTaskAssignee")?.value;
+  const due = $("#founderTaskDue")?.value;
+  const priority = $("#founderTaskPriority")?.value || "Высокая";
+  if (!signal || !question || !title || !assigneeId || !due) return toast("Заполните вопрос, задачу, ответственного и срок.", "warn");
+  const task = {
+    id: uid("founder-task"),
+    signalKey: signal.key,
+    signalTitle: signal.title,
+    signalValue: signal.value,
+    signalDetail: signal.detail,
+    title,
+    question,
+    assigneeId,
+    due,
+    priority,
+    status: "Новая",
+    createdBy: currentUser().name,
+    createdAt: new Date().toISOString(),
+  };
+  state.founderTasks.unshift(task);
+  notify(assigneeId, "Новое поручение учредителя", `${title}. Показатель: ${signal.title} — ${signal.value}`, priority === "Критическая" ? "danger" : "warn");
+  audit("Постановка задачи из показателя", "founder-task", task.id, "", { signal: signal.title, assigneeId, due, question });
+  saveState();
+  closeModal();
+  renderAll();
+  toast("Задача поставлена и связана с показателем", "ok");
+}
+
+function completeFounderTask(taskId) {
+  const task = state.founderTasks.find((item) => item.id === taskId);
+  if (!task || task.assigneeId !== currentUserId && !["commercialDirector", "seniorManager"].includes(currentPolicy().roleType)) return toast("Эта задача вам не назначена.", "warn");
+  task.status = "Выполнена";
+  task.completedAt = new Date().toISOString();
+  task.completedBy = currentUser().name;
+  notify("founder", "Поручение выполнено", `${task.title} · ${currentUser().name}`, "ok");
+  audit("Выполнение задачи учредителя", "founder-task", task.id, "Новая", "Выполнена");
+  saveState();
+  renderAll();
+  toast("Поручение отмечено выполненным", "ok");
+}
+
+function renderUserShell() {
+  const user = currentUser();
+  const policy = currentPolicy();
+  document.body.dataset.roleType = policy.roleType || "";
+  document.body.dataset.activeView = activeView;
+  const initial = user.name.slice(0, 1).toUpperCase();
+  $("#sidebarUserName").textContent = user.name;
+  $("#sidebarUserRole").textContent = user.role;
+  $("#sidebarAvatar").textContent = initial;
+  $("#topUserName").textContent = user.name;
+  $("#topUserAvatar").textContent = initial;
+  $("#topUserRole").textContent = policy.label;
+  const notificationCount = userNotifications().filter((item) => !item.read).length + countBy((process) => process.dueState === "danger" || process.approvalState === "pending");
+  $(".counter").textContent = notificationCount;
+  $("#newRequestBtn").hidden = !policy.canCreate || ["assistant", "messages"].includes(activeView);
+  $("#genericAction").hidden = activeView === "messages" ? false : !policy.canCreate;
+  $("[data-action='create-client']").hidden = !policy.canCreate;
+  $$(".nav-item").forEach((button) => {
+    button.hidden = !policy.views.includes(button.dataset.view);
+  });
+  const messagesNav = $('.nav-item[data-view="messages"]');
+  messagesNav?.querySelector(".nav-counter")?.remove();
+  const unreadMessages = unreadCommunicationsCount();
+  if (messagesNav && unreadMessages) messagesNav.insertAdjacentHTML("beforeend", `<b class="nav-counter">${unreadMessages}</b>`);
+  $(".team-panel").hidden = !policy.canSeeTeam && policy.roleType !== "founder";
+  $(".process-panel").hidden = policy.roleType === "founder";
+  $(".approvals-panel").hidden = policy.roleType === "founder";
+  $(".operational-panel").hidden = policy.roleType === "founder";
+  $(".report-builder-panel").hidden = policy.roleType === "founder";
+  $$("[data-filter-company]").forEach((button) => {
+    const company = button.dataset.filterCompany;
+    button.hidden = company === "all" ? policy.companies.length === 1 : !policy.companies.includes(company);
+    button.classList.toggle("is-selected", company === currentCompany);
+  });
+}
+
+function renderExecutiveHero() {
+  if (!$("#executiveHero")) return;
+  const user = currentUser();
+  const active = countBy((process) => !process.stage.toLowerCase().includes("закрыт") && process.stage !== "Решено");
+  const approvals = countBy((process) => process.approvalState === "pending" || process.stage.toLowerCase().includes("директор"));
+  const overdue = countBy((process) => process.dueState === "danger");
+  const today = aggregateSales(salesInPeriod(todayISO(), todayISO()));
+  const policy = currentPolicy();
+  const companyName = policy.companies.length === 1 ? companyLabel(policy.companies[0]) : "";
+  const dateLabel = new Date().toLocaleDateString(currentLanguage === "kk" ? "kk-KZ" : "ru-RU", { weekday: "long", day: "numeric", month: "long" });
+  $("#executiveHero").innerHTML = `
+    <div>
+      <span class="eyebrow">${dateLabel}</span>
+      <h2>${currentLanguage === "kk" ? `${user.name}, бүгін назар аударуды қажет ететін мәселелер` : `${user.name}, вот что требует внимания сегодня`}</h2>
+      <p>${
+        policy.roleType === "companyDirector"
+          ? currentLanguage === "kk"
+            ? `Сіз ${companyName} компаниясының процестері мен келісулерін ғана көресіз. Басқа компанияның деректеріне қолжетімділік жабық.`
+            : `Вы видите процессы, продажи и согласования только по ${companyName}. Доступ к данным второй компании закрыт.`
+          : policy.roleType === "founder"
+            ? "Здесь собрана ключевая аналитика двух компаний: продажи, финансы, задолженность, возвраты, тендеры и риски. Режим только для просмотра."
+          : ["assignedManager", "salesManager", "wholesaleManager", "procurementManager"].includes(policy.roleType)
+            ? "Показаны только ваши клиенты, назначенные процессы, задачи, сроки и результаты в пределах вашей роли."
+          : currentLanguage === "kk"
+            ? "Сіз екі компанияны, барлық коммерциялық процестерді, кешігулер мен шешімдер кезегін көресіз. Көрсеткішті басу тиісті жұмыс тізімін ашады."
+            : "Ты видишь обе компании, все коммерческие процессы, просрочки и очередь решений. Нажатие на показатель сразу открывает соответствующий рабочий список."
+      }</p>
+    </div>
+    <div class="hero-statuses">
+      <div class="hero-status"><span>${currentLanguage === "kk" ? "Белсенді процестер" : "Активные процессы"}</span><strong>${active}</strong></div>
+      <div class="hero-status"><span>${currentLanguage === "kk" ? "Келісуде" : "На согласовании"}</span><strong>${approvals}</strong></div>
+      <div class="hero-status"><span>${currentLanguage === "kk" ? "SLA кешігулері" : "Просрочки SLA"}</span><strong>${overdue}</strong></div>
+      <div class="hero-status"><span>${currentLanguage === "kk" ? "Бүгінгі сатылым" : "Продажи сегодня"}</span><strong>${formatMoney(today.revenue)}</strong></div>
+    </div>
+  `;
+}
+
+function managementPriority(process) {
+  if (process.dueState === "danger") return 0;
+  if (process.approvalState === "pending" || process.stage.toLowerCase().includes("директор")) return 1;
+  if (process.stage.includes("классификац")) return 2;
+  return 3;
+}
+
+function renderManagementQueue() {
+  if (!$("#managementQueue")) return;
+  const items = accessibleProcesses()
+    .filter(
+      (process) =>
+        process.dueState === "danger" ||
+        process.approvalState === "pending" ||
+        process.stage.toLowerCase().includes("директор") ||
+        process.stage.includes("классификац"),
+    )
+    .sort((a, b) => managementPriority(a) - managementPriority(b))
+    .slice(0, 6);
+  $("#managementQueue").innerHTML =
+    items
+      .map((process) => {
+        const client = clientById(process.clientId);
+        return `
+          <article class="management-item">
+            <div>
+              <strong>${process.id} · ${client.name}</strong>
+              <p>${processName(process.type)} · ${companyLabel(process.companyKey)} · ${process.stage}</p>
+            </div>
+            <div class="management-item-actions">
+              <span class="status-pill ${statusClass(processTone(process))}">${process.due}</span>
+              <button data-open="${process.id}">${currentLanguage === "kk" ? "Ашу" : "Открыть"}</button>
+            </div>
+          </article>
+        `;
+      })
+      .join("") || `<div class="empty-state">${currentLanguage === "kk" ? "Бүгін маңызды шешімдер жоқ" : "На сегодня критичных решений нет"}</div>`;
+}
+
+function renderTeamLoad() {
+  if (!$("#teamLoad")) return;
+  const team = ["Диана", "Ольга", "Павел", "Ильяс", "Жанара", "Ельжан", "Екатерина"];
+  $("#teamLoad").innerHTML = team
+    .map((name) => {
+      const member = STAFF.find((user) => user.name === name);
+      const items = accessibleProcesses().filter(
+        (process) => process.owner === name && !process.stage.toLowerCase().includes("закрыт") && process.stage !== "Решено",
+      );
+      const overdue = items.filter((process) => process.dueState === "danger").length;
+      return `
+        <article class="team-row">
+          <div>
+            <strong>${name}</strong>
+            <p>${member?.role || "Сотрудник"}</p>
+          </div>
+          <div class="team-counts">
+            <span class="status-pill is-progress">${items.length} ${currentLanguage === "kk" ? "жұмыста" : "в работе"}</span>
+            ${overdue ? `<span class="status-pill is-danger">${overdue} ${currentLanguage === "kk" ? "кешік." : "проср."}</span>` : ""}
+          </div>
+        </article>
+      `;
+    })
+    .join("");
+}
+
 function renderLeaderSummary() {
   if (!$("#leaderSummary")) return;
+  const policy = currentPolicy();
   const month = aggregateSales(salesInPeriod(monthStartISO(), todayISO()));
   const today = aggregateSales(salesInPeriod(todayISO(), todayISO()));
-  const planPct = Math.min(100, Math.round((month.revenue / MONTHLY_REVENUE_PLAN) * 100));
-  $("#monthLabel").textContent = new Date().toLocaleDateString("ru-RU", { month: "long", year: "numeric" });
-  const trade = month.byCompany.trade || { revenue: 0, liters: 0 };
-  const ugh = month.byCompany.ugh || { revenue: 0, liters: 0 };
+  const revenuePlan =
+    policy.companies.length === 1 ? COMPANY_MONTHLY_PLAN[policy.companies[0]] || MONTHLY_REVENUE_PLAN : MONTHLY_REVENUE_PLAN;
+  const planPct = Math.min(100, Math.round((month.revenue / revenuePlan) * 100));
+  $("#monthLabel").textContent = new Date().toLocaleDateString(currentLanguage === "kk" ? "kk-KZ" : "ru-RU", { month: "long", year: "numeric" });
+  const companyCards = policy.companies
+    .map((companyKey) => {
+      const company = month.byCompany[companyKey] || { revenue: 0, liters: 0 };
+      return `
+        <div>
+          <span>${companyLabel(companyKey)}</span>
+          <strong>${formatMoney(company.revenue)}</strong>
+          <p>${formatLiters(company.liters)}</p>
+        </div>
+      `;
+    })
+    .join("");
   $("#leaderSummary").innerHTML = `
     <div class="summary-hero">
       <div>
-        <span>Выручка за месяц</span>
+        <span>${currentLanguage === "kk" ? "Айлық түсім" : "Выручка за месяц"}</span>
         <strong>${formatMoney(month.revenue)}</strong>
-        <p>Сегодня: ${formatMoney(today.revenue)} · ${formatLiters(today.liters)}</p>
+        <p>${currentLanguage === "kk" ? "Бүгін" : "Сегодня"}: ${formatMoney(today.revenue)} · ${formatLiters(today.liters)}</p>
       </div>
       <div class="plan-ring" style="--value:${planPct}%">
         <b>${planPct}%</b>
-        <span>плана</span>
+        <span>${currentLanguage === "kk" ? "жоспар" : "плана"}</span>
       </div>
     </div>
     <div class="summary-split">
+      ${companyCards}
       <div>
-        <span>${COMPANY.trade}</span>
-        <strong>${formatMoney(trade.revenue)}</strong>
-        <p>${formatLiters(trade.liters)}</p>
-      </div>
-      <div>
-        <span>${COMPANY.ugh}</span>
-        <strong>${formatMoney(ugh.revenue)}</strong>
-        <p>${formatLiters(ugh.liters)}</p>
-      </div>
-      <div>
-        <span>Сделки / заявки</span>
+        <span>${currentLanguage === "kk" ? "Мәмілелер / өтінімдер" : "Сделки / заявки"}</span>
         <strong>${month.deals} / ${month.requests}</strong>
-        <p>${state.processes.length} активных CRM-карточек</p>
+        <p>${accessibleProcesses().length} ${currentLanguage === "kk" ? "қолжетімді CRM-карточка" : "доступных CRM-карточек"}</p>
       </div>
     </div>
   `;
@@ -792,8 +2110,9 @@ function renderLeaderSummary() {
 function renderFuelSalesToday() {
   if (!$("#fuelSalesToday")) return;
   const today = aggregateSales(salesInPeriod(todayISO(), todayISO()));
-  const maxLiters = Math.max(...FUEL_TYPES.map((fuel) => today.byFuel[fuel]?.liters || 0), 1);
-  $("#fuelSalesToday").innerHTML = FUEL_TYPES.map((fuel) => {
+  const fuels = visibleFuelTypes();
+  const maxLiters = Math.max(...fuels.map((fuel) => today.byFuel[fuel]?.liters || 0), 1);
+  $("#fuelSalesToday").innerHTML = fuels.map((fuel) => {
     const row = today.byFuel[fuel] || { liters: 0, revenue: 0, deals: 0 };
     const trend = trendInfo(row.liters, previousSevenDayAverage(fuel));
     const width = Math.max(4, Math.round((row.liters / maxLiters) * 100));
@@ -866,7 +2185,7 @@ function renderSalesAlerts() {
 function buildSalesAlerts() {
   const alerts = [];
   const today = aggregateSales(salesInPeriod(todayISO(), todayISO()));
-  FUEL_TYPES.forEach((fuel) => {
+  visibleFuelTypes().forEach((fuel) => {
     const todayLiters = today.byFuel[fuel]?.liters || 0;
     const avg = previousSevenDayAverage(fuel);
     const trend = trendInfo(todayLiters, avg);
@@ -889,7 +2208,10 @@ function buildSalesAlerts() {
   });
   const month = aggregateSales(salesInPeriod(monthStartISO(), todayISO()));
   const dayOfMonth = new Date().getDate();
-  const expectedPlan = MONTHLY_REVENUE_PLAN * (dayOfMonth / 30);
+  const policy = currentPolicy();
+  const revenuePlan =
+    policy.companies.length === 1 ? COMPANY_MONTHLY_PLAN[policy.companies[0]] || MONTHLY_REVENUE_PLAN : MONTHLY_REVENUE_PLAN;
+  const expectedPlan = revenuePlan * (dayOfMonth / 30);
   if (month.revenue < expectedPlan * 0.9) {
     alerts.unshift({
       tone: "warn",
@@ -907,7 +2229,15 @@ function buildSalesAlerts() {
       text: `${overdue} ${formatCount(overdue, "карточка требует", "карточки требуют", "карточек требуют")} внимания руководителя.`,
     });
   }
-  return alerts.slice(0, 7);
+  const unpaid = countBy((item) => item.type === "orders" && item.checks?.invoice && !item.checks?.payment);
+  if (unpaid) alerts.unshift({ tone: "warn", icon: "badge-dollar-sign", title: "Нет подтверждения оплаты", text: `${unpaid} заказов имеют счёт, но ещё не получили подтверждение оплаты из 1С.` });
+  const expiring = countBy((item) => item.type === "contracts" && item.stage === "Скоро истекает");
+  if (expiring) alerts.unshift({ tone: "warn", icon: "file-clock", title: "Договоры скоро истекают", text: `${expiring} договоров требуют перезаключения и контроля ответственного.` });
+  const approvals = countBy(isDirectorApprovalStage);
+  if (approvals) alerts.unshift({ tone: "progress", icon: "stamp", title: "Требуется согласование", text: `${approvals} карточек находятся в очереди решения директора.` });
+  const tenderRisks = countBy((item) => item.type === "tenders" && item.dueState === "danger" && !item.checks?.submitted);
+  if (tenderRisks) alerts.unshift({ tone: "danger", icon: "clock-alert", title: "Тендер скоро заканчивается", text: `${tenderRisks} заявок ещё не имеют подтверждения подачи.` });
+  return alerts.slice(0, 9);
 }
 
 function renderRequestTable() {
@@ -918,7 +2248,7 @@ function renderRequestTable() {
         <tr>
           <td data-label="Заявка"><strong>${process.id}</strong></td>
           <td data-label="Клиент">${client.name}</td>
-          <td data-label="Процесс">${metaFor(process.type).label}</td>
+          <td data-label="Процесс">${processName(process.type)}</td>
           <td data-label="Компания">${companyLabel(process.companyKey)}</td>
           <td data-label="Стадия"><span class="status-pill ${statusClass(processTone(process))}">${process.stage}</span></td>
           <td data-label="Ответственный">${process.owner}</td>
@@ -932,9 +2262,11 @@ function renderRequestTable() {
 }
 
 function renderClients() {
-  $("#clientList").innerHTML = state.clients
+  const clients = accessibleClients();
+  if (!clients.some((client) => client.id === state.selectedClientId)) state.selectedClientId = clients[0]?.id || "";
+  $("#clientList").innerHTML = clients
     .map((client) => {
-      const processes = state.processes.filter((item) => item.clientId === client.id);
+      const processes = accessibleProcesses().filter((item) => item.clientId === client.id);
       const tone = client.id === state.selectedClientId ? "is-progress" : processes.some((item) => item.dueState === "danger") ? "is-danger" : "is-ok";
       return `
         <article class="client-card ${client.id === state.selectedClientId ? "is-selected" : ""}" data-client="${client.id}">
@@ -953,8 +2285,12 @@ function renderClients() {
 function renderClientProfile() {
   const profile = $(".client-profile");
   if (!profile) return;
+  if (!accessibleClients().length) {
+    profile.innerHTML = '<div class="empty-state">Нет доступных клиентов</div>';
+    return;
+  }
   const client = clientById(state.selectedClientId);
-  const items = state.processes.filter((process) => process.clientId === client.id);
+  const items = accessibleProcesses().filter((process) => process.clientId === client.id);
   const contracts = items.filter((item) => item.type === "contracts").length;
   const orders = items.filter((item) => item.type === "orders").length;
   const lastEvents = items.flatMap((item) => item.history.slice(-2).map((event) => [item.id, event])).slice(-5).reverse();
@@ -974,8 +2310,11 @@ function renderClientProfile() {
       <div><span>Дебиторка</span><strong>${client.debt}</strong></div>
     </div>
     <div class="client-meta">
-      <b>${client.type}</b>
-      <span>${client.contacts}</span>
+      <b>${client.type} · ${client.status || "Активный"}</b>
+      <span>${client.contacts}${client.phone ? ` · ${client.phone}` : ""}${client.email ? ` · ${client.email}` : ""}</span>
+      <span>Ответственный: ${client.responsible || "Не назначен"}</span>
+      <span>${client.legalAddress || "Юридический адрес не заполнен"}</span>
+      <span>Поставка: ${(client.supplyMethods || []).join(", ") || "Не указана"}</span>
     </div>
     <div class="timeline">
       ${
@@ -987,12 +2326,34 @@ function renderClientProfile() {
   `;
 }
 
+function showStandardGeneric() {
+  $("#genericStandardLayout").hidden = false;
+  $("#customModuleContent").hidden = true;
+  $("#customModuleContent").innerHTML = "";
+}
+
+function showCustomGeneric(html) {
+  $("#genericStandardLayout").hidden = true;
+  $("#customModuleContent").hidden = false;
+  $("#customModuleContent").innerHTML = html;
+}
+
 function renderGeneric(viewName = activeView) {
+  showStandardGeneric();
+  if (viewName === "assistant") return renderAssistantModule();
+  if (viewName === "messages") return renderMessagesModule();
   if (viewName === "reports") return renderReports();
+  if (viewName === "tasks") return renderTasksModule();
+  if (viewName === "documents") return renderDocumentsModule();
+  if (viewName === "users") return renderUsersModule();
+  if (viewName === "audit") return renderAuditModule();
+  if (viewName === "settings") return renderSettingsModule();
   const config = metaFor(viewName);
-  $("#genericTitle").textContent = config.plural;
+  $("#genericAction").hidden = !currentPolicy().canCreate;
+  $("#genericTitle").textContent = processName(viewName, true);
   $("#genericEyebrow").textContent = "Рабочий реестр";
-  $("#genericAction span:last-child").textContent = config.label;
+  $("#genericAction span:last-child").textContent = processName(viewName);
+  setGenericColumns(["Номер", "Клиент", "Стадия", "Сумма / объем", "Ответственный", "Срок", ""]);
 
   const all = filteredProcesses(viewName);
   $("#stageColumn").innerHTML = config.stages
@@ -1008,6 +2369,12 @@ function renderGeneric(viewName = activeView) {
       `;
     })
     .join("");
+  if (viewName === "tenders" && currentPolicy().canCreate) {
+    $("#stageColumn").insertAdjacentHTML(
+      "afterbegin",
+      `<button class="primary-button tender-import-button" data-import-tenders><span data-lucide="cloud-download"></span><span>Импортировать тендеры</span></button>`,
+    );
+  }
 
   $("#genericTable").innerHTML =
     all
@@ -1028,10 +2395,308 @@ function renderGeneric(viewName = activeView) {
       .join("") || `<tr><td colspan="7"><div class="empty-state">В этом разделе пока нет карточек</div></td></tr>`;
 }
 
+function aiHistory() {
+  state.aiChats ||= {};
+  state.aiChats[currentUserId] ||= [
+    {
+      id: uid("ai"),
+      role: "assistant",
+      text: `Здравствуйте, ${currentUser().name}. Я ваш персональный помощник по роли «${currentPolicy().label}». Могу показать задачи, просрочки, продажи, согласования и помочь сформулировать действие.`,
+      createdAt: new Date().toISOString(),
+    },
+  ];
+  return state.aiChats[currentUserId];
+}
+
+function aiQuickPrompts() {
+  const policy = currentPolicy();
+  const prompts = ["Что требует моего внимания?", "Покажи мои задачи", "Есть ли просрочки?"];
+  if (policy.canSeeFinancials) prompts.push("Как идут продажи?");
+  if (policy.canApprove) prompts.push("Что ждёт согласования?");
+  if (policy.roleType === "founder") prompts.push("Где самое сильное падение?");
+  return prompts;
+}
+
+function generateAssistantReply(prompt) {
+  const normalized = prompt.toLowerCase();
+  const processes = accessibleProcesses();
+  const openTasks = processes.flatMap((process) => (process.tasks || []).filter((task) => !task.done).map((task) => ({ ...task, process })));
+  const founderAssigned = (state.founderTasks || []).filter((task) => task.assigneeId === currentUserId && task.status !== "Выполнена");
+  const overdue = processes.filter((process) => process.dueState === "danger");
+  const approvals = processes.filter(isDirectorApprovalStage);
+  if (/продаж|выруч|паден|рост/.test(normalized)) {
+    if (!currentPolicy().canSeeFinancials) return "Финансовая аналитика закрыта для вашей роли. Я могу помочь с вашими клиентами, процессами, задачами и сроками.";
+    const today = aggregateSales(salesInPeriod(todayISO(), todayISO()));
+    const month = aggregateSales(salesInPeriod(monthStartISO(), todayISO()));
+    const trends = visibleFuelTypes()
+      .map((fuel) => ({ fuel, liters: today.byFuel[fuel]?.liters || 0, trend: trendInfo(today.byFuel[fuel]?.liters || 0, previousSevenDayAverage(fuel)) }))
+      .sort((a, b) => a.trend.pct - b.trend.pct);
+    const decline = trends[0];
+    const growth = trends.at(-1);
+    return `Сегодня продажи составляют ${formatMoney(today.revenue)} (${formatLiters(today.liters)}), за месяц — ${formatMoney(month.revenue)}. Максимальный рост: ${growth.fuel} ${growth.trend.pct >= 0 ? "+" : ""}${Math.round(growth.trend.pct * 100)}%. Наибольшее падение: ${decline.fuel} ${Math.round(decline.trend.pct * 100)}%.`;
+  }
+  if (/просроч/.test(normalized)) {
+    if (!overdue.length) return "По доступным вам процессам просрочек сейчас нет.";
+    return `Найдено ${overdue.length} просроченных процессов: ${overdue.slice(0, 5).map((process) => `${process.id} — ${process.stage}, ответственный ${process.owner}`).join("; ")}.`;
+  }
+  if (/соглас|решени/.test(normalized)) {
+    if (!approvals.length) return "В доступном контуре сейчас нет карточек, ожидающих согласования.";
+    return `На согласовании ${approvals.length} карточек: ${approvals.slice(0, 5).map((process) => `${process.id} — ${companyLabel(process.companyKey)}, ${process.stage}`).join("; ")}.`;
+  }
+  if (/задач|поручен/.test(normalized)) {
+    const total = openTasks.length + founderAssigned.length;
+    if (!total) return "Активных задач и поручений для вас сейчас нет.";
+    const processText = openTasks.slice(0, 4).map((task) => `${task.process.id}: ${task.title}`).join("; ");
+    const founderText = founderAssigned.slice(0, 3).map((task) => `поручение учредителя: ${task.title}`).join("; ");
+    return `У вас ${total} активных задач. ${[processText, founderText].filter(Boolean).join("; ")}.`;
+  }
+  if (/внимани|сегодня|что делать|приоритет/.test(normalized)) {
+    return `Сегодня рекомендую начать с ${overdue.length} просрочек, затем обработать ${approvals.length} согласований и ${openTasks.length + founderAssigned.length} активных задач. Самый срочный процесс: ${overdue[0]?.id || approvals[0]?.id || openTasks[0]?.process.id || "критичных карточек нет"}.`;
+  }
+  return `Я учитываю вашу роль «${currentPolicy().label}» и вижу только разрешённые данные. Уточните, что проверить: задачи, просрочки, продажи, согласования или конкретную карточку.`;
+}
+
+function renderAssistantModule() {
+  $("#genericTitle").textContent = "Персональный ИИ-помощник";
+  $("#genericEyebrow").textContent = `${currentPolicy().label} · ролевой контекст`;
+  $("#genericAction").hidden = true;
+  const history = aiHistory();
+  showCustomGeneric(`
+    <div class="assistant-layout">
+      <aside class="assistant-context">
+        <div class="assistant-orb"><span data-lucide="sparkles"></span></div>
+        <h3>Помощник ${currentUser().name}</h3>
+        <p>Анализирует только те данные, которые разрешены вашей ролью.</p>
+        <div class="assistant-context-card"><span>Доступных процессов</span><strong>${accessibleProcesses().length}</strong></div>
+        <div class="assistant-context-card"><span>Активных задач</span><strong>${accessibleProcesses().flatMap((process) => process.tasks || []).filter((task) => !task.done).length}</strong></div>
+        <small>Сейчас используется локальная интеллектуальная логика. Архитектура готова для подключения реальной AI-модели.</small>
+      </aside>
+      <section class="assistant-chat">
+        <div class="quick-prompts">${aiQuickPrompts().map((prompt) => `<button data-ai-prompt="${escapeAttr(prompt)}">${prompt}</button>`).join("")}</div>
+        <div class="chat-messages assistant-messages" id="assistantMessages">
+          ${history.map((message) => `<article class="chat-bubble ${message.role === "user" ? "is-mine" : "is-ai"}"><div>${escapeAttr(message.text)}</div><small>${new Date(message.createdAt).toLocaleTimeString("ru-RU", { hour: "2-digit", minute: "2-digit" })}</small></article>`).join("")}
+        </div>
+        <div class="chat-composer">
+          <textarea id="assistantPrompt" placeholder="Спросите о задачах, продажах, просрочках или согласованиях"></textarea>
+          <button class="primary-button" data-send-ai><span data-lucide="send"></span><span>Отправить</span></button>
+        </div>
+      </section>
+    </div>
+  `);
+  requestAnimationFrame(() => {
+    const messages = $("#assistantMessages");
+    if (messages) messages.scrollTop = messages.scrollHeight;
+  });
+  iconRefresh();
+}
+
+function sendAiPrompt(text = "") {
+  const prompt = text || $("#assistantPrompt")?.value.trim();
+  if (!prompt) return;
+  const history = aiHistory();
+  history.push({ id: uid("ai"), role: "user", text: prompt, createdAt: new Date().toISOString() });
+  history.push({ id: uid("ai"), role: "assistant", text: generateAssistantReply(prompt), createdAt: new Date().toISOString() });
+  audit("Запрос ИИ-помощнику", "ai-chat", currentUserId, "", prompt);
+  saveState();
+  renderAssistantModule();
+}
+
+function communicationUsers() {
+  return state.users.filter((user) => user.roleId && user.active !== false);
+}
+
+function directChannelId(firstId, secondId) {
+  return [firstId, secondId].sort().join("--");
+}
+
+function channelMessages(type = activeChatType, id = activeChatId) {
+  return (state.communications?.messages || []).filter((message) => message.channelType === type && message.channelId === id);
+}
+
+function chatUnread(type, id) {
+  return channelMessages(type, id).filter((message) => message.authorId !== currentUserId && !(message.readBy || []).includes(currentUserId)).length;
+}
+
+function activeChatInfo() {
+  if (activeChatType === "group") {
+    const group = state.communications.groups.find((item) => item.id === activeChatId);
+    return group?.memberIds.includes(currentUserId) ? { title: group.name, subtitle: `${group.memberIds.length} участников`, memberIds: group.memberIds } : null;
+  }
+  const otherId = activeChatId.split("--").find((id) => id !== currentUserId);
+  const user = state.users.find((item) => item.id === otherId);
+  return user ? { title: user.name, subtitle: user.role, memberIds: [currentUserId, user.id] } : null;
+}
+
+function ensureActiveChat() {
+  const groups = state.communications.groups.filter((group) => group.memberIds.includes(currentUserId));
+  if (activeChatType === "group" && !groups.some((group) => group.id === activeChatId)) {
+    activeChatId = groups[0]?.id || directChannelId(currentUserId, communicationUsers().find((user) => user.id !== currentUserId)?.id || currentUserId);
+    activeChatType = groups.length ? "group" : "direct";
+  }
+}
+
+function renderMessagesModule() {
+  $("#genericTitle").textContent = "Корпоративные сообщения";
+  $("#genericEyebrow").textContent = "Личные диалоги и общие группы";
+  $("#genericAction").hidden = false;
+  $("#genericAction span:last-child").textContent = "Группа";
+  ensureActiveChat();
+  const groups = state.communications.groups.filter((group) => group.memberIds.includes(currentUserId));
+  const users = communicationUsers().filter((user) => user.id !== currentUserId);
+  const info = activeChatInfo();
+  if (!info && groups.length) {
+    activeChatType = "group";
+    activeChatId = groups[0].id;
+  }
+  const messages = channelMessages();
+  messages.forEach((message) => {
+    message.readBy ||= [];
+    if (!message.readBy.includes(currentUserId)) message.readBy.push(currentUserId);
+  });
+  saveState();
+  showCustomGeneric(`
+    <div class="messenger-layout">
+      <aside class="conversation-sidebar">
+        <div class="conversation-section-title"><span>Группы</span><button data-create-chat-group title="Создать группу"><span data-lucide="plus"></span></button></div>
+        <div class="conversation-list">
+          ${groups.map((group) => {
+            const unread = chatUnread("group", group.id);
+            return `<button class="conversation-item ${activeChatType === "group" && activeChatId === group.id ? "is-active" : ""}" data-chat-type="group" data-chat-id="${group.id}"><span class="conversation-avatar">#</span><span><strong>${group.name}</strong><small>${group.description}</small></span>${unread ? `<b>${unread}</b>` : ""}</button>`;
+          }).join("")}
+        </div>
+        <div class="conversation-section-title"><span>Личные сообщения</span></div>
+        <div class="conversation-list direct-list">
+          ${users.map((user) => {
+            const id = directChannelId(currentUserId, user.id);
+            const unread = chatUnread("direct", id);
+            return `<button class="conversation-item ${activeChatType === "direct" && activeChatId === id ? "is-active" : ""}" data-chat-type="direct" data-chat-id="${id}"><span class="conversation-avatar">${user.name.slice(0, 1)}</span><span><strong>${user.name}</strong><small>${user.role}</small></span>${unread ? `<b>${unread}</b>` : ""}</button>`;
+          }).join("")}
+        </div>
+      </aside>
+      <section class="conversation-main">
+        <header class="conversation-header">
+          <div><strong>${info?.title || "Выберите диалог"}</strong><span>${info?.subtitle || ""}</span></div>
+          ${activeChatType === "group" ? `<button class="ghost-button" data-chat-members="${activeChatId}"><span data-lucide="users"></span><span>Участники</span></button>` : ""}
+        </header>
+        <div class="chat-messages" id="corporateMessages">
+          ${messages.map((message) => {
+            const author = state.users.find((user) => user.id === message.authorId);
+            return `<article class="chat-bubble ${message.authorId === currentUserId ? "is-mine" : ""}"><strong>${message.authorId === currentUserId ? "Вы" : author?.name || "Система"}</strong><div>${escapeAttr(message.text)}</div><small>${new Date(message.createdAt).toLocaleString("ru-RU", { day: "2-digit", month: "short", hour: "2-digit", minute: "2-digit" })}</small></article>`;
+          }).join("") || '<div class="empty-state">Начните обсуждение — сообщения увидят участники этого диалога.</div>'}
+        </div>
+        <div class="chat-composer">
+          <textarea id="corporateMessageText" placeholder="Напишите сообщение"></textarea>
+          <button class="primary-button" data-send-message><span data-lucide="send"></span><span>Отправить</span></button>
+        </div>
+      </section>
+    </div>
+  `);
+  requestAnimationFrame(() => {
+    const container = $("#corporateMessages");
+    if (container) container.scrollTop = container.scrollHeight;
+  });
+  renderUserShell();
+  iconRefresh();
+}
+
+function selectChat(type, id) {
+  activeChatType = type;
+  activeChatId = id;
+  renderMessagesModule();
+}
+
+function sendCorporateMessage() {
+  const text = $("#corporateMessageText")?.value.trim();
+  const info = activeChatInfo();
+  if (!text || !info) return toast("Введите сообщение.", "warn");
+  const message = { id: uid("msg"), channelType: activeChatType, channelId: activeChatId, authorId: currentUserId, text, createdAt: new Date().toISOString(), readBy: [currentUserId] };
+  state.communications.messages.push(message);
+  info.memberIds.filter((id) => id !== currentUserId).forEach((id) => notify(id, `Новое сообщение: ${info.title}`, `${currentUser().name}: ${text.slice(0, 100)}`, "progress"));
+  audit("Отправка сообщения", activeChatType === "group" ? "chat-group" : "direct-chat", activeChatId, "", text);
+  saveState();
+  renderMessagesModule();
+}
+
+function openCreateChatGroupModal() {
+  const users = communicationUsers();
+  const modal = $("#requestModal");
+  modal.innerHTML = `
+    <article class="modal is-wide" role="dialog" aria-modal="true" aria-labelledby="newGroupTitle">
+      <header class="modal-header">
+        <div><span class="eyebrow">Корпоративные сообщения</span><h2 id="newGroupTitle">Новая группа</h2></div>
+        <button class="icon-button" data-close-modal title="Закрыть" aria-label="Закрыть"><span data-lucide="x"></span></button>
+      </header>
+      <div class="detail-grid">
+        <label>Название группы<input id="newGroupName" placeholder="Например, План продаж — июль" /></label>
+        <label>Описание<input id="newGroupDescription" placeholder="Тема общего обсуждения" /></label>
+      </div>
+      <section class="group-member-picker">
+        <div class="checklist-header"><strong>Участники</strong><small>Вы уже добавлены автоматически</small></div>
+        <div class="member-checkbox-grid">
+          ${users.map((user) => `<label class="toggle-row"><input type="checkbox" data-group-member="${user.id}" ${user.id === currentUserId ? "checked disabled" : ""} /><span>${user.name}<small>${user.role}</small></span></label>`).join("")}
+        </div>
+      </section>
+      <footer class="modal-footer">
+        <button class="ghost-button" data-close-modal>Отмена</button>
+        <button class="primary-button" data-save-chat-group><span data-lucide="users-round"></span><span>Создать группу</span></button>
+      </footer>
+    </article>
+  `;
+  modal.classList.add("is-open");
+  modal.setAttribute("aria-hidden", "false");
+  iconRefresh();
+}
+
+function saveChatGroup() {
+  const name = $("#newGroupName")?.value.trim();
+  const description = $("#newGroupDescription")?.value.trim();
+  const memberIds = $$("[data-group-member]:checked").map((checkbox) => checkbox.dataset.groupMember);
+  if (!name) return toast("Введите название группы.", "warn");
+  if (memberIds.length < 2) return toast("Добавьте хотя бы одного участника.", "warn");
+  const group = { id: uid("group"), name, description: description || "Общее обсуждение", memberIds: [...new Set([currentUserId, ...memberIds])], createdBy: currentUserId, createdAt: new Date().toISOString() };
+  state.communications.groups.unshift(group);
+  state.communications.messages.push({ id: uid("msg"), channelType: "group", channelId: group.id, authorId: currentUserId, text: `Группа «${name}» создана.`, createdAt: new Date().toISOString(), readBy: [currentUserId] });
+  group.memberIds.filter((id) => id !== currentUserId).forEach((id) => notify(id, "Вас добавили в группу", `${currentUser().name}: ${name}`, "progress"));
+  audit("Создание группы", "chat-group", group.id, "", { name, memberIds: group.memberIds });
+  activeChatType = "group";
+  activeChatId = group.id;
+  saveState();
+  closeModal();
+  switchView("messages");
+  toast(`Группа «${name}» создана`, "ok");
+}
+
+function openChatMembers(groupId) {
+  const group = state.communications.groups.find((item) => item.id === groupId && item.memberIds.includes(currentUserId));
+  if (!group) return;
+  const modal = $("#requestModal");
+  modal.innerHTML = `
+    <article class="modal profile-modal" role="dialog" aria-modal="true" aria-labelledby="membersTitle">
+      <header class="modal-header">
+        <div><span class="eyebrow">Участники группы</span><h2 id="membersTitle">${group.name}</h2></div>
+        <button class="icon-button" data-close-modal title="Закрыть" aria-label="Закрыть"><span data-lucide="x"></span></button>
+      </header>
+      <div class="record-list">
+        ${group.memberIds.map((id) => {
+          const user = state.users.find((item) => item.id === id);
+          return user ? `<article class="record-row"><span class="conversation-avatar">${user.name.slice(0, 1)}</span><div><strong>${user.name}</strong><p>${user.role}</p></div><b>${id === group.createdBy ? "Создатель" : "Участник"}</b></article>` : "";
+        }).join("")}
+      </div>
+      <footer class="modal-footer"><button class="primary-button" data-close-modal>Закрыть</button></footer>
+    </article>
+  `;
+  modal.classList.add("is-open");
+  modal.setAttribute("aria-hidden", "false");
+  iconRefresh();
+}
+
 function renderReports() {
+  if (currentPolicy().roleType === "founder") return renderFounderReports();
+  $("#genericAction").hidden = true;
   $("#genericTitle").textContent = "Отчеты и аналитика";
   $("#genericEyebrow").textContent = "Руководителю";
   $("#genericAction span:last-child").textContent = "Отчет";
+  setGenericColumns(["Отчет", "Значение", "Показатель", "Результат", "Источник", "Период", ""]);
   $("#stageColumn").innerHTML = REPORTS.map(
     ([title, hint], index) => `
       <article class="stage-item ${index === 2 ? "is-danger" : index === 3 ? "is-warn" : ""}">
@@ -1044,8 +2709,12 @@ function renderReports() {
   const rows = [
     ["Найдено тендеров", countBy((item) => item.type === "tenders"), "конверсия к победе", "33%"],
     ["Активные заказы", countBy((item) => item.type === "orders" && !item.stage.includes("Закрыто")), "объем", sumVolumes("orders")],
+    ["Неоплаченные счета", countBy((item) => item.type === "orders" && item.checks?.invoice && !item.checks?.payment), "контроль 1С", sumAmounts("orders")],
     ["Возвраты в работе", countBy((item) => item.type === "refunds" && !item.stage.includes("Закрыто")), "сумма", sumAmounts("refunds")],
     ["Продления", countBy((item) => item.type === "extensions"), "на согласовании", countBy((item) => item.type === "extensions" && item.approvalState === "pending")],
+    ["Истекающие договоры", countBy((item) => item.type === "contracts" && item.stage === "Скоро истекает"), "горизонт", "30 дней"],
+    ["Сделки без движения", countBy((item) => item.dueState === "danger" && !item.stage.includes("Закрыто")), "SLA", "требуют действия"],
+    ["Неполные документы", countBy((item) => Object.values(item.checks || {}).some((value) => value === false)), "контроль качества", "есть пропуски"],
     ["Просрочки", countBy((item) => item.dueState === "danger"), "уведомления", "отправлены"],
   ];
 
@@ -1066,8 +2735,266 @@ function renderReports() {
     .join("");
 }
 
+function renderFounderReports() {
+  $("#genericTitle").textContent = "Отчёты учредителя";
+  $("#genericEyebrow").textContent = "Продажи и ключевая аналитика";
+  $("#genericAction").hidden = true;
+  const period = aggregateSales(salesInPeriod(state.reportPeriod.start, state.reportPeriod.end));
+  const directorOverdue = accessibleProcesses().filter((process) => isDirectorApprovalStage(process) && process.dueState === "danger");
+  const refunds = accessibleProcesses().filter((process) => process.type === "refunds" && !process.stage.includes("Закрыто"));
+  const tenders = accessibleProcesses().filter((process) => process.type === "tenders");
+  const trade = period.byCompany.trade || { revenue: 0, liters: 0 };
+  const ugh = period.byCompany.ugh || { revenue: 0, liters: 0 };
+  $("#stageColumn").innerHTML = `
+    <section class="founder-report-form">
+      <strong>Сформировать отчёт</strong>
+      <label>С даты<input type="date" id="founderReportStart" value="${state.reportPeriod.start}" /></label>
+      <label>По дату<input type="date" id="founderReportEnd" value="${state.reportPeriod.end}" /></label>
+      <button class="primary-button" data-action="build-founder-report"><span data-lucide="chart-column"></span><span>Сформировать</span></button>
+    </section>
+    ${[
+      ["Продажи", "Общая выручка и объём"],
+      ["Компании", "GAZOIL TRADE и УГХ GAZOIL"],
+      ["Продукты", "Динамика по видам топлива"],
+      ["Риски", "Падения и просрочки директоров"],
+    ].map(([title, hint]) => `<article class="stage-item"><strong>${title}</strong><p>${hint}</p></article>`).join("")}
+  `;
+  setGenericColumns(["Показатель", "Значение", "Детализация", "Динамика / статус", "Период", "Источник", ""]);
+  const rows = [
+    ["Общие продажи", formatMoney(period.revenue), formatLiters(period.liters), `${period.deals} сделок`, `${state.reportPeriod.start} — ${state.reportPeriod.end}`, "Продажи CRM"],
+    ["GAZOIL TRADE", formatMoney(trade.revenue), formatLiters(trade.liters), formatPercent(period.revenue ? trade.revenue / period.revenue : 0), `${state.reportPeriod.start} — ${state.reportPeriod.end}`, "Продажи CRM"],
+    ["УГХ GAZOIL", formatMoney(ugh.revenue), formatLiters(ugh.liters), formatPercent(period.revenue ? ugh.revenue / period.revenue : 0), `${state.reportPeriod.start} — ${state.reportPeriod.end}`, "Продажи CRM"],
+    ["Просрочки директоров", directorOverdue.length, directorOverdue.map((process) => `${COMPANY_DIRECTOR[process.companyKey]} · ${process.id}`).join(", ") || "Нет", directorOverdue.length ? "Требует внимания" : "В срок", "Сейчас", "Согласования"],
+    ["Возвраты в работе", refunds.length, sumAmounts("refunds"), refunds.some((process) => process.dueState === "danger") ? "Есть риск" : "Под контролем", "Сейчас", "CRM"],
+    ["Тендеры", tenders.length, `${tenders.filter((process) => process.stage === "Выиграли").length} выиграно`, `${tenders.filter((process) => process.dueState === "danger").length} критичных`, "Сейчас", "CRM"],
+  ];
+  $("#genericTable").innerHTML = rows
+    .map(
+      ([name, value, detail, status, periodLabel, source]) => `
+        <tr>
+          <td data-label="Показатель"><strong>${name}</strong></td>
+          <td data-label="Значение">${value}</td>
+          <td data-label="Детализация">${detail}</td>
+          <td data-label="Статус"><span class="status-pill ${String(status).includes("внимания") || String(status).includes("риск") || String(status).includes("критичных") && !String(status).startsWith("0") ? "is-warn" : "is-progress"}">${status}</span></td>
+          <td data-label="Период">${periodLabel}</td>
+          <td data-label="Источник">${source}</td>
+          <td data-label=""><button class="row-action" data-founder-signal="${name === "Общие продажи" ? "sales-month" : name === "GAZOIL TRADE" ? "company:trade" : name === "УГХ GAZOIL" ? "company:ugh" : name === "Просрочки директоров" ? "director-overdue" : name === "Возвраты в работе" ? "refunds-summary" : "tenders-summary"}">Задача</button></td>
+        </tr>
+      `,
+    )
+    .join("");
+  iconRefresh();
+}
+
+function setGenericColumns(columns) {
+  const row = $("#genericTable")?.closest("table")?.querySelector("thead tr");
+  if (row) row.innerHTML = columns.map((column) => `<th>${column}</th>`).join("");
+}
+
+function renderTasksModule() {
+  $("#genericTitle").textContent = "Задачи и согласования";
+  $("#genericEyebrow").textContent = "Рабочая очередь";
+  $("#genericAction").hidden = true;
+  const processes = accessibleProcesses();
+  const processTasks = processes.flatMap((process) =>
+    (process.tasks || []).map((task) => ({
+      ...task,
+      kind: "process",
+      processId: process.id,
+      processType: process.type,
+      companyKey: process.companyKey,
+      processStage: process.stage,
+    })),
+  );
+  const founderTasks = (state.founderTasks || [])
+    .filter((task) => task.assigneeId === currentUserId || ["commercialDirector", "seniorManager"].includes(currentPolicy().roleType))
+    .map((task) => ({
+      ...task,
+      kind: "founder",
+      owner: state.users.find((user) => user.id === task.assigneeId)?.name || "Не назначен",
+      done: task.status === "Выполнена",
+      processId: "Показатель",
+      processType: "",
+      companyKey: "",
+    }));
+  const tasks = [...founderTasks, ...processTasks];
+  const overdue = tasks.filter((task) => !task.done && /вчера|просроч/i.test(task.due)).length;
+  const approvals = processes.filter(isDirectorApprovalStage).length;
+  $("#stageColumn").innerHTML = [
+    ["Мои активные", tasks.filter((task) => !task.done).length, "is-progress"],
+    ["Просроченные", overdue, overdue ? "is-danger" : "is-ok"],
+    ["Выполненные", tasks.filter((task) => task.done).length, "is-ok"],
+    ["Согласования", approvals, approvals ? "is-warn" : ""],
+  ]
+    .map(([title, value, tone]) => `<article class="stage-item ${tone}"><strong>${title}</strong><p>${value} записей</p></article>`)
+    .join("");
+  setGenericColumns(["Задача", "Процесс", "Компания", "Статус", "Исполнитель", "Срок", ""]);
+  $("#genericTable").innerHTML =
+    tasks
+      .sort((a, b) => Number(a.done) - Number(b.done))
+      .map(
+        (task) => `
+          <tr>
+            <td data-label="Задача"><strong>${task.title}</strong>${task.kind === "founder" ? `<br><small>Вопрос: ${task.question}</small>` : ""}</td>
+            <td data-label="Процесс">${task.kind === "founder" ? `<strong>${task.signalTitle}</strong><br><small>${task.signalValue}</small>` : `${task.processId}<br><small>${processName(task.processType)}</small>`}</td>
+            <td data-label="Компания">${task.kind === "founder" ? "Поручение учредителя" : companyLabel(task.companyKey)}</td>
+            <td data-label="Статус"><span class="status-pill ${task.done ? "is-ok" : /вчера|просроч/i.test(task.due) || task.due < todayISO() ? "is-danger" : "is-progress"}">${task.done ? "Выполнена" : task.status || "В работе"}</span></td>
+            <td data-label="Исполнитель">${task.owner}</td>
+            <td data-label="Срок">${task.due}</td>
+            <td data-label="">${task.kind === "founder" ? `<button class="row-action" data-complete-founder-task="${task.id}" ${task.done ? "disabled" : ""}>${task.done ? "Готово" : "Выполнить"}</button>` : `<button class="row-action" data-open="${task.processId}">Открыть</button>`}</td>
+          </tr>
+        `,
+      )
+      .join("") || `<tr><td colspan="7"><div class="empty-state">Задач по текущему доступу нет</div></td></tr>`;
+}
+
+function renderDocumentsModule() {
+  $("#genericTitle").textContent = "Документы";
+  $("#genericEyebrow").textContent = "Единый реестр";
+  $("#genericAction").hidden = true;
+  const documents = accessibleProcesses().flatMap((process) =>
+    (process.documents || []).map((document) => ({
+      ...document,
+      processId: process.id,
+      client: clientById(process.clientId),
+      companyKey: process.companyKey,
+      uploadedBy: document.uploadedBy || "Система / импорт",
+    })),
+  );
+  const types = [...new Set(documents.map((document) => document.type))];
+  $("#stageColumn").innerHTML = types
+    .slice(0, 12)
+    .map((type) => `<article class="stage-item"><strong>${type}</strong><p>${documents.filter((document) => document.type === type).length} документов</p></article>`)
+    .join("") || '<div class="empty-state">Документы появятся после загрузки в карточках</div>';
+  setGenericColumns(["Документ", "Тип", "Клиент", "Процесс", "Компания", "Статус", ""]);
+  $("#genericTable").innerHTML =
+    documents
+      .map(
+        (document) => `
+          <tr>
+            <td data-label="Документ"><strong>${document.name}</strong><br><small>${document.uploadedBy}</small></td>
+            <td data-label="Тип">${document.type}</td>
+            <td data-label="Клиент">${document.client.name}</td>
+            <td data-label="Процесс">${document.processId}</td>
+            <td data-label="Компания">${companyLabel(document.companyKey)}</td>
+            <td data-label="Статус"><span class="status-pill is-progress">${document.status}</span></td>
+            <td data-label=""><button class="row-action" data-open="${document.processId}">Карточка</button></td>
+          </tr>
+        `,
+      )
+      .join("") || `<tr><td colspan="7"><div class="empty-state">Документов по текущему доступу нет</div></td></tr>`;
+}
+
+function roleLabel(roleId) {
+  return ROLE_POLICIES[roleId]?.label || roleId;
+}
+
+function renderUsersModule() {
+  if (!currentPolicy().canManageUsers) return switchView("dashboard");
+  $("#genericTitle").textContent = "Пользователи и роли";
+  $("#genericEyebrow").textContent = "Управление доступом";
+  $("#genericAction").hidden = false;
+  $("#genericAction span:last-child").textContent = "Пользователь";
+  const loginUsers = state.users.filter((user) => user.roleId);
+  $("#stageColumn").innerHTML = Object.entries(ROLE_POLICIES)
+    .map(([roleId, policy]) => `<article class="stage-item"><strong>${policy.label}</strong><p>${loginUsers.filter((user) => user.roleId === roleId).length} пользователей</p></article>`)
+    .join("");
+  setGenericColumns(["Пользователь", "Логин", "Роль", "Компании", "Статус", "Пароль", ""]);
+  $("#genericTable").innerHTML = loginUsers
+    .map((user) => {
+      const policy = ROLE_POLICIES[user.roleId];
+      return `
+        <tr>
+          <td data-label="Пользователь"><strong>${user.name}</strong><br><small>${user.email || "Внутренний аккаунт"}</small></td>
+          <td data-label="Логин">${user.login}</td>
+          <td data-label="Роль">${roleLabel(user.roleId)}</td>
+          <td data-label="Компании">${policy.companies.map(companyLabel).join(", ")}</td>
+          <td data-label="Статус"><span class="status-pill ${user.active === false ? "is-danger" : "is-ok"}">${user.active === false ? "Отключён" : "Активен"}</span></td>
+          <td data-label="Пароль">${user.mustChangePassword ? "Требуется смена" : "Установлен"}</td>
+          <td data-label="">
+            <div class="table-actions">
+              <button class="row-action" data-edit-user="${user.id}">Изменить</button>
+              <button class="row-action" data-reset-user-password="${user.id}">Сбросить</button>
+            </div>
+          </td>
+        </tr>
+      `;
+    })
+    .join("");
+}
+
+function renderAuditModule() {
+  if (!currentPolicy().canViewAudit) return switchView("dashboard");
+  $("#genericTitle").textContent = "Журнал действий";
+  $("#genericEyebrow").textContent = "Аудит системы";
+  $("#genericAction").hidden = true;
+  const records = state.auditLog || [];
+  const today = todayISO();
+  $("#stageColumn").innerHTML = [
+    ["Всего событий", records.length],
+    ["Сегодня", records.filter((record) => record.createdAt?.startsWith(today)).length],
+    ["Решения директоров", records.filter((record) => record.action.includes("директор")).length],
+    ["Управление доступом", records.filter((record) => ["Создание пользователя", "Смена роли", "Сброс пароля"].includes(record.action)).length],
+  ]
+    .map(([title, value]) => `<article class="stage-item"><strong>${title}</strong><p>${value} записей</p></article>`)
+    .join("");
+  setGenericColumns(["Дата и время", "Пользователь", "Действие", "Объект", "Старое значение", "Новое значение", "Устройство"]);
+  $("#genericTable").innerHTML =
+    records
+      .slice(0, 200)
+      .map(
+        (record) => `
+          <tr>
+            <td data-label="Дата">${new Date(record.createdAt).toLocaleString("ru-RU")}</td>
+            <td data-label="Пользователь"><strong>${record.user}</strong><br><small>${record.role}</small></td>
+            <td data-label="Действие">${record.action}</td>
+            <td data-label="Объект">${record.objectType} · ${record.objectId}</td>
+            <td data-label="Было"><small>${escapeAttr(record.oldValue || "—")}</small></td>
+            <td data-label="Стало"><small>${escapeAttr(record.newValue || "—")}</small></td>
+            <td data-label="Устройство"><small>${escapeAttr(record.device || "—")}</small></td>
+          </tr>
+        `,
+      )
+      .join("") || `<tr><td colspan="7"><div class="empty-state">Журнал начнёт заполняться после действий пользователей</div></td></tr>`;
+}
+
+function renderSettingsModule() {
+  $("#genericTitle").textContent = "Настройки справочников";
+  $("#genericEyebrow").textContent = "Маршрутизация и данные";
+  $("#genericAction").hidden = true;
+  const dictionaries = [
+    ["Компании", CRM_DICTIONARIES.organizations.map((item) => item.label)],
+    ["Виды топлива", FUEL_TYPES],
+    ["Продукты", CRM_DICTIONARIES.products],
+    ["Способы поставки", CRM_DICTIONARIES.supplyMethods],
+    ["Типы клиентов", CRM_DICTIONARIES.clientTypes],
+    ["Роли", Object.values(ROLE_POLICIES).map((item) => item.label)],
+    ["Типы возврата", CRM_DICTIONARIES.refundTypes],
+    ["Типы документов", ["Договор", "Счёт", "Акт", "Накладная", "ЭСФ", "Доверенность", "Письмо клиента", "Служебная записка", "Акт сверки", "Платёжное поручение", "Протокол тендера"]],
+  ];
+  $("#stageColumn").innerHTML = dictionaries
+    .map(([title, items]) => `<article class="stage-item"><strong>${title}</strong><p>${items.length} значений</p></article>`)
+    .join("");
+  setGenericColumns(["Справочник", "Значения", "Количество", "Источник", "Статус", "Изменение", ""]);
+  $("#genericTable").innerHTML = dictionaries
+    .map(
+      ([title, items]) => `
+        <tr>
+          <td data-label="Справочник"><strong>${title}</strong></td>
+          <td data-label="Значения">${items.slice(0, 4).join(", ")}${items.length > 4 ? "…" : ""}</td>
+          <td data-label="Количество">${items.length}</td>
+          <td data-label="Источник">CRM</td>
+          <td data-label="Статус"><span class="status-pill is-ok">Активен</span></td>
+          <td data-label="Изменение">Только администратор</td>
+          <td data-label=""><button class="row-action" data-toast="Редактор справочника будет подключён к серверной базе">Открыть</button></td>
+        </tr>
+      `,
+    )
+    .join("");
+}
+
 function sumAmounts(type) {
-  const total = state.processes
+  const total = accessibleProcesses()
     .filter((process) => process.type === type)
     .map((process) => Number(String(process.amount).replace(/[^\d]/g, "")))
     .filter(Boolean)
@@ -1083,6 +3010,8 @@ function renderAll() {
   renderRequestTable();
   renderClients();
   if (!["dashboard", "clients"].includes(activeView)) renderGeneric(activeView);
+  applyLanguage();
+  if (activeView === "dashboard" && currentPolicy().roleType === "founder") renderFounderDashboard();
   iconRefresh();
 }
 
@@ -1116,6 +3045,7 @@ function availableTransitions(process) {
         transition("appeal-transfer", "Передать в профильный процесс", "Передано в профильный процесс", { requirements: ["linked"] }),
         transition("appeal-wait", "Ожидать клиента", "Ожидается клиент", { tone: "secondary" }),
         transition("appeal-resolve", "Решить обращение", "Решено", { tone: "success" }),
+        transition("appeal-close-no-result", "Закрыть без решения", "Закрыто без решения", { requirements: ["closeReason"], tone: "secondary" }),
       ];
     }
     if (stage === "Ожидается клиент") return [transition("appeal-resume", "Ответ получен", "В работе", { requirements: ["clientAnswer"] })];
@@ -1143,6 +3073,9 @@ function availableTransitions(process) {
       ];
     }
     if (stage === "Ожидается доверенность") return [transition("order-power-ready", "Доверенность получена", "Готово к выдаче", { requirements: ["power"] })];
+    if (stage === "Готово к выдаче") return [transition("order-issue", "Начать выдачу / пополнение", "Выдача / пополнение карты", { requirements: ["payment", ...(requiresPower(process) ? ["power"] : [])], tone: "success" })];
+    if (stage === "Выдача / пополнение карты") return [transition("order-issued", "Зафиксировать выдачу", "Документы оформлены", { requirements: ["issuedWithinPaid"] })];
+    if (stage === "Документы оформлены") return [transition("order-documents", "Передать на ЭСФ", "Ожидается ЭСФ", { requirements: ["docs"] })];
     if (stage === "Ожидается ЭСФ") return [transition("order-close", "Закрыть выдачу", "Закрыто успешно", { requirements: ["docs", "esf"], tone: "success" })];
   }
 
@@ -1203,7 +3136,7 @@ function availableTransitions(process) {
       return [transition("tender-discussion", "Обсуждение завершено", "Готово к согласованию", { requirements: ["discussion"] })];
     }
     if (stage === "Готово к согласованию") {
-      return [transition("tender-director", "Передать директору", "На решении директора", { requirements: ["discussion"] })];
+      return [transition("tender-director", "Передать директору", "На решении директора", { requirements: ["discussion", "tenderData"] })];
     }
     if (stage === "На решении директора") return [];
     if (stage === "Подготовка заявки") return [transition("tender-submit", "Подать заявку", "Заявка подана", { requirements: ["bidReady", "submitted"] })];
@@ -1218,6 +3151,9 @@ function availableTransitions(process) {
     }
     if (stage === "Выиграли") {
       return [transition("tender-contract", "Создать связанный договор", "Договор на подготовке", { action: "createContract", tone: "success" })];
+    }
+    if (stage === "Договор на подписании") {
+      return [transition("tender-close-contract", "Закрыть успешно", "Договор подписан / закрыто успешно", { requirements: ["contract"], tone: "success" })];
     }
     if (stage === "Из одного источника") {
       return [transition("tender-reopen", "Вернуть в работу", "Проверка госзакупщиком")];
@@ -1254,9 +3190,25 @@ function validateTransition(process, target) {
     contractData: "Не заполнены договор, объём, цены или условия.",
     bidReady: "Заявка ещё не готова.",
     submitted: "Не зафиксированы дата, время и подтверждение подачи.",
+    closeReason: "Для закрытия без решения укажите обязательную причину.",
+    issuedWithinPaid: "Укажите выданный объём. Он не может превышать оплаченный объём.",
+    tenderData: "Заполните площадку, номер объявления или лота, заказчика и срок подачи.",
+    contract: "Для успешного закрытия нужен номер и файл подписанного договора.",
   };
   for (const requirement of target.requirements || []) {
-    const passed = requirement === "activeContract" ? hasActiveContract(process) : process.checks?.[requirement];
+    let passed;
+    if (requirement === "activeContract") passed = hasActiveContract(process);
+    else if (requirement === "closeReason") passed = Boolean(process.details?.closeReason?.trim());
+    else if (requirement === "issuedWithinPaid") {
+      const paid = Number(process.details?.paidVolume || 0);
+      const issued = Number(process.details?.issuedVolume || 0);
+      passed = paid > 0 && issued > 0 && issued <= paid;
+    } else if (requirement === "tenderData") {
+      const details = process.details || {};
+      passed = Boolean(details.platform && (details.announcementNumber || details.lotNumber) && details.customer && details.deadline);
+    } else if (requirement === "contract") {
+      passed = Boolean(process.checks?.contract && process.details?.signedContractNumber && process.documents.some((document) => document.type === "Договор"));
+    } else passed = process.checks?.[requirement];
     if (!passed) return messages[requirement] || `Не выполнено условие: ${requirement}`;
   }
   return "";
@@ -1291,6 +3243,7 @@ function createLinkedProcess(source, targetType) {
     overpayment: "unknown",
     linkedProcessIds: [source.id],
     integration: { source: "1С", invoiceNumber: "", invoiceDate: "", paymentStatus: "Ожидается", paymentDate: "" },
+    details: defaultProcessDetails(targetType, source),
     checks: defaultChecks(targetType),
     documents: [],
     tasks: [{ id: uid("task"), title: `Проверить связанную карточку из ${source.id}`, owner: defaultOwnerFor(targetType, clientType), due: "Сегодня", done: false }],
@@ -1301,7 +3254,25 @@ function createLinkedProcess(source, targetType) {
   source.linkedProcessIds.push(id);
   source.checks.linked = true;
   state.processes.unshift(linked);
+  audit("Создание связанной карточки", targetType, id, source.id, { stage: linked.stage, companyKey: linked.companyKey });
+  notify(state.users.find((user) => user.name === linked.owner)?.id || "", "Новая связанная задача", `${id} создан из ${source.id}`, "progress", id);
   return linked;
+}
+
+function createLinkedFromAppeal(sourceId, targetType) {
+  const source = processById(sourceId);
+  if (!source || source.type !== "appeals" || !canAccessProcess(source) || !currentPolicy().canEditProcesses) return toast("Преобразование обращения недоступно.", "warn");
+  if (!allowedCreateTypes().includes(targetType) && !["commercialDirector", "seniorManager"].includes(currentPolicy().roleType)) return toast("Ваша роль не может создать этот тип процесса.", "warn");
+  if (targetType === "orders" && !hasActiveContract(source)) return toast("Нельзя создать заказ: сначала нужен действующий договор по компании и продукту.", "warn");
+  const linked = createLinkedProcess(source, targetType);
+  source.stage = "Передано в профильный процесс";
+  source.organizationLocked = true;
+  source.history.push(`Обращение преобразовано в ${linked.id}.`);
+  audit("Преобразование обращения", source.type, source.id, "", linked.id);
+  saveState();
+  renderAll();
+  openProcessModal(linked.id, "data");
+  toast(`Создана связанная карточка ${linked.id}`, "ok");
 }
 
 function applyTransition(process, target) {
@@ -1327,6 +3298,13 @@ function applyTransition(process, target) {
 
   if (target.to.toLowerCase().includes("закрыт") || target.to === "Решено") process.dueState = "ok";
   process.history.push(`Маршрут: «${previousStage}» → «${target.to}» (${target.label}).`);
+  audit("Изменение статуса", process.type, process.id, previousStage, target.to);
+  const ownerUser = state.users.find((user) => user.name === process.owner);
+  if (ownerUser) notify(ownerUser.id, "Изменение процесса", `${process.id}: ${target.to}`, process.dueState, process.id);
+  if (target.to.toLowerCase().includes("директор")) {
+    const directorId = process.companyKey === "trade" ? "khusnutdinov" : "kiikbay";
+    notify(directorId, "Требуется согласование", `${process.id}: ${clientById(process.clientId).name}`, "warn", process.id);
+  }
   saveState();
   renderAll();
   if (currentModalId === process.id) openProcessModal(process.id, modalTab);
@@ -1336,7 +3314,21 @@ function applyTransition(process, target) {
 
 function performTransition(id, key) {
   const process = processById(id);
-  if (!process) return;
+  if (!process || !canAccessProcess(process) || !currentPolicy().canEditProcesses) return toast("Действие недоступно для вашей роли.", "warn");
+  if (currentModalId === id) {
+    process.details ||= {};
+    $$("[data-detail-field]").forEach((field) => {
+      process.details[field.dataset.detailField] = field.value;
+    });
+    $$("[data-check]").forEach((checkbox) => {
+      if (!checkbox.disabled) process.checks[checkbox.dataset.check] = checkbox.checked;
+    });
+    if (process.type === "orders") process.checks.esf = ["Оформлена", "Не требуется"].includes(process.details.esfStatus);
+    if (process.type === "tenders") {
+      process.checks.submitted = Boolean(process.details.bidSubmittedAt && process.documents.some((document) => document.type === "Подтверждение подачи заявки"));
+      process.checks.contract = Boolean(process.details.signedContractNumber && process.documents.some((document) => document.type === "Договор"));
+    }
+  }
   const target = availableTransitions(process).find((item) => item.key === key);
   if (!target) return toast("Этот переход больше недоступен.", "warn");
   applyTransition(process, target);
@@ -1344,7 +3336,7 @@ function performTransition(id, key) {
 
 function advanceProcess(id) {
   const process = processById(id);
-  if (!process) return;
+  if (!process || !canAccessProcess(process) || !currentPolicy().canEditProcesses) return toast("Действие недоступно для вашей роли.", "warn");
   const options = availableTransitions(process);
   if (!options.length) {
     openProcessModal(id, "data");
@@ -1359,12 +3351,14 @@ function advanceProcess(id) {
 
 function previousProcess(id) {
   const process = processById(id);
-  if (!process) return;
+  if (!process || !canAccessProcess(process) || !currentPolicy().canEditProcesses) return toast("Действие недоступно для вашей роли.", "warn");
   const stages = metaFor(process.type).stages;
   const index = stageIndex(process);
   if (index <= 0) return toast("Это первая стадия процесса.", "warn");
+  const previousStage = process.stage;
   process.stage = stages[index - 1];
   process.history.push(`Возврат на стадию «${process.stage}»`);
+  audit("Возврат статуса", process.type, process.id, previousStage, process.stage);
   saveState();
   renderAll();
   openProcessModal(id, modalTab);
@@ -1372,53 +3366,90 @@ function previousProcess(id) {
 
 function approveProcess(id) {
   const process = processById(id);
-  if (!process) return;
+  if (!process || !canAccessProcess(process) || !currentPolicy().canApprove) return toast("У вас нет права согласовать эту карточку.", "warn");
+  if (!isDirectorApprovalStage(process)) return toast("Карточка не находится на согласовании директора.", "warn");
   if (process.type === "refunds" && (!process.checks.accounting || !process.checks.reconciliation)) {
     openProcessModal(id, "data");
     return toast("Для согласования возврата нужны финансовая проверка и подписанный акт сверки.", "warn");
   }
+  const decision =
+    $("#directorDecision")?.value ||
+    (process.type === "extensions" ? "Продлить без перерасчёта" : process.type === "tenders" ? "Участвуем" : process.type === "refunds" ? "Согласовать возврат" : "Согласовать");
+  if (decision === "Продлить с перерасчётом" && !(Number(process.details?.recalculation) > 0)) {
+    openProcessModal(id, "data");
+    return toast("Для решения с перерасчётом сначала укажите сумму перерасчёта.", "warn");
+  }
+  const decisionComment = $("#directorDecisionComment")?.value.trim() || "Согласовано. Передать на следующий этап.";
+  const previousStage = process.stage;
   process.approvalState = "approved";
   process.checks.director = true;
   process.history.push("Директор согласовал заявку");
-  if (process.type === "tenders") process.stage = "Участвуем";
-  else if (process.type === "extensions") process.stage = "Ожидается ответ клиента";
-  else if (process.type === "refunds") process.stage = "Ожидает банковского возврата";
+  if (process.type === "tenders") process.stage = decision === "Не участвуем" ? "Не участвуем" : "Участвуем";
+  else if (process.type === "extensions") process.stage = decision === "Отказать в продлении" ? "Закрыто без продления" : "Ожидается ответ клиента";
+  else if (process.type === "refunds") process.stage = decision === "Отказать в возврате" ? "Закрыто без возврата - отказ / невозможность" : "Ожидает банковского возврата";
   else {
     const next = metaFor(process.type).stages[stageIndex(process) + 1];
     if (next) process.stage = next;
   }
   process.organizationLocked = true;
-  process.owner = process.type === "refunds" ? "Бухгалтер по банку" : process.clientType === "Государственная организация" ? "Ольга" : defaultOwnerFor(process.type, process.clientType);
-  process.comments.unshift({ author: "Директор", text: "Согласовано. Передать на следующий этап.", time: "сейчас" });
+  const isRejected = decision.startsWith("Отказать") || decision === "Не участвуем";
+  process.approvalState = isRejected ? "rejected" : "approved";
+  process.owner = !isRejected && process.type === "refunds" ? "Бухгалтер по банку" : process.clientType === "Государственная организация" ? "Ольга" : defaultOwnerFor(process.type, process.clientType);
+  if (isRejected) process.dueState = "ok";
+  process.comments.unshift({ author: currentUser().name, text: decisionComment, time: "сейчас" });
+  process.approval = { userId: currentUserId, user: currentUser().name, decision, comment: decisionComment, companyKey: process.companyKey, previousStage, nextStage: process.stage, decidedAt: new Date().toISOString() };
+  audit(`Решение директора: ${decision}`, process.type, process.id, previousStage, process.stage);
+  notify("madi", "Решение директора", `${process.id}: ${decision} · ${currentUser().name}`, isRejected ? "warn" : "ok", process.id);
   saveState();
   renderAll();
-  if (currentModalId === id) openProcessModal(id, modalTab);
-  toast(`Согласовано: ${id}`, "ok");
+  if (currentModalId === id) {
+    if (canAccessProcess(process)) openProcessModal(id, modalTab);
+    else closeModal();
+  }
+  toast(`${decision}: ${id}`, isRejected ? "warn" : "ok");
 }
 
 function returnProcess(id) {
   const process = processById(id);
-  if (!process) return;
+  if (!process || !canAccessProcess(process) || !currentPolicy().canApprove) return toast("У вас нет права вернуть эту карточку.", "warn");
+  if (!isDirectorApprovalStage(process)) return toast("Карточка не находится на согласовании директора.", "warn");
+  const decisionComment = $("#directorDecisionComment")?.value.trim();
+  if (!decisionComment) {
+    openProcessModal(id, "data");
+    return toast("Укажите причину возврата на доработку.", "warn");
+  }
+  const previousStage = process.stage;
   process.approvalState = "returned";
   process.dueState = "warn";
   const returnedStage = metaFor(process.type).stages.find((stage) => stage.toLowerCase().includes("доработ"));
   if (returnedStage) process.stage = returnedStage;
-  process.tasks.unshift({ id: uid("task"), title: "Исправить замечания согласующего", owner: process.owner, due: "Сегодня", done: false });
-  process.comments.unshift({ author: "Директор", text: "Вернуть на доработку, требуется уточнение данных.", time: "сейчас" });
+  const correctionOwner = process.type === "tenders" || process.clientType === "Государственная организация" ? "Ольга" : defaultOwnerFor(process.type, process.clientType);
+  process.owner = correctionOwner;
+  process.tasks.unshift({ id: uid("task"), title: "Исправить замечания согласующего", owner: correctionOwner, due: "Сегодня", priority: "Высокая", status: "Новая", createdBy: currentUser().name, createdAt: new Date().toISOString(), result: "", done: false });
+  process.comments.unshift({ author: currentUser().name, text: decisionComment, time: "сейчас" });
   process.history.push("Заявка возвращена на доработку");
+  process.approval = { userId: currentUserId, user: currentUser().name, decision: "Возвращено на доработку", comment: decisionComment, companyKey: process.companyKey, previousStage, nextStage: process.stage, decidedAt: new Date().toISOString() };
+  audit("Решение директора: возврат", process.type, process.id, previousStage, process.stage);
+  notify("madi", "Заявка возвращена директором", `${process.id}: требуется доработка`, "warn", process.id);
+  notify(state.users.find((user) => user.name === correctionOwner)?.id || "", "Заявка возвращена на доработку", `${process.id}: ${decisionComment}`, "warn", process.id);
   saveState();
   renderAll();
-  if (currentModalId === id) openProcessModal(id, "tasks");
+  if (currentModalId === id) {
+    if (canAccessProcess(process)) openProcessModal(id, "tasks");
+    else closeModal();
+  }
   toast(`Возвращено на доработку: ${id}`, "warn");
 }
 
 function openProcessModal(id, tab = "data") {
   const process = processById(id);
   if (!process) return;
+  if (!canAccessProcess(process)) return toast("У вас нет доступа к этой карточке.", "warn");
   currentModalId = id;
   modalTab = tab;
   const client = clientById(process.clientId);
-  const routes = availableTransitions(process);
+  const policy = currentPolicy();
+  const routes = policy.canEditProcesses ? availableTransitions(process) : [];
   const modal = $("#requestModal");
   modal.innerHTML = `
     <article class="modal is-wide" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
@@ -1430,7 +3461,7 @@ function openProcessModal(id, tab = "data") {
         <button class="icon-button" data-close-modal title="Закрыть" aria-label="Закрыть"><span data-lucide="x"></span></button>
       </header>
       <div class="modal-status">
-        <span class="status-pill ${statusClass(processTone(process))}">${metaFor(process.type).label}</span>
+        <span class="status-pill ${statusClass(processTone(process))}">${processName(process.type)}</span>
         <span>${process.stage}</span>
         <b>SLA: ${process.due}</b>
       </div>
@@ -1446,8 +3477,12 @@ function openProcessModal(id, tab = "data") {
       </div>
       <div class="modal-body">${renderModalTab(process, tab)}</div>
       <footer class="modal-footer">
-        <button class="ghost-button" data-prev="${process.id}"><span data-lucide="arrow-left"></span><span>Назад</span></button>
-        ${process.approvalState === "pending" || process.stage.toLowerCase().includes("директор") ? `<button class="ghost-button" data-return="${process.id}"><span data-lucide="undo-2"></span><span>Вернуть</span></button><button class="ghost-button is-success" data-approve="${process.id}"><span data-lucide="check"></span><span>Согласовать</span></button>` : ""}
+        ${policy.canEditProcesses ? `<button class="ghost-button" data-prev="${process.id}"><span data-lucide="arrow-left"></span><span>Назад</span></button>` : ""}
+        ${
+          policy.canApprove && (process.approvalState === "pending" || process.stage.toLowerCase().includes("директор"))
+            ? `<button class="ghost-button" data-return="${process.id}"><span data-lucide="undo-2"></span><span>Вернуть</span></button><button class="ghost-button is-success" data-approve="${process.id}"><span data-lucide="check"></span><span>Согласовать</span></button>`
+            : ""
+        }
         ${routes
           .map(
             (route) =>
@@ -1488,8 +3523,38 @@ function routeWaitingMessage(process) {
   return "Выполните обязательные проверки текущей стадии";
 }
 
+function renderProcessFields(process, editable) {
+  const schema = PROCESS_FIELD_SCHEMAS[process.type] || [];
+  if (!schema.length) return "";
+  const fields = schema
+    .map(([key, label, type, options = []]) => {
+      const value = process.details?.[key] ?? "";
+      const disabled = editable ? "" : "disabled";
+      if (type === "select") {
+        return `<label>${label}<select data-detail-field="${key}" ${disabled}>${options.map((option) => `<option ${String(option) === String(value) ? "selected" : ""}>${option}</option>`).join("")}</select></label>`;
+      }
+      if (type === "textarea") return `<label class="field-wide">${label}<textarea data-detail-field="${key}" ${disabled}>${escapeAttr(value)}</textarea></label>`;
+      return `<label>${label}<input data-detail-field="${key}" type="${type}" value="${escapeAttr(value)}" ${editable ? "" : "readonly"} /></label>`;
+    })
+    .join("");
+  return `<section class="process-specific-fields"><div class="checklist-header"><strong>Данные процесса</strong><small>Поля зависят от типа карточки</small></div><div class="detail-grid">${fields}</div></section>`;
+}
+
+function directorDecisionOptions(process) {
+  const decisions =
+    process.type === "extensions"
+      ? ["Продлить без перерасчёта", "Продлить с перерасчётом", "Отказать в продлении"]
+      : process.type === "tenders"
+        ? ["Участвуем", "Не участвуем"]
+        : process.type === "refunds"
+          ? ["Согласовать возврат", "Отказать в возврате"]
+          : ["Согласовать"];
+  return decisions.map((decision) => `<option>${decision}</option>`).join("");
+}
+
 function renderDataTab(process) {
   const client = clientById(process.clientId);
+  const editable = currentPolicy().canEditProcesses;
   const locked = isOrganizationLocked(process);
   const organization = organizationFor(process.companyKey);
   const routes = availableTransitions(process);
@@ -1499,7 +3564,7 @@ function renderDataTab(process) {
         const checked = key === "contract" ? hasActiveContract(process) : value;
         return `
         <label class="toggle-row">
-          <input type="checkbox" data-check="${key}" ${checked ? "checked" : ""} ${isIntegrationCheck(process, key) ? "disabled" : ""} />
+          <input type="checkbox" data-check="${key}" ${checked ? "checked" : ""} ${!editable || isIntegrationCheck(process, key) ? "disabled" : ""} />
           <span>${checkLabel(key)}${checkSource(process, key) ? `<small>${checkSource(process, key)}</small>` : ""}</span>
         </label>
       `;
@@ -1514,14 +3579,14 @@ function renderDataTab(process) {
       <div><span>Доступ</span><strong>${locked ? "Юрлицо зафиксировано" : "Стартовая стадия"}</strong></div>
     </section>
     <div class="detail-grid">
-      <label>Клиент<input id="modalClientName" value="${escapeAttr(client.name)}" /></label>
+      <label>Клиент<input id="modalClientName" value="${escapeAttr(client.name)}" ${editable ? "" : "readonly"} /></label>
       <label>Тип клиента
-        <select id="modalClientType">
+        <select id="modalClientType" ${editable ? "" : "disabled"}>
           ${CRM_DICTIONARIES.clientTypes.map((type) => `<option ${type === process.clientType ? "selected" : ""}>${type}</option>`).join("")}
         </select>
       </label>
       <label>Наша организация
-        <select id="modalCompanyKey" ${locked ? "disabled" : ""}>
+        <select id="modalCompanyKey" ${locked || !editable ? "disabled" : ""}>
           <option value="trade" ${process.companyKey === "trade" ? "selected" : ""}>${COMPANY.trade}</option>
           <option value="ugh" ${process.companyKey === "ugh" ? "selected" : ""}>${COMPANY.ugh}</option>
         </select>
@@ -1529,27 +3594,27 @@ function renderDataTab(process) {
       </label>
       <label>Стадия<input id="modalStageSelect" value="${escapeAttr(process.stage)}" readonly /></label>
       <label>Ответственный
-        <select id="modalOwner">${staffOptions(process.owner, process.companyKey)}</select>
+        <select id="modalOwner" ${editable ? "" : "disabled"}>${staffOptions(process.owner, process.companyKey)}</select>
       </label>
       <label>Вид топлива
-        <select id="modalFuel" ${locked ? "disabled" : ""}>${fuelOptions(process.fuel)}</select>
+        <select id="modalFuel" ${locked || !editable ? "disabled" : ""}>${fuelOptions(process.fuel)}</select>
       </label>
       <label>Продукт
         <input id="modalProduct" value="${escapeAttr(process.product)}" readonly />
       </label>
-      <label>Способ / предмет<input id="modalSupply" value="${escapeAttr(process.supply)}" /></label>
-      <label>Объем<input id="modalVolume" value="${escapeAttr(process.volume)}" /></label>
-      <label>Сумма<input id="modalAmount" value="${escapeAttr(process.amount)}" /></label>
-      <label>SLA / срок<input id="modalDue" value="${escapeAttr(process.due)}" /></label>
+      <label>Способ / предмет<input id="modalSupply" value="${escapeAttr(process.supply)}" ${editable ? "" : "readonly"} /></label>
+      <label>Объем<input id="modalVolume" value="${escapeAttr(process.volume)}" ${editable ? "" : "readonly"} /></label>
+      <label>Сумма<input id="modalAmount" value="${escapeAttr(process.amount)}" ${editable ? "" : "readonly"} /></label>
+      <label>SLA / срок<input id="modalDue" value="${escapeAttr(process.due)}" ${editable ? "" : "readonly"} /></label>
       <label>Приоритет
-        <select id="modalPriority">
+        <select id="modalPriority" ${editable ? "" : "disabled"}>
           ${["Обычная", "Высокая", "Критическая"].map((priority) => `<option ${priority === process.priority ? "selected" : ""}>${priority}</option>`).join("")}
         </select>
       </label>
       ${
         process.type === "refunds"
           ? `<label>Переплата подтверждена
-              <select id="modalOverpayment">
+              <select id="modalOverpayment" ${editable ? "" : "disabled"}>
                 <option value="unknown" ${process.overpayment === "unknown" ? "selected" : ""}>Не определено</option>
                 <option value="yes" ${process.overpayment === "yes" ? "selected" : ""}>Да — требуется банковский возврат</option>
                 <option value="no" ${process.overpayment === "no" ? "selected" : ""}>Нет — закрыть без возврата ДС</option>
@@ -1558,6 +3623,17 @@ function renderDataTab(process) {
           : ""
       }
     </div>
+    ${renderProcessFields(process, editable)}
+    ${
+      process.type === "appeals" && editable
+        ? `<section class="linked-process-panel">
+            <div><span class="eyebrow">Преобразовать обращение</span><strong>Создать связанную карточку без повторного ввода данных</strong></div>
+            <div class="inline-actions">
+              ${["contracts", "orders", "extensions", "refunds", "tenders"].map((type) => `<button class="ghost-button" data-create-linked="${type}" data-source-process="${process.id}">${processName(type)}</button>`).join("")}
+            </div>
+          </section>`
+        : ""
+    }
     ${
       process.type === "orders"
         ? `<section class="integration-card">
@@ -1566,21 +3642,32 @@ function renderDataTab(process) {
               <strong>1С · поля защищены от ручного редактирования</strong>
               <p>Счёт: ${process.integration.invoiceNumber || "не получен"} · Оплата: ${process.integration.paymentStatus || "ожидается"}</p>
             </div>
-            <button class="ghost-button" data-sync-one-c="${process.id}"><span data-lucide="refresh-cw"></span><span>Получить демо-ответ 1С</span></button>
+            <div class="inline-actions">
+              ${editable && !process.checks.invoice ? `<button class="ghost-button" data-create-invoice-one-c="${process.id}"><span data-lucide="file-plus-2"></span><span>Сформировать счёт в 1С</span></button>` : ""}
+              ${currentPolicy().canConfirm1C && process.checks.invoice && !process.checks.payment ? `<button class="ghost-button is-success" data-confirm-payment-one-c="${process.id}"><span data-lucide="badge-check"></span><span>Подтвердить оплату из 1С</span></button>` : ""}
+            </div>
           </section>`
         : ""
     }
     <section class="route-panel">
       <div>
-        <span class="eyebrow">Доступные переходы</span>
-        <strong>${routes.length ? routes.map((route) => route.label).join(" · ") : routeWaitingMessage(process)}</strong>
+        <span class="eyebrow">${editable ? "Доступные переходы" : "Решение директора"}</span>
+        <strong>${editable ? (routes.length ? routes.map((route) => route.label).join(" · ") : routeWaitingMessage(process)) : "Согласовать заявку или вернуть её на доработку"}</strong>
       </div>
-      <p>Стадия меняется только через маршрут — ручное переключение отключено.</p>
+      <p>${editable ? "Стадия меняется только через маршрут — ручное переключение отключено." : "Операционные поля доступны только для чтения."}</p>
     </section>
+    ${
+      currentPolicy().canApprove && isDirectorApprovalStage(process)
+        ? `<div class="director-comment-field">
+            <label>Решение<select id="directorDecision">${directorDecisionOptions(process)}</select></label>
+            <label>Комментарий к решению<textarea id="directorDecisionComment" placeholder="Укажите условия согласования или причину возврата"></textarea></label>
+          </div>`
+        : ""
+    }
     <section class="checklist">
       <div class="checklist-header">
         <strong>Проверки текущего маршрута</strong>
-        <button class="text-button" data-save-process="${process.id}">Сохранить изменения</button>
+        ${editable ? `<button class="text-button" data-save-process="${process.id}">Сохранить изменения</button>` : ""}
       </div>
       <div class="toggle-grid">${checks || '<div class="empty-state">Для процесса пока нет проверок</div>'}</div>
     </section>
@@ -1588,15 +3675,20 @@ function renderDataTab(process) {
 }
 
 function renderDocsTab(process) {
+  const editable = currentPolicy().canEditProcesses;
   return `
     <section class="modal-section">
-      <div class="inline-form">
-        <select id="docType">
-          ${["Договор", "Счет", "Платежное поручение", "Доверенность", "Акт", "Накладная", "ЭСФ", "Письмо", "Протокол", "Техспецификация"].map((item) => `<option>${item}</option>`).join("")}
-        </select>
-        <input id="docName" placeholder="Название документа или файла" />
-        <button class="primary-button" data-add-doc="${process.id}"><span data-lucide="paperclip"></span><span>Добавить</span></button>
-      </div>
+      ${
+        editable
+          ? `<div class="inline-form">
+              <select id="docType">
+                ${["Проект договора", "Договор", "Счет", "Платежное поручение", "Доверенность", "Акт", "Накладная", "ЭСФ", "Письмо клиента", "Служебная записка", "Акт сверки", "Протокол тендера", "Подтверждение подачи заявки", "Техспецификация", "Иной документ"].map((item) => `<option>${item}</option>`).join("")}
+              </select>
+              <input id="docName" placeholder="Название документа или файла" />
+              <button class="primary-button" data-add-doc="${process.id}"><span data-lucide="paperclip"></span><span>Добавить</span></button>
+            </div>`
+          : ""
+      }
       <div class="record-list">
         ${
           process.documents
@@ -1617,22 +3709,34 @@ function renderDocsTab(process) {
 }
 
 function renderTasksTab(process) {
+  const editable = currentPolicy().canEditProcesses;
   return `
     <section class="modal-section">
-      <div class="inline-form">
-        <input id="taskTitle" placeholder="Новая задача" />
-        <input id="taskOwner" placeholder="Ответственный" value="${escapeAttr(process.owner)}" />
-        <input id="taskDue" placeholder="Срок" value="Сегодня" />
-        <button class="primary-button" data-add-task="${process.id}"><span data-lucide="list-plus"></span><span>Добавить</span></button>
-      </div>
+      ${
+        editable
+          ? `<div class="inline-form">
+              <input id="taskTitle" placeholder="Новая задача" />
+              <input id="taskOwner" placeholder="Ответственный" value="${escapeAttr(process.owner)}" />
+              <input id="taskDue" placeholder="Срок" value="Сегодня" />
+              <button class="primary-button" data-add-task="${process.id}"><span data-lucide="list-plus"></span><span>Добавить</span></button>
+            </div>`
+          : ""
+      }
       <div class="record-list">
         ${
           process.tasks
             .map(
               (task) => `
                 <article class="record-row">
-                  <input type="checkbox" data-task-done="${process.id}" data-task-id="${task.id}" ${task.done ? "checked" : ""} />
-                  <div><strong class="${task.done ? "is-muted" : ""}">${task.title}</strong><p>${task.owner} · ${task.due}</p></div>
+                  <input type="checkbox" data-task-done="${process.id}" data-task-id="${task.id}" ${task.done ? "checked" : ""} ${editable ? "" : "disabled"} />
+                  <div>
+                    <strong class="${task.done ? "is-muted" : ""}">${task.title}</strong>
+                    ${
+                      currentPolicy().canReassign
+                        ? `<p><select class="inline-owner-select" data-task-owner="${process.id}" data-task-id="${task.id}">${staffOptions(task.owner, process.companyKey)}</select> · ${task.due}</p>`
+                        : `<p>${task.owner} · ${task.due}</p>`
+                    }
+                  </div>
                   <b>${task.done ? "Готово" : "В работе"}</b>
                 </article>
               `,
@@ -1695,7 +3799,8 @@ function checkLabel(key) {
 
 function saveProcessFromModal(id) {
   const process = processById(id);
-  if (!process) return;
+  if (!process || !canAccessProcess(process) || !currentPolicy().canEditProcesses) return toast("Редактирование недоступно для вашей роли.", "warn");
+  const before = { companyKey: process.companyKey, owner: process.owner, volume: process.volume, amount: process.amount, priority: process.priority };
   const client = clientById(process.clientId);
   const locked = isOrganizationLocked(process);
   const name = $("#modalClientName")?.value.trim();
@@ -1723,39 +3828,115 @@ function saveProcessFromModal(id) {
   $$("[data-check]").forEach((checkbox) => {
     process.checks[checkbox.dataset.check] = checkbox.checked;
   });
+  process.details ||= {};
+  $$("[data-detail-field]").forEach((field) => {
+    process.details[field.dataset.detailField] = field.value;
+  });
+  if (process.type === "orders") {
+    process.checks.esf = process.details.esfStatus === "Оформлена" || process.details.esfStatus === "Не требуется";
+  }
+  if (process.type === "refunds") {
+    process.checks.paymentOrder = Boolean(process.details.paymentOrderNumber && process.details.paymentDate && process.documents.some((document) => document.type === "Платежное поручение"));
+  }
+  if (process.type === "tenders") {
+    process.checks.submitted = Boolean(process.details.bidSubmittedAt && process.documents.some((document) => document.type === "Подтверждение подачи заявки"));
+    process.checks.contract = Boolean(process.details.signedContractNumber && process.documents.some((document) => document.type === "Договор"));
+  }
   process.history.push(`Данные карточки обновлены. Маршрут: ${companyLabel(process.companyKey)}, директор: ${COMPANY_DIRECTOR[process.companyKey]}.`);
+  audit("Изменение карточки", process.type, process.id, before, { companyKey: process.companyKey, owner: process.owner, volume: process.volume, amount: process.amount, priority: process.priority });
   saveState();
   renderAll();
   openProcessModal(id, "data");
   toast("Изменения сохранены", "ok");
 }
 
-function simulate1CSync(id) {
+function mock1CCreateInvoice(id) {
   const process = processById(id);
-  if (!process || process.type !== "orders") return;
+  if (!process || !canAccessProcess(process) || !currentPolicy().canEditProcesses || process.type !== "orders") return;
+  if (!hasActiveContract(process)) return toast("1С-запрос заблокирован: нет действующего договора.", "warn");
   process.checks.invoice = true;
-  process.checks.payment = true;
   process.integration = {
     ...process.integration,
     invoiceNumber: process.integration.invoiceNumber || `СЧ-${process.id.replace(/\D/g, "")}`,
     invoiceDate: todayISO(),
-    paymentStatus: "Оплата подтверждена",
-    paymentDate: todayISO(),
+    invoiceFile: `invoice-${process.id}.pdf`,
+    paymentStatus: process.integration.paymentStatus || "Ожидается",
   };
-  process.history.push("1С передала номер счёта и подтверждение оплаты. Поля обновлены автоматически.");
-  process.comments.unshift({ author: "Интеграция 1С", text: "Счёт и оплата синхронизированы.", time: "сейчас" });
+  if (["Подготовка счета", "Новый запрос", "Проверка договора"].includes(process.stage)) process.stage = "Счет сформирован";
+  if (!process.documents.some((document) => document.type === "Счет")) {
+    process.documents.unshift({ id: uid("doc"), type: "Счет", name: process.integration.invoiceFile, status: "Получен из mock 1С", uploadedBy: "Интеграция 1С", uploadedAt: new Date().toISOString() });
+  }
+  process.history.push("Mock 1С сформировал счёт и вернул номер, дату, сумму и файл.");
+  process.comments.unshift({ author: "Интеграция 1С", text: `Сформирован счёт ${process.integration.invoiceNumber}.`, time: "сейчас" });
+  audit("Формирование счёта в 1С", process.type, process.id, "", process.integration.invoiceNumber);
   saveState();
   renderAll();
   openProcessModal(id, "data");
-  toast("Демо-ответ 1С получен", "ok");
+  toast("Тестовый счёт сформирован в 1С", "ok");
+}
+
+function mock1CConfirmPayment(id) {
+  const process = processById(id);
+  if (!process || !canAccessProcess(process) || !currentPolicy().canConfirm1C || process.type !== "orders") return toast("Подтверждать оплату может только администратор или бухгалтерия.", "warn");
+  if (!process.checks.invoice) return toast("Сначала сформируйте счёт в 1С.", "warn");
+  const previousStatus = process.integration.paymentStatus || "Ожидается";
+  process.checks.payment = true;
+  process.integration = {
+    ...process.integration,
+    paymentStatus: "Оплата подтверждена",
+    paymentDate: todayISO(),
+    paidAmount: process.amount,
+    partialPayment: false,
+  };
+  process.details ||= defaultProcessDetails("orders", process);
+  process.details.paidVolume = Number(String(process.volume || "").replace(/[^\d]/g, "")) || process.details.paidVolume || 0;
+  process.stage = "Оплата подтверждена";
+  process.history.push("Mock 1С подтвердил оплату. Переход к выдаче теперь разрешён.");
+  process.comments.unshift({ author: "Интеграция 1С", text: "Оплата подтверждена по данным 1С.", time: "сейчас" });
+  audit("Подтверждение оплаты из 1С", process.type, process.id, previousStatus, process.integration.paymentStatus);
+  notify(state.users.find((user) => user.name === process.owner)?.id || "", "Оплата подтверждена", `${process.id}: можно готовить выдачу`, "ok", process.id);
+  saveState();
+  renderAll();
+  openProcessModal(id, "data");
+  toast("Оплата подтверждена из mock 1С", "ok");
+}
+
+function simulate1CSync(id) {
+  const process = processById(id);
+  if (!process?.checks.invoice) return mock1CCreateInvoice(id);
+  return mock1CConfirmPayment(id);
 }
 
 function addDocument(id) {
   const process = processById(id);
+  if (!process || !canAccessProcess(process) || !currentPolicy().canEditProcesses) return toast("Добавление документов недоступно.", "warn");
   const name = $("#docName")?.value.trim();
-  if (!process || !name) return toast("Введите название документа.", "warn");
-  process.documents.unshift({ id: uid("doc"), type: $("#docType").value, name, status: "Прикреплен" });
+  if (!name) return toast("Введите название документа.", "warn");
+  const document = {
+    id: uid("doc"),
+    type: $("#docType").value,
+    name,
+    status: "Прикреплен",
+    uploadedBy: currentUser().name,
+    uploadedAt: new Date().toISOString(),
+    clientId: process.clientId,
+    processId: process.id,
+  };
+  process.documents.unshift(document);
+  if (document.type === "Платежное поручение") process.checks.paymentOrder = Boolean(process.details?.paymentOrderNumber && process.details?.paymentDate);
+  if (document.type === "Акт сверки") process.checks.reconciliation = true;
+  if (document.type === "Письмо клиента") process.checks.clientLetter = true;
+  if (document.type === "Подтверждение подачи заявки") process.checks.submitted = Boolean(process.details?.bidSubmittedAt);
+  if (document.type === "Проект договора" && process.type === "contracts") process.checks.project = true;
+  if (document.type === "Договор" && process.type === "contracts") process.checks.signed = true;
+  if (document.type === "Договор" && process.type === "tenders") process.checks.contract = Boolean(process.details?.signedContractNumber);
+  if (["Акт", "Накладная"].includes(document.type) && process.type === "orders") process.checks.docs = true;
+  if (document.type === "ЭСФ" && process.type === "orders") {
+    process.checks.esf = true;
+    process.details.esfStatus = "Оформлена";
+  }
   process.history.push(`Добавлен документ: ${name}`);
+  audit("Загрузка документа", "document", document.id, "", { processId: process.id, type: document.type, name });
   saveState();
   renderAll();
   openProcessModal(id, "docs");
@@ -1763,16 +3944,25 @@ function addDocument(id) {
 
 function addTask(id) {
   const process = processById(id);
+  if (!process || !canAccessProcess(process) || !currentPolicy().canEditProcesses) return toast("Добавление задач недоступно.", "warn");
   const title = $("#taskTitle")?.value.trim();
-  if (!process || !title) return toast("Введите название задачи.", "warn");
-  process.tasks.unshift({
+  if (!title) return toast("Введите название задачи.", "warn");
+  const task = {
     id: uid("task"),
     title,
     owner: $("#taskOwner")?.value.trim() || process.owner,
     due: $("#taskDue")?.value.trim() || "Сегодня",
+    priority: process.priority,
+    status: "Новая",
+    createdBy: currentUser().name,
+    createdAt: new Date().toISOString(),
+    result: "",
     done: false,
-  });
+  };
+  process.tasks.unshift(task);
   process.history.push(`Создана задача: ${title}`);
+  audit("Создание задачи", "task", task.id, "", { processId: process.id, owner: task.owner, due: task.due });
+  notify(state.users.find((user) => user.name === task.owner)?.id || "", "Новая задача", `${process.id}: ${title}`, process.dueState, process.id);
   saveState();
   renderAll();
   openProcessModal(id, "tasks");
@@ -1780,10 +3970,12 @@ function addTask(id) {
 
 function addComment(id) {
   const process = processById(id);
+  if (!process || !canAccessProcess(process)) return toast("У вас нет доступа к этой карточке.", "warn");
   const text = $("#commentText")?.value.trim();
-  if (!process || !text) return toast("Введите комментарий.", "warn");
-  process.comments.unshift({ author: "Вы", text, time: "сейчас" });
+  if (!text) return toast("Введите комментарий.", "warn");
+  process.comments.unshift({ author: currentUser().name, text, time: "сейчас" });
   process.history.push("Добавлен комментарий");
+  audit("Добавление комментария", process.type, process.id, "", text);
   saveState();
   renderAll();
   openProcessModal(id, "comments");
@@ -1791,19 +3983,43 @@ function addComment(id) {
 
 function toggleTask(processId, taskId, done) {
   const process = processById(processId);
+  if (!process || !canAccessProcess(process) || !currentPolicy().canEditProcesses) return toast("Изменение задач недоступно.", "warn");
   const task = process?.tasks.find((item) => item.id === taskId);
   if (!task) return;
   task.done = done;
+  task.status = done ? "Выполнена" : "В работе";
+  task.closedAt = done ? new Date().toISOString() : "";
   process.history.push(done ? `Задача закрыта: ${task.title}` : `Задача возвращена в работу: ${task.title}`);
+  audit(done ? "Закрытие задачи" : "Возврат задачи в работу", "task", task.id, !done, done);
   saveState();
   renderAll();
   openProcessModal(processId, "tasks");
 }
 
+function reassignTask(processId, taskId, owner) {
+  const process = processById(processId);
+  if (!process || !canAccessProcess(process) || !currentPolicy().canReassign) return toast("Переназначение задач недоступно.", "warn");
+  const task = process.tasks.find((item) => item.id === taskId);
+  if (!task || !owner) return;
+  const previousOwner = task.owner;
+  task.owner = owner;
+  task.status = task.done ? "Выполнена" : "В работе";
+  process.history.push(`Задача «${task.title}» переназначена: ${previousOwner} → ${owner}`);
+  audit("Смена исполнителя задачи", "task", task.id, previousOwner, owner);
+  notify(state.users.find((user) => user.name === owner)?.id || "", "Вам назначена задача", `${process.id}: ${task.title}`, process.dueState, process.id);
+  saveState();
+  renderAll();
+  openProcessModal(processId, "tasks");
+  toast(`Задача передана: ${owner}`, "ok");
+}
+
 function openCreateModal(defaultType = activeView) {
-  const type = PROCESS_META[defaultType] ? defaultType : "appeals";
-  const initialClient = state.clients[0];
-  const defaultOwner = defaultOwnerFor(type, initialClient?.type);
+  if (!currentPolicy().canCreate) return toast("Создание карточек недоступно для вашей роли.", "warn");
+  const allowedTypes = allowedCreateTypes();
+  const type = allowedTypes.includes(defaultType) ? defaultType : allowedTypes[0] || "appeals";
+  const clients = accessibleClients();
+  const initialClient = clients[0] || state.clients[0];
+  const defaultOwner = currentPolicy().canReassign ? defaultOwnerFor(type, initialClient?.type) : currentUser().name;
   const modal = $("#requestModal");
   modal.innerHTML = `
     <article class="modal" role="dialog" aria-modal="true" aria-labelledby="createTitle">
@@ -1816,10 +4032,10 @@ function openCreateModal(defaultType = activeView) {
       </header>
       <div class="detail-grid">
         <label>Тип процесса
-          <select id="createType">${Object.entries(PROCESS_META).map(([key, meta]) => `<option value="${key}" ${key === type ? "selected" : ""}>${meta.label}</option>`).join("")}</select>
+          <select id="createType">${Object.entries(PROCESS_META).filter(([key]) => allowedTypes.includes(key)).map(([key, meta]) => `<option value="${key}" ${key === type ? "selected" : ""}>${meta.label}</option>`).join("")}</select>
         </label>
         <label>Клиент
-          <select id="createClient">${state.clients.map((client) => `<option value="${client.id}">${client.name}</option>`).join("")}<option value="new">+ Новый клиент</option></select>
+          <select id="createClient">${clients.map((client) => `<option value="${client.id}">${client.name}</option>`).join("")}<option value="new">+ Новый клиент</option></select>
         </label>
         <label>Тип клиента
           <select id="createClientType">
@@ -1838,7 +4054,7 @@ function openCreateModal(defaultType = activeView) {
           <select id="createSupply">${supplyOptions(type, "Талоны")}</select>
         </label>
         <label>Ответственный
-          <select id="createOwner">${staffOptions(defaultOwner)}</select>
+          <select id="createOwner" ${currentPolicy().canReassign ? "" : "disabled"}>${staffOptions(defaultOwner)}</select>
         </label>
         <label>Объем<input id="createVolume" placeholder="Например, 5 000 л" /></label>
         <label>Сумма<input id="createAmount" placeholder="Например, 2 500 000 ₸" /></label>
@@ -1863,22 +4079,42 @@ function openCreateModal(defaultType = activeView) {
 }
 
 function createProcess() {
+  if (!currentPolicy().canCreate) return toast("Создание карточек недоступно для вашей роли.", "warn");
   const type = $("#createType").value;
+  if (!allowedCreateTypes().includes(type)) return toast("Эта роль не может создавать выбранный процесс.", "warn");
   const meta = metaFor(type);
   const fuel = $("#createFuel").value;
   const companyKey = companyByFuel(fuel);
   const clientType = $("#createClientType").value;
-  const owner = clientType === "Государственная организация" ? "Ольга" : $("#createOwner").value || defaultOwnerFor(type, clientType);
+  const owner = currentPolicy().canReassign
+    ? clientType === "Государственная организация"
+      ? "Ольга"
+      : $("#createOwner").value || defaultOwnerFor(type, clientType)
+    : currentUser().name;
   let clientId = $("#createClient").value;
   if (clientId === "new") {
     const name = $("#createClientName").value.trim();
     if (!name) return toast("Введите название нового клиента.", "warn");
+    const bin = $("#createClientBin").value.trim();
+    const duplicate = bin && state.clients.find((client) => client.bin.replace(/\D/g, "") === bin.replace(/\D/g, ""));
+    if (duplicate) {
+      $("#createClient").value = duplicate.id;
+      state.selectedClientId = duplicate.id;
+      return toast(`Клиент с этим БИН уже существует: ${duplicate.name}. Выберите его в списке.`, "warn");
+    }
     const client = {
       id: uid("cli"),
       name,
-      bin: $("#createClientBin").value.trim() || "Не указан",
+      bin: bin || "Не указан",
       type: clientType,
       contacts: "Не заполнено",
+      legalAddress: "",
+      bankDetails: "",
+      phone: "",
+      email: "",
+      status: "Новый",
+      responsible: owner,
+      supplyMethods: [$("#createSupply").value],
       products: `${productByFuel(fuel)}, ${fuel}`,
       buysGsm: productByFuel(fuel) === "ГСМ",
       buysGas: productByFuel(fuel) === "Газ",
@@ -1889,6 +4125,12 @@ function createProcess() {
     };
     state.clients.unshift(client);
     clientId = client.id;
+    audit("Создание клиента", "client", client.id, "", { name: client.name, bin: client.bin });
+  }
+  if (!clientId || !clientById(clientId)) return toast("Выберите клиента.", "warn");
+  if (type === "orders") {
+    const contractProbe = { clientId, companyKey, product: productByFuel(fuel) };
+    if (!hasActiveContract(contractProbe)) return toast("Нельзя создать заказ: у клиента нет действующего договора по выбранной компании и продукту.", "warn");
   }
   state.counters[meta.prefix] = (state.counters[meta.prefix] || 0) + 1;
   const id = `${meta.prefix}-${String(state.counters[meta.prefix]).padStart(4, "0")}`;
@@ -1915,6 +4157,7 @@ function createProcess() {
     overpayment: "unknown",
     linkedProcessIds: [],
     integration: { source: "1С", invoiceNumber: "", invoiceDate: "", paymentStatus: "Ожидается", paymentDate: "" },
+    details: defaultProcessDetails(type, { volume: $("#createVolume").value.trim(), supply: $("#createSupply").value }),
     checks: defaultChecks(type),
     documents: [],
     tasks: [{ id: uid("task"), title: `Первичная проверка: ${meta.label.toLowerCase()}`, owner, due: $("#createDue").value.trim() || "Сегодня", done: false }],
@@ -1923,11 +4166,66 @@ function createProcess() {
   };
   state.processes.unshift(process);
   state.selectedClientId = clientId;
+  audit("Создание карточки", type, id, "", { stage: process.stage, owner, companyKey });
+  notify(state.users.find((user) => user.name === owner)?.id || "", "Новая задача", `${id}: ${process.tasks[0].title}`, process.dueState, id);
   saveState();
   closeModal();
   switchView(type);
   openProcessModal(id, "data");
   toast(`Создана карточка ${id}`, "ok");
+}
+
+function importDemoTenders() {
+  if (!currentPolicy().canCreate || !allowedCreateTypes().includes("tenders")) return toast("Импорт тендеров недоступен для вашей роли.", "warn");
+  const client = state.clients.find((item) => item.type === "Государственная организация") || state.clients[0];
+  state.counters.TEN = (state.counters.TEN || 0) + 1;
+  const id = `TEN-${String(state.counters.TEN).padStart(4, "0")}`;
+  const deadline = new Date(Date.now() + 26 * 60 * 60 * 1000);
+  const deadlineValue = new Date(deadline.getTime() - deadline.getTimezoneOffset() * 60000).toISOString().slice(0, 16);
+  const process = {
+    id,
+    type: "tenders",
+    clientId: client.id,
+    clientType: client.type,
+    companyKey: "trade",
+    direction: "trade",
+    product: "ГСМ",
+    fuel: "АИ-92",
+    supply: "Госзакупка",
+    stage: "Новый тендер",
+    owner: "Ольга",
+    due: "До дедлайна 26 ч.",
+    dueState: "warn",
+    priority: "Высокая",
+    volume: "60 000 л",
+    amount: "13 200 000 ₸",
+    approvalState: "none",
+    organizationLocked: false,
+    overpayment: "unknown",
+    linkedProcessIds: [],
+    integration: { source: "Tender JSON mock", importedAt: new Date().toISOString() },
+    details: {
+      ...defaultProcessDetails("tenders"),
+      platform: "Госзакуп",
+      url: "https://goszakup.gov.kz/mock",
+      announcementNumber: `MOCK-${Date.now().toString().slice(-6)}`,
+      lotNumber: "1",
+      customer: client.name,
+      deadline: deadlineValue,
+    },
+    checks: defaultChecks("tenders"),
+    documents: [],
+    tasks: [{ id: uid("task"), title: "Проверить импортированный тендер", owner: "Ольга", due: "Сегодня", priority: "Высокая", status: "Новая", createdBy: "Импорт JSON", createdAt: new Date().toISOString(), result: "", done: false }],
+    comments: [{ author: "Импорт JSON", text: "Карточка загружена через демонстрационный API-коннектор.", time: "сейчас" }],
+    history: ["Тендер импортирован из mock JSON/API."],
+  };
+  state.processes.unshift(process);
+  audit("Импорт тендера", "tenders", id, "", { source: "mock JSON/API", announcementNumber: process.details.announcementNumber });
+  notify("olga", "Импортирован новый тендер", `${id}: проверить карточку до дедлайна`, "warn", id);
+  saveState();
+  renderAll();
+  openProcessModal(id, "data");
+  toast(`Импортирован тендер ${id}`, "ok");
 }
 
 function defaultChecks(type) {
@@ -1941,6 +4239,480 @@ function defaultChecks(type) {
   }[type] || {};
 }
 
+function defaultProcessDetails(type, process = {}) {
+  if (type === "appeals") return { source: process.supply || "WhatsApp", topic: "Другое", closeReason: "" };
+  if (type === "contracts") return { contractNumber: "", contractDate: "", startDate: "", endDate: "", paymentTerms: "", pricing: "" };
+  if (type === "orders") {
+    const volume = Number(String(process.volume || "").replace(/[^\d]/g, "")) || 0;
+    return { paidVolume: process.checks?.payment ? volume : 0, issuedVolume: 0, deliveryDate: "", esfStatus: process.checks?.esf ? "Оформлена" : "Ожидается" };
+  }
+  if (type === "extensions") return { extensionSubject: String(process.supply || "").toLowerCase().includes("карт") ? "Топливная карта" : "Талоны", purchasePrice: "", currentPrice: "", discount: "", recalculation: "", newExpiry: "", reason: "" };
+  if (type === "refunds") return { refundReason: "", preliminaryAmount: "", overpaymentAmount: "", returnAmount: "", clientDebt: "", paymentOrderNumber: "", paymentDate: "" };
+  if (type === "tenders") return { platform: "Госзакуп", url: "", announcementNumber: "", lotNumber: "", customer: "", deadline: "", bidSubmittedAt: "", result: "", signedContractNumber: "" };
+  return {};
+}
+
+function applySessionState() {
+  document.body.classList.toggle("session-locked", !currentUserId);
+  if (currentUserId) renderUserShell();
+  else {
+    $("#loginForm")?.reset();
+    $("#loginError").textContent = "";
+    setTimeout(() => $("#loginUsername")?.focus(), 100);
+  }
+  iconRefresh();
+}
+
+async function hashPassword(password) {
+  const bytes = new TextEncoder().encode(password);
+  const digest = await crypto.subtle.digest("SHA-256", bytes);
+  return Array.from(new Uint8Array(digest), (byte) => byte.toString(16).padStart(2, "0")).join("");
+}
+
+async function authenticate(username, password) {
+  const normalizedUsername = username.trim().toLowerCase();
+  const passwordHash = await hashPassword(password);
+  const user = state.users.find((account) => {
+    const logins = [account.login, ...(account.loginAliases || [])].filter(Boolean).map((value) => value.trim().toLowerCase());
+    return account.active !== false && logins.includes(normalizedUsername) && account.passwordHash === passwordHash;
+  });
+  return user?.id || "";
+}
+
+async function submitLogin() {
+  const username = $("#loginUsername")?.value || "";
+  const password = $("#loginPassword")?.value || "";
+  const submitButton = $("#loginForm button[type='submit']");
+  if (submitButton) submitButton.disabled = true;
+  const userId = await authenticate(username, password);
+  if (submitButton) submitButton.disabled = false;
+  if (!userId) {
+    $("#loginError").textContent = t("wrongCredentials");
+    $("#loginPassword").value = "";
+    $("#loginPassword").focus();
+    return;
+  }
+  $("#loginError").textContent = "";
+  loginAs(userId);
+}
+
+function loginAs(userId) {
+  const user = state.users.find((item) => item.id === userId);
+  if (!user || !ROLE_POLICIES[user.roleId]) return toast("Профиль ещё не настроен.", "warn");
+  currentUserId = user.id;
+  localStorage.setItem(SESSION_KEY, currentUserId);
+  activeView = "dashboard";
+  currentCompany = currentPolicy().companies.length === 1 ? currentPolicy().companies[0] : "all";
+  slaOnly = false;
+  activeStage = "";
+  applySessionState();
+  switchView("dashboard");
+  audit("Вход пользователя", "user", user.id, "", { login: user.login });
+  saveState();
+  toast(`Вход выполнен: ${user.name}`, "ok");
+  if (user.mustChangePassword) toast("Используется временный пароль. Его нужно сменить в профиле.", "warn");
+}
+
+function logout() {
+  audit("Выход пользователя", "user", currentUserId);
+  saveState();
+  currentUserId = "";
+  localStorage.removeItem(SESSION_KEY);
+  closeModal();
+  applySessionState();
+}
+
+function togglePasswordVisibility() {
+  const input = $("#loginPassword");
+  const button = $("#passwordToggle");
+  if (!input || !button) return;
+  const show = input.type === "password";
+  input.type = show ? "text" : "password";
+  button.setAttribute("aria-label", show ? t("hidePassword") : t("showPassword"));
+  button.setAttribute("title", show ? t("hidePassword") : t("showPassword"));
+  button.innerHTML = `<span data-lucide="${show ? "eye-off" : "eye"}"></span>`;
+  iconRefresh();
+}
+
+function openUserProfile() {
+  const user = currentUser();
+  const policy = currentPolicy();
+  const companyAccess =
+    policy.companies.length === 1
+      ? `<strong>${companyLabel(policy.companies[0])}</strong><small>Данные второго юридического лица недоступны</small>`
+      : `<strong>Обе компании</strong><small>GAZOIL TRADE и УГХ GAZOIL</small>`;
+  const processAccess =
+    policy.roleType === "companyDirector"
+      ? `<strong>Процессы своей компании</strong><small>Продления, возвраты, тендеры и решения директора</small>`
+      : policy.roleType === "founder"
+        ? `<strong>Только просмотр аналитики</strong><small>Без изменения процессов, статусов и документов</small>`
+        : `<strong>Ролевой рабочий контур</strong><small>Доступ определяется назначением и зоной ответственности</small>`;
+  const modal = $("#requestModal");
+  modal.innerHTML = `
+    <article class="modal profile-modal" role="dialog" aria-modal="true" aria-labelledby="profileTitle">
+      <header class="modal-header">
+        <div>
+          <span class="eyebrow">Текущий пользователь</span>
+          <h2 id="profileTitle">${user.name}</h2>
+        </div>
+        <button class="icon-button" data-close-modal title="Закрыть" aria-label="Закрыть"><span data-lucide="x"></span></button>
+      </header>
+      <div class="profile-access-head">
+        <span class="user-avatar">${user.name.slice(0, 1)}</span>
+        <div>
+          <strong>${user.role}</strong>
+          <p>${user.email || "Рабочий аккаунт GAZOIL"}</p>
+        </div>
+      </div>
+      <section class="access-list">
+        <div><span data-lucide="building-2"></span><p>${companyAccess}</p></div>
+        <div><span data-lucide="workflow"></span><p>${processAccess}</p></div>
+        <div><span data-lucide="stamp"></span><p><strong>Решения и согласования</strong><small>${policy.canSubstituteDirectors ? "Контроль очереди и замещение директоров" : "Согласовать или вернуть на доработку"}</small></p></div>
+        <div><span data-lucide="chart-no-axes-combined"></span><p><strong>Финансы и аналитика</strong><small>${policy.canSeeTeam ? "Планы, продажи, SLA и загрузка команды" : "План и продажи только своей компании"}</small></p></div>
+      </section>
+      <footer class="modal-footer">
+        <button class="ghost-button" data-action="logout"><span data-lucide="log-out"></span><span>Выйти</span></button>
+        <button class="ghost-button" data-action="change-password"><span data-lucide="key-round"></span><span>Сменить пароль</span></button>
+        <button class="primary-button" data-close-modal>Продолжить работу</button>
+      </footer>
+    </article>
+  `;
+  modal.classList.add("is-open");
+  modal.setAttribute("aria-hidden", "false");
+  iconRefresh();
+}
+
+function roleOptions(selected = "") {
+  return Object.entries(ROLE_POLICIES)
+    .map(([roleId, policy]) => `<option value="${roleId}" ${roleId === selected ? "selected" : ""}>${policy.label}</option>`)
+    .join("");
+}
+
+function openCreateClientModal() {
+  if (!currentPolicy().canCreate) return toast("Создание клиентов недоступно.", "warn");
+  const modal = $("#requestModal");
+  modal.innerHTML = `
+    <article class="modal is-wide" role="dialog" aria-modal="true" aria-labelledby="newClientTitle">
+      <header class="modal-header">
+        <div><span class="eyebrow">Единая клиентская база</span><h2 id="newClientTitle">Новый клиент</h2></div>
+        <button class="icon-button" data-close-modal title="Закрыть" aria-label="Закрыть"><span data-lucide="x"></span></button>
+      </header>
+      <div class="detail-grid">
+        <label>Наименование<input id="clientName" /></label>
+        <label>БИН / ИИН<input id="clientBin" inputmode="numeric" /></label>
+        <label>Тип клиента<select id="clientType">${CRM_DICTIONARIES.clientTypes.map((type) => `<option>${type}</option>`).join("")}</select></label>
+        <label>Статус<select id="clientStatus">${["Новый", "Активный", "Спящий", "Потерянный", "Проблемный"].map((status) => `<option>${status}</option>`).join("")}</select></label>
+        <label class="field-wide">Юридический адрес<input id="clientAddress" /></label>
+        <label class="field-wide">Банковские реквизиты<textarea id="clientBankDetails"></textarea></label>
+        <label>Контактное лицо<input id="clientContact" /></label>
+        <label>Телефон<input id="clientPhone" /></label>
+        <label>Email<input id="clientEmail" type="email" /></label>
+        <label>Ответственный<select id="clientResponsible">${staffOptions(currentPolicy().canReassign ? "Жанара" : currentUser().name)}</select></label>
+        <label>Доверенное лицо<input id="clientPowerPerson" /></label>
+        <label>Срок доверенности<input id="clientPowerUntil" type="date" /></label>
+      </div>
+      <div class="toggle-grid client-options">
+        <label class="toggle-row"><input id="clientBuysGsm" type="checkbox" checked /><span>Покупает ГСМ</span></label>
+        <label class="toggle-row"><input id="clientBuysGas" type="checkbox" /><span>Покупает газ</span></label>
+        ${CRM_DICTIONARIES.supplyMethods.map((method) => `<label class="toggle-row"><input type="checkbox" data-client-supply="${method}" /><span>${method}</span></label>`).join("")}
+      </div>
+      <footer class="modal-footer">
+        <button class="ghost-button" data-close-modal>Отмена</button>
+        <button class="primary-button" data-save-client><span data-lucide="building-2"></span><span>Создать клиента</span></button>
+      </footer>
+    </article>
+  `;
+  modal.classList.add("is-open");
+  modal.setAttribute("aria-hidden", "false");
+  iconRefresh();
+}
+
+function saveClient() {
+  if (!currentPolicy().canCreate) return toast("Создание клиентов недоступно.", "warn");
+  const name = $("#clientName")?.value.trim();
+  const bin = $("#clientBin")?.value.trim();
+  if (!name || !bin) return toast("Наименование и БИН / ИИН обязательны.", "warn");
+  const duplicate = state.clients.find((client) => client.bin.replace(/\D/g, "") === bin.replace(/\D/g, ""));
+  if (duplicate) {
+    state.selectedClientId = duplicate.id;
+    closeModal();
+    switchView("clients");
+    return toast(`Клиент с таким БИН уже существует: ${duplicate.name}`, "warn");
+  }
+  const supplyMethods = $$("[data-client-supply]:checked").map((checkbox) => checkbox.dataset.clientSupply);
+  const client = {
+    id: uid("cli"),
+    name,
+    bin,
+    type: $("#clientType").value,
+    status: $("#clientStatus").value,
+    legalAddress: $("#clientAddress").value.trim(),
+    bankDetails: $("#clientBankDetails").value.trim(),
+    contacts: $("#clientContact").value.trim() || "Не заполнено",
+    phone: $("#clientPhone").value.trim(),
+    email: $("#clientEmail").value.trim(),
+    responsible: $("#clientResponsible").value || currentUser().name,
+    buysGsm: $("#clientBuysGsm").checked,
+    buysGas: $("#clientBuysGas").checked,
+    supplyMethods,
+    products: [$("#clientBuysGsm").checked ? "ГСМ" : "", $("#clientBuysGas").checked ? "Газ" : "", ...supplyMethods].filter(Boolean).join(", "),
+    debt: "0 ₸",
+    powerPerson: $("#clientPowerPerson").value.trim(),
+    powerUntil: $("#clientPowerUntil").value || "Нет",
+    powerFile: "",
+    history: [{ at: new Date().toISOString(), text: `Клиент создан пользователем ${currentUser().name}` }],
+  };
+  state.clients.unshift(client);
+  state.selectedClientId = client.id;
+  audit("Создание клиента", "client", client.id, "", { name: client.name, bin: client.bin, responsible: client.responsible });
+  saveState();
+  closeModal();
+  switchView("clients");
+  toast(`Клиент ${client.name} создан`, "ok");
+}
+
+function openCreateUserModal() {
+  if (!currentPolicy().canManageUsers) return toast("Управление пользователями недоступно.", "warn");
+  const modal = $("#requestModal");
+  modal.innerHTML = `
+    <article class="modal profile-modal" role="dialog" aria-modal="true" aria-labelledby="newUserTitle">
+      <header class="modal-header">
+        <div><span class="eyebrow">Администрирование</span><h2 id="newUserTitle">Новый пользователь</h2></div>
+        <button class="icon-button" data-close-modal title="Закрыть" aria-label="Закрыть"><span data-lucide="x"></span></button>
+      </header>
+      <div class="detail-grid">
+        <label>Имя сотрудника<input id="newUserName" placeholder="Имя и фамилия" /></label>
+        <label>Логин<input id="newUserLogin" placeholder="Уникальный логин" /></label>
+        <label>Email<input id="newUserEmail" type="email" placeholder="name@gazoil.kz" /></label>
+        <label>Роль<select id="newUserRole">${roleOptions("SERVICE_MANAGER")}</select></label>
+      </div>
+      <section class="route-panel">
+        <div><span class="eyebrow">Временный доступ</span><strong>Стартовый пароль: Aa123456</strong></div>
+        <p>В состоянии приложения хранится только SHA-256 хэш. При первом входе пользователь получит требование сменить пароль.</p>
+      </section>
+      <footer class="modal-footer">
+        <button class="ghost-button" data-close-modal>Отмена</button>
+        <button class="primary-button" data-save-new-user><span data-lucide="user-plus"></span><span>Создать пользователя</span></button>
+      </footer>
+    </article>
+  `;
+  modal.classList.add("is-open");
+  modal.setAttribute("aria-hidden", "false");
+  iconRefresh();
+}
+
+function openEditUserModal(userId) {
+  if (!currentPolicy().canManageUsers) return toast("Управление пользователями недоступно.", "warn");
+  const user = state.users.find((item) => item.id === userId && item.roleId);
+  if (!user) return;
+  const modal = $("#requestModal");
+  modal.innerHTML = `
+    <article class="modal profile-modal" role="dialog" aria-modal="true" aria-labelledby="editUserTitle">
+      <header class="modal-header">
+        <div><span class="eyebrow">Права доступа</span><h2 id="editUserTitle">${user.name}</h2></div>
+        <button class="icon-button" data-close-modal title="Закрыть" aria-label="Закрыть"><span data-lucide="x"></span></button>
+      </header>
+      <div class="detail-grid">
+        <label>Имя сотрудника<input id="editUserName" value="${escapeAttr(user.name)}" /></label>
+        <label>Логин<input id="editUserLogin" value="${escapeAttr(user.login)}" /></label>
+        <label>Email<input id="editUserEmail" type="email" value="${escapeAttr(user.email || "")}" /></label>
+        <label>Роль<select id="editUserRole">${roleOptions(user.roleId)}</select></label>
+      </div>
+      <label class="toggle-row user-active-toggle">
+        <input id="editUserActive" type="checkbox" ${user.active === false ? "" : "checked"} />
+        <span>Аккаунт активен<small>Отключённый пользователь не сможет войти</small></span>
+      </label>
+      <footer class="modal-footer">
+        <button class="ghost-button" data-reset-user-password="${user.id}"><span data-lucide="rotate-ccw-key"></span><span>Сбросить пароль</span></button>
+        <button class="primary-button" data-save-user="${user.id}">Сохранить</button>
+      </footer>
+    </article>
+  `;
+  modal.classList.add("is-open");
+  modal.setAttribute("aria-hidden", "false");
+  iconRefresh();
+}
+
+function saveNewUser() {
+  if (!currentPolicy().canManageUsers) return toast("Управление пользователями недоступно.", "warn");
+  const name = $("#newUserName")?.value.trim();
+  const login = $("#newUserLogin")?.value.trim();
+  const email = $("#newUserEmail")?.value.trim();
+  const roleId = $("#newUserRole")?.value;
+  if (!name || !login || !ROLE_POLICIES[roleId]) return toast("Заполните имя, логин и роль.", "warn");
+  if (state.users.some((user) => user.login?.toLowerCase() === login.toLowerCase())) return toast("Такой логин уже существует.", "warn");
+  const idBase = login.toLowerCase().replace(/[^a-zа-яё0-9]+/gi, "-").replace(/^-|-$/g, "") || "user";
+  const user = {
+    id: `${idBase}-${Date.now().toString().slice(-5)}`,
+    name,
+    login,
+    email,
+    role: roleLabel(roleId),
+    roleId,
+    scope: ROLE_POLICIES[roleId].companies.length === 1 ? ROLE_POLICIES[roleId].companies[0] : "both",
+    passwordHash: DEFAULT_PASSWORD_HASH,
+    mustChangePassword: true,
+    active: true,
+  };
+  state.users.push(user);
+  const generalGroup = state.communications.groups.find((group) => group.id === "group-general");
+  if (generalGroup && !generalGroup.memberIds.includes(user.id)) generalGroup.memberIds.push(user.id);
+  audit("Создание пользователя", "user", user.id, "", { login, roleId });
+  saveState();
+  closeModal();
+  renderAll();
+  toast(`Пользователь ${name} создан`, "ok");
+}
+
+function saveUser(userId) {
+  if (!currentPolicy().canManageUsers) return toast("Управление пользователями недоступно.", "warn");
+  const user = state.users.find((item) => item.id === userId && item.roleId);
+  if (!user) return;
+  const nextLogin = $("#editUserLogin")?.value.trim();
+  const nextRole = $("#editUserRole")?.value;
+  if (!nextLogin || !ROLE_POLICIES[nextRole]) return toast("Логин и роль обязательны.", "warn");
+  if (state.users.some((item) => item.id !== user.id && item.login?.toLowerCase() === nextLogin.toLowerCase())) return toast("Такой логин уже существует.", "warn");
+  const before = { name: user.name, login: user.login, roleId: user.roleId, active: user.active !== false };
+  user.name = $("#editUserName")?.value.trim() || user.name;
+  user.login = nextLogin;
+  user.email = $("#editUserEmail")?.value.trim() || "";
+  user.roleId = nextRole;
+  user.role = roleLabel(nextRole);
+  user.scope = ROLE_POLICIES[nextRole].companies.length === 1 ? ROLE_POLICIES[nextRole].companies[0] : "both";
+  user.active = $("#editUserActive")?.checked ?? true;
+  const after = { name: user.name, login: user.login, roleId: user.roleId, active: user.active };
+  audit(before.roleId === after.roleId ? "Изменение пользователя" : "Смена роли", "user", user.id, before, after);
+  saveState();
+  closeModal();
+  renderAll();
+  toast("Пользователь обновлён", "ok");
+}
+
+function resetUserPassword(userId) {
+  if (!currentPolicy().canResetPasswords) return toast("Сброс паролей недоступен.", "warn");
+  const user = state.users.find((item) => item.id === userId && item.roleId);
+  if (!user) return;
+  user.passwordHash = DEFAULT_PASSWORD_HASH;
+  user.mustChangePassword = true;
+  audit("Сброс пароля", "user", user.id, "Существующий хэш", "Временный пароль установлен");
+  saveState();
+  toast(`Пароль ${user.name} сброшен на Aa123456`, "ok");
+  if ($("#editUserRole")) openEditUserModal(userId);
+  else renderAll();
+}
+
+function openChangePasswordModal() {
+  const modal = $("#requestModal");
+  modal.innerHTML = `
+    <article class="modal profile-modal" role="dialog" aria-modal="true" aria-labelledby="passwordTitle">
+      <header class="modal-header">
+        <div><span class="eyebrow">Безопасность</span><h2 id="passwordTitle">Смена пароля</h2></div>
+        <button class="icon-button" data-close-modal title="Закрыть" aria-label="Закрыть"><span data-lucide="x"></span></button>
+      </header>
+      <div class="detail-grid password-grid">
+        <label>Текущий пароль<input id="currentPassword" type="password" autocomplete="current-password" /></label>
+        <label>Новый пароль<input id="newPassword" type="password" autocomplete="new-password" /></label>
+        <label>Повторите новый пароль<input id="repeatPassword" type="password" autocomplete="new-password" /></label>
+      </div>
+      <footer class="modal-footer">
+        <button class="ghost-button" data-close-modal>Отмена</button>
+        <button class="primary-button" data-save-password>Сменить пароль</button>
+      </footer>
+    </article>
+  `;
+  modal.classList.add("is-open");
+  modal.setAttribute("aria-hidden", "false");
+}
+
+async function saveOwnPassword() {
+  const user = currentUser();
+  const current = $("#currentPassword")?.value || "";
+  const next = $("#newPassword")?.value || "";
+  const repeat = $("#repeatPassword")?.value || "";
+  if ((await hashPassword(current)) !== user.passwordHash) return toast("Текущий пароль указан неверно.", "warn");
+  if (next.length < 8 || !/[A-ZА-Я]/.test(next) || !/[a-zа-я]/.test(next) || !/\d/.test(next)) return toast("Новый пароль: минимум 8 символов, заглавная и строчная буква, цифра.", "warn");
+  if (next !== repeat) return toast("Новые пароли не совпадают.", "warn");
+  user.passwordHash = await hashPassword(next);
+  user.mustChangePassword = false;
+  audit("Смена собственного пароля", "user", user.id, "Старый хэш", "Новый хэш");
+  saveState();
+  closeModal();
+  toast("Пароль изменён", "ok");
+}
+
+function openNotificationsModal() {
+  const items = userNotifications();
+  const modal = $("#requestModal");
+  modal.innerHTML = `
+    <article class="modal profile-modal" role="dialog" aria-modal="true" aria-labelledby="notificationsTitle">
+      <header class="modal-header">
+        <div><span class="eyebrow">Центр событий</span><h2 id="notificationsTitle">Уведомления</h2></div>
+        <button class="icon-button" data-close-modal title="Закрыть" aria-label="Закрыть"><span data-lucide="x"></span></button>
+      </header>
+      <div class="record-list notification-list">
+        ${
+          items
+            .slice(0, 30)
+            .map(
+              (item) => `
+                <article class="record-row">
+                  <span data-lucide="${item.tone === "danger" ? "circle-alert" : item.tone === "warn" ? "clock-alert" : "bell"}"></span>
+                  <div><strong>${item.title}</strong><p>${item.text}</p></div>
+                  ${item.processId ? `<button class="row-action" data-open="${item.processId}">${item.processId}</button>` : `<b>${new Date(item.createdAt).toLocaleDateString("ru-RU")}</b>`}
+                </article>
+              `,
+            )
+            .join("") || '<div class="empty-state">Новых уведомлений нет</div>'
+        }
+      </div>
+      <footer class="modal-footer"><button class="primary-button" data-close-modal>Закрыть</button></footer>
+    </article>
+  `;
+  items.forEach((item) => {
+    item.read = true;
+  });
+  saveState();
+  modal.classList.add("is-open");
+  modal.setAttribute("aria-hidden", "false");
+  renderUserShell();
+  iconRefresh();
+}
+
+function openDashboardQueue(queue) {
+  const policy = currentPolicy();
+  currentCompany = policy.companies.length === 1 ? policy.companies[0] : "all";
+  $$("[data-filter-company]").forEach((button) => button.classList.toggle("is-selected", button.dataset.filterCompany === currentCompany));
+  slaOnly = false;
+  $("#slaOnly").classList.remove("is-selected");
+
+  if (queue === "incoming") {
+    switchView("appeals");
+    activeStage = "Требуется классификация";
+    renderAll();
+    return;
+  }
+  if (queue === "expiring") {
+    switchView("contracts");
+    activeStage = "Скоро истекает";
+    renderAll();
+    return;
+  }
+
+  switchView("dashboard");
+  if (queue === "overdue") {
+    slaOnly = true;
+    $("#slaOnly").classList.add("is-selected");
+    renderAll();
+    $("#requestTable")?.closest(".panel")?.scrollIntoView({ behavior: "smooth", block: "start" });
+    return;
+  }
+  if (queue === "approvals") {
+    $(".approvals-panel")?.scrollIntoView({ behavior: "smooth", block: "start" });
+    return;
+  }
+  $("#requestTable")?.closest(".panel")?.scrollIntoView({ behavior: "smooth", block: "start" });
+}
+
 function closeModal() {
   currentModalId = "";
   $("#requestModal").classList.remove("is-open");
@@ -1948,27 +4720,47 @@ function closeModal() {
 }
 
 function switchView(viewName) {
+  if (currentUserId && !currentPolicy().views.includes(viewName)) return toast("Раздел недоступен для вашей роли.", "warn");
   activeView = viewName;
   activeStage = "";
   $$(".nav-item").forEach((button) => button.classList.toggle("is-active", button.dataset.view === viewName));
   $("#dashboardView").classList.toggle("is-active", viewName === "dashboard");
   $("#clientsView").classList.toggle("is-active", viewName === "clients");
   $("#genericView").classList.toggle("is-active", !["dashboard", "clients"].includes(viewName));
-  const titles = {
-    dashboard: "Дашборд руководителя",
-    clients: "Клиенты",
-    appeals: "Обращения клиентов",
-    contracts: "Договоры",
-    orders: "Заказы и выдача топлива",
-    extensions: "Продление талонов и ТК",
-    refunds: "Возвраты денежных средств",
-    tenders: "Тендеры и госзакупки",
-    reports: "Отчеты и аналитика",
-  };
-  $("#viewTitle").textContent = titles[viewName] || "GAZOIL CRM";
+  updateViewTitle();
   if (!["dashboard", "clients"].includes(viewName)) renderGeneric(viewName);
   closeSidebar();
   renderAll();
+}
+
+function updateViewTitle() {
+  if (activeView === "dashboard" && currentPolicy().roleType === "companyDirector") {
+    $("#viewTitle").textContent = currentLanguage === "kk" ? "Директордың басқару тақтасы" : "Дашборд директора";
+    return;
+  }
+  if (activeView === "dashboard" && currentPolicy().roleType === "founder") {
+    $("#viewTitle").textContent = currentLanguage === "kk" ? "Құрылтайшы кабинеті" : "Кабинет учредителя";
+    return;
+  }
+  const keys = {
+    dashboard: "dashboardTitle",
+    assistant: "assistantTitle",
+    messages: "messagesTitle",
+    clients: "clientsTitle",
+    appeals: "appealsTitle",
+    contracts: "contractsTitle",
+    orders: "ordersTitle",
+    extensions: "extensionsTitle",
+    refunds: "refundsTitle",
+    tenders: "tendersTitle",
+    tasks: "tasksTitle",
+    documents: "documentsTitle",
+    reports: "reportsTitle",
+    users: "usersTitle",
+    audit: "auditTitle",
+    settings: "settingsTitle",
+  };
+  if ($("#viewTitle")) $("#viewTitle").textContent = keys[activeView] ? t(keys[activeView]) : "GAZOIL CRM";
 }
 
 function exportState() {
@@ -2065,10 +4857,20 @@ function enhanceStaticControls() {
 
 document.addEventListener("click", (event) => {
   const target = event.target;
-  const button = target.closest("button, .client-card, .stage-item");
+  const button = target.closest("button, .client-card, .stage-item, [data-dashboard-queue], [data-founder-signal]");
   if (!button) return;
 
+  if (button.matches("[data-founder-signal]")) openFounderSignalModal(button.dataset.founderSignal);
+  if (button.matches("[data-ai-prompt]")) sendAiPrompt(button.dataset.aiPrompt);
+  if (button.matches("[data-send-ai]")) sendAiPrompt();
+  if (button.matches("[data-chat-type]")) selectChat(button.dataset.chatType, button.dataset.chatId);
+  if (button.matches("[data-send-message]")) sendCorporateMessage();
+  if (button.matches("[data-create-chat-group]")) openCreateChatGroupModal();
+  if (button.matches("[data-save-chat-group]")) saveChatGroup();
+  if (button.matches("[data-chat-members]")) openChatMembers(button.dataset.chatMembers);
   if (button.matches("[data-open]")) openProcessModal(button.dataset.open, "data");
+  if (button.matches("[data-lang]")) setLanguage(button.dataset.lang);
+  if (button.matches("[data-dashboard-queue]")) openDashboardQueue(button.dataset.dashboardQueue);
   if (button.matches("[data-next]")) advanceProcess(button.dataset.next);
   if (button.matches("[data-transition-id]")) performTransition(button.dataset.transitionId, button.dataset.transitionKey);
   if (button.matches("[data-prev]")) previousProcess(button.dataset.prev);
@@ -2081,6 +4883,10 @@ document.addEventListener("click", (event) => {
   if (button.matches("[data-add-task]")) addTask(button.dataset.addTask);
   if (button.matches("[data-add-comment]")) addComment(button.dataset.addComment);
   if (button.matches("[data-sync-one-c]")) simulate1CSync(button.dataset.syncOneC);
+  if (button.matches("[data-create-invoice-one-c]")) mock1CCreateInvoice(button.dataset.createInvoiceOneC);
+  if (button.matches("[data-confirm-payment-one-c]")) mock1CConfirmPayment(button.dataset.confirmPaymentOneC);
+  if (button.matches("[data-create-linked]")) createLinkedFromAppeal(button.dataset.sourceProcess, button.dataset.createLinked);
+  if (button.matches("[data-import-tenders]")) importDemoTenders();
   if (button.matches("[data-create-process]")) createProcess();
   if (button.matches("[data-client]")) {
     state.selectedClientId = button.dataset.client;
@@ -2093,6 +4899,20 @@ document.addEventListener("click", (event) => {
   }
   if (button.matches("[data-action='export']")) exportState();
   if (button.matches("[data-action='reset']")) resetDemo();
+  if (button.matches("[data-action='profile']")) openUserProfile();
+  if (button.matches("[data-action='create-client']")) openCreateClientModal();
+  if (button.matches("[data-action='notifications']")) openNotificationsModal();
+  if (button.matches("[data-action='logout']")) logout();
+  if (button.matches("[data-action='change-password']")) openChangePasswordModal();
+  if (button.matches("[data-save-password]")) saveOwnPassword();
+  if (button.matches("[data-save-new-user]")) saveNewUser();
+  if (button.matches("[data-save-client]")) saveClient();
+  if (button.matches("[data-save-founder-task]")) saveFounderTask();
+  if (button.matches("[data-complete-founder-task]")) completeFounderTask(button.dataset.completeFounderTask);
+  if (button.matches("[data-edit-user]")) openEditUserModal(button.dataset.editUser);
+  if (button.matches("[data-save-user]")) saveUser(button.dataset.saveUser);
+  if (button.matches("[data-reset-user-password]")) resetUserPassword(button.dataset.resetUserPassword);
+  if (button.matches("#passwordToggle")) togglePasswordVisibility();
   if (button.matches("[data-action='refresh-dashboard']")) {
     renderExecutiveDashboard();
     toast("Дашборд обновлен", "ok");
@@ -2106,12 +4926,24 @@ document.addEventListener("click", (event) => {
     renderExecutiveDashboard();
     toast(`Отчет сформирован: ${start} - ${end}`, "ok");
   }
+  if (button.matches("[data-action='build-founder-report']")) {
+    const start = $("#founderReportStart")?.value;
+    const end = $("#founderReportEnd")?.value;
+    if (!start || !end || start > end) return toast("Выберите корректный период отчёта.", "warn");
+    state.reportPeriod = { start, end };
+    saveState();
+    renderFounderReports();
+    toast(`Отчёт сформирован: ${start} — ${end}`, "ok");
+  }
   if (button.matches("[data-toast]")) toast(button.dataset.toast);
 });
 
 document.addEventListener("change", (event) => {
   if (event.target.matches("[data-task-done]")) {
     toggleTask(event.target.dataset.taskDone, event.target.dataset.taskId, event.target.checked);
+  }
+  if (event.target.matches("[data-task-owner]")) {
+    reassignTask(event.target.dataset.taskOwner, event.target.dataset.taskId, event.target.value);
   }
   if (event.target.matches("#createFuel")) {
     const companyKey = companyByFuel(event.target.value);
@@ -2160,10 +4992,27 @@ $("#slaOnly").addEventListener("click", () => {
 });
 
 $("#newRequestBtn").addEventListener("click", () => openCreateModal(activeView));
-$("#genericAction").addEventListener("click", () => openCreateModal(activeView));
+$("#genericAction").addEventListener("click", () => {
+  if (activeView === "users") return openCreateUserModal();
+  if (activeView === "messages") return openCreateChatGroupModal();
+  openCreateModal(activeView);
+});
 
 $("#requestModal").addEventListener("click", (event) => {
   if (event.target.id === "requestModal") closeModal();
+});
+
+$("#loginForm").addEventListener("submit", (event) => {
+  event.preventDefault();
+  submitLogin();
+});
+
+$("#loginUsername").addEventListener("input", () => {
+  $("#loginError").textContent = "";
+});
+
+$("#loginPassword").addEventListener("input", () => {
+  $("#loginError").textContent = "";
 });
 
 $("#mobileMenu").addEventListener("click", () => setSidebar(!document.body.classList.contains("sidebar-open")));
@@ -2171,6 +5020,28 @@ $("#sidebarClose")?.addEventListener("click", closeSidebar);
 $("#mobileBackdrop")?.addEventListener("click", closeSidebar);
 
 document.addEventListener("keydown", (event) => {
+  if ((event.metaKey || event.ctrlKey) && event.key === "Enter" && event.target.matches("#assistantPrompt")) {
+    event.preventDefault();
+    sendAiPrompt();
+    return;
+  }
+  if ((event.metaKey || event.ctrlKey) && event.key === "Enter" && event.target.matches("#corporateMessageText")) {
+    event.preventDefault();
+    sendCorporateMessage();
+    return;
+  }
+  const founderSignal = event.target.closest?.("[data-founder-signal]");
+  if (founderSignal && ["Enter", " "].includes(event.key)) {
+    event.preventDefault();
+    openFounderSignalModal(founderSignal.dataset.founderSignal);
+    return;
+  }
+  const dashboardCard = event.target.closest?.("[data-dashboard-queue]");
+  if (dashboardCard && ["Enter", " "].includes(event.key)) {
+    event.preventDefault();
+    openDashboardQueue(dashboardCard.dataset.dashboardQueue);
+    return;
+  }
   if (event.key === "Escape") {
     closeModal();
     closeSidebar();
@@ -2179,4 +5050,6 @@ document.addEventListener("keydown", (event) => {
 
 enhanceStaticControls();
 setupMobileGestures();
+runAutomations();
 renderAll();
+applySessionState();

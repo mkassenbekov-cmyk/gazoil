@@ -307,7 +307,7 @@ const ROLE_POLICIES = {
   SERVICE_MANAGER: {
     label: "Менеджер обслуживания",
     companies: ["trade", "ugh"],
-    views: ["dashboard", "clients", "appeals", "contracts", "orders", "extensions", "refunds", "tasks", "documents"],
+    views: ["dashboard", "clients", "appeals", "contracts", "orders", "extensions", "refunds", "tenders", "tasks", "documents"],
     canCreate: true,
     canApprove: false,
     canSeeFinancials: false,
@@ -492,6 +492,62 @@ const FUEL_PRICE = {
   "Автогаз": 95,
 };
 
+const SERVICE_MANAGER_NAMES = ["Ельжан", "Жанара", "Екатерина"];
+const APPEAL_CLASSIFICATIONS = [
+  "Договор",
+  "Счёт",
+  "Заказ топлива",
+  "Выдача топлива",
+  "Оплата",
+  "Талоны",
+  "Топливная карта",
+  "Опт",
+  "Продление",
+  "Возврат",
+  "Акт сверки",
+  "Документы",
+  "Госзакупки",
+  "Жалоба / проблема",
+  "Консультация",
+  "Другое",
+];
+const APPEAL_PROCESS_BY_CLASSIFICATION = {
+  Договор: "contracts",
+  Счёт: "orders",
+  "Заказ топлива": "orders",
+  "Выдача топлива": "orders",
+  Талоны: "orders",
+  "Топливная карта": "orders",
+  Опт: "orders",
+  Продление: "extensions",
+  Возврат: "refunds",
+  Госзакупки: "tenders",
+};
+const APPEAL_TASK_BY_CLASSIFICATION = {
+  Договор: "Запросить реквизиты и подготовить договор",
+  Счёт: "Подготовить счёт клиенту",
+  "Заказ топлива": "Уточнить объём и вид топлива",
+  "Выдача топлива": "Проверить оплату и доверенность",
+  Оплата: "Проверить оплату в 1С",
+  Талоны: "Подготовить заказ талонов",
+  "Топливная карта": "Подготовить пополнение топливной карты",
+  Опт: "Уточнить объём, цену и условия оптовой поставки",
+  Продление: "Передать заявку на продление",
+  Возврат: "Передать заявку на возврат",
+  "Акт сверки": "Подготовить акт сверки",
+  Документы: "Отправить или запросить документы",
+  Госзакупки: "Передать Ольге по госзакупкам",
+  "Жалоба / проблема": "Разобрать жалобу клиента",
+  Другое: "Уточнить обращение и определить дальнейшее действие",
+};
+const DEFAULT_SLA_SETTINGS = {
+  firstResponseMinutes: 15,
+  classificationMinutes: 30,
+  processCreationMinutes: 30,
+  missedCallMinutes: 20,
+  consultationHours: 24,
+};
+
 const MONTHLY_REVENUE_PLAN = 180000000;
 const COMPANY_MONTHLY_PLAN = { trade: 150000000, ugh: 30000000 };
 const DEMO_SALES = makeDemoSales();
@@ -553,7 +609,10 @@ const PROCESS_NAMES_KK = {
 const PROCESS_FIELD_SCHEMAS = {
   appeals: [
     ["source", "Источник обращения", "select", ["WhatsApp", "Телефония", "Email", "Офис", "Сайт", "Руководитель", "Тендерная площадка", "Иное"]],
-    ["topic", "Тема обращения", "select", ["Договор", "Счёт", "Выдача топлива", "Оплата", "Талоны", "Топливная карта", "Акт сверки", "Возврат", "Продление", "Документы", "Опт", "Госзакупки", "Другое"]],
+    ["contactName", "Контактное лицо", "text"],
+    ["phone", "Телефон", "text"],
+    ["email", "Email", "email"],
+    ["subject", "Тема обращения", "text"],
     ["closeReason", "Причина закрытия без решения", "textarea"],
   ],
   contracts: [
@@ -612,7 +671,8 @@ const REPORTS = [
 
 const DEFAULT_STATE = {
   selectedClientId: "cli-1",
-  counters: { APP: 5521, AGR: 713, ORD: 1290, EXT: 337, REF: 441, TEN: 188 },
+  counters: { APP: 5524, AGR: 713, ORD: 1290, EXT: 337, REF: 441, TEN: 188 },
+  crmSettings: { sla: DEFAULT_SLA_SETTINGS, roundRobinIndex: 0 },
   dictionaries: CRM_DICTIONARIES,
   users: STAFF,
   fuels: FUEL_TYPES,
@@ -877,6 +937,78 @@ const DEFAULT_STATE = {
       comments: [{ author: "Екатерина", text: "Проект согласован и отправлен клиенту.", time: "Сегодня" }],
       history: ["Реквизиты получены", "Проект договора подготовлен", "Отправлено клиенту"],
     },
+    {
+      id: "APP-5522",
+      type: "appeals",
+      clientId: "cli-1",
+      companyKey: "trade",
+      product: "ГСМ",
+      fuel: "АИ-92",
+      supply: "Email",
+      stage: "Новое обращение",
+      owner: "Екатерина",
+      due: "12 мин.",
+      dueState: "new",
+      priority: "Высокая",
+      volume: "Запрос счёта и условий",
+      amount: "7 500 л",
+      approvalState: "none",
+      details: { source: "Email", topic: "Счёт", closeReason: "", firstResponseAt: "", customerMessage: "Просим выставить счёт на АИ-92 и сообщить срок поставки." },
+      checks: { classified: false, linked: false, clientAnswer: false },
+      documents: [],
+      tasks: [{ id: "task-inbox-email", title: "Классифицировать обращение из email", owner: "Екатерина", due: "Сегодня", done: false }],
+      comments: [{ author: "Email клиента", text: "Просим выставить счёт на АИ-92 и сообщить срок поставки.", time: "13:08" }],
+      history: ["Создано из корпоративной почты"],
+    },
+    {
+      id: "APP-5523",
+      type: "appeals",
+      clientId: "cli-2",
+      companyKey: "ugh",
+      product: "Газ",
+      fuel: "Автогаз",
+      supply: "Телефония",
+      stage: "В работе",
+      owner: "Ельжан",
+      due: "5 мин.",
+      dueState: "warn",
+      priority: "Критическая",
+      volume: "Входящий звонок",
+      amount: "Уточнение оплаты",
+      approvalState: "none",
+      details: { source: "Телефония", topic: "Оплата", closeReason: "", firstResponseAt: "13:02", customerMessage: "Клиент уточняет, поступила ли оплата по последнему счёту." },
+      checks: { classified: true, linked: false, clientAnswer: false },
+      documents: [],
+      tasks: [{ id: "task-inbox-phone", title: "Проверить оплату и перезвонить клиенту", owner: "Ельжан", due: "Сегодня 13:20", done: false }],
+      comments: [{ author: "Телефония", text: "Клиент уточняет, поступила ли оплата по последнему счёту.", time: "13:01" }],
+      history: ["Создано из входящего звонка", "Обращение взято в работу Ельжаном"],
+    },
+    {
+      id: "APP-5524",
+      type: "appeals",
+      clientId: "cli-4",
+      companyKey: "trade",
+      product: "ГСМ",
+      fuel: "ДТ лето",
+      supply: "WhatsApp",
+      stage: "Ожидается клиент",
+      owner: "Жанара",
+      due: "Сегодня 15:00",
+      dueState: "progress",
+      priority: "Обычная",
+      volume: "WhatsApp",
+      amount: "Продление доверенности",
+      approvalState: "none",
+      details: { source: "WhatsApp", topic: "Документы", closeReason: "", firstResponseAt: "12:42", customerMessage: "Подскажите, куда отправить новую доверенность?" },
+      checks: { classified: true, linked: false, clientAnswer: false },
+      documents: [],
+      tasks: [{ id: "task-inbox-wa", title: "Получить новую доверенность", owner: "Жанара", due: "Сегодня 15:00", done: false }],
+      comments: [
+        { author: "Жанара", text: "Отправила клиенту адрес корпоративной почты.", time: "12:42" },
+        { author: "WhatsApp", text: "Подскажите, куда отправить новую доверенность?", time: "12:39" },
+      ],
+      history: ["Создано из WhatsApp", "Первый ответ отправлен за 3 минуты"],
+    },
   ],
 };
 
@@ -892,6 +1024,7 @@ let currentModalId = "";
 let currentFounderSignalKey = "";
 let activeChatType = "group";
 let activeChatId = "group-general";
+let crmChannelFilter = "all";
 
 const $ = (selector) => document.querySelector(selector);
 const $$ = (selector) => Array.from(document.querySelectorAll(selector));
@@ -963,6 +1096,10 @@ function migrateState(saved) {
   next.notifications = Array.isArray(saved.notifications) ? saved.notifications : [];
   next.founderTasks = Array.isArray(saved.founderTasks) ? saved.founderTasks : [];
   next.aiChats = saved.aiChats && typeof saved.aiChats === "object" ? saved.aiChats : {};
+  next.crmSettings = {
+    sla: { ...DEFAULT_SLA_SETTINGS, ...(saved.crmSettings?.sla || {}) },
+    roundRobinIndex: Number(saved.crmSettings?.roundRobinIndex || 0),
+  };
   next.communications = {
     groups: Array.isArray(saved.communications?.groups) ? saved.communications.groups : structuredClone(DEFAULT_STATE.communications.groups),
     messages: Array.isArray(saved.communications?.messages) ? saved.communications.messages : structuredClone(DEFAULT_STATE.communications.messages),
@@ -1011,12 +1148,13 @@ function migrateState(saved) {
   const processSource = savedProcesses.concat(structuredClone(DEFAULT_STATE.processes).filter((process) => !savedProcessIds.has(process.id)));
   next.processes = processSource.map((process) => {
     const fuel = process.fuel || inferFuel(process);
-    const owner = ownerMap[process.owner] || process.owner || defaultOwnerFor(process.type);
+    const migrateEmailAppealOwner = process.id === "APP-5522" && process.owner === "Диана";
+    const owner = migrateEmailAppealOwner ? "Екатерина" : ownerMap[process.owner] || process.owner || defaultOwnerFor(process.type);
     const client = next.clients.find((item) => item.id === process.clientId);
     const migrateTenderApproval = process.id === "TEN-0188" && process.stage === "Подготовка заявки" && process.approvalState === "approved";
     const stage = migrateTenderApproval ? "На решении директора" : process.stage;
     const stagePosition = metaFor(process.type).stages.indexOf(stage);
-    return {
+    const migrated = {
       ...process,
       stage,
       fuel,
@@ -1047,11 +1185,43 @@ function migrateState(saved) {
         createdAt: new Date().toISOString(),
         result: "",
         ...task,
-        owner: ownerMap[task.owner] || task.owner || owner,
+        owner: migrateEmailAppealOwner && task.owner === "Диана" ? "Екатерина" : ownerMap[task.owner] || task.owner || owner,
       })),
       comments: process.comments || [],
       history: process.history || ["Карточка импортирована из демо-состояния"],
     };
+    if (migrated.type === "appeals") {
+      const createdAt = migrated.details.createdAt || migrated.createdAt || new Date(Date.now() - 5 * 60 * 1000).toISOString();
+      migrated.createdAt = migrated.createdAt || createdAt;
+      migrated.details = {
+        communicationId: migrated.details.communicationId || `COM-${migrated.id.replace(/\D/g, "") || Date.now().toString().slice(-6)}`,
+        communicationStatus: migrated.details.communicationStatus || (migrated.details.source === "Телефония" ? "Завершён" : "Получено"),
+        callDurationSeconds: Number(migrated.details.callDurationSeconds || 0),
+        callRecordingUrl: migrated.details.callRecordingUrl || "",
+        contactName: migrated.details.contactName || "",
+        phone: migrated.details.phone || client?.phone || "",
+        email: migrated.details.email || client?.email || "",
+        subject: migrated.details.subject || migrated.volume || "",
+        result: migrated.details.result || "",
+        problemDescription: migrated.details.problemDescription || "",
+        createdAt,
+        firstResponseAtISO: migrated.details.firstResponseAtISO || "",
+        classifiedAt: migrated.details.classifiedAt || "",
+        linkedAt: migrated.details.linkedAt || "",
+        resolvedAt: migrated.details.resolvedAt || "",
+        missedCall: Boolean(migrated.details.missedCall),
+        callbackCompletedAt: migrated.details.callbackCompletedAt || "",
+        nextStep: migrated.details.nextStep || "",
+        ...migrated.details,
+      };
+      if (migrated.details.firstResponseAt && !migrated.details.firstResponseAtISO) {
+        migrated.details.firstResponseAtISO = createdAt;
+        migrated.checks.firstResponse = true;
+      }
+      if (migrated.checks.classified && !migrated.details.classifiedAt) migrated.details.classifiedAt = createdAt;
+      if (migrated.checks.linked && !migrated.details.linkedAt) migrated.details.linkedAt = createdAt;
+    }
+    return migrated;
   });
   return next;
 }
@@ -1077,6 +1247,102 @@ function addDaysISO(baseISO, delta) {
   const date = new Date(year, month - 1, day);
   date.setDate(date.getDate() + delta);
   return toLocalISO(date);
+}
+
+function crmSlaSettings() {
+  return { ...DEFAULT_SLA_SETTINGS, ...(state.crmSettings?.sla || {}) };
+}
+
+function minutesSince(iso) {
+  const time = Date.parse(iso || "");
+  return Number.isFinite(time) ? Math.max(0, Math.floor((Date.now() - time) / 60000)) : 0;
+}
+
+function appealSlaStatus(process) {
+  const details = process.details || {};
+  const sla = crmSlaSettings();
+  const age = minutesSince(details.createdAt || process.createdAt);
+  const violations = [];
+  const terminal = ["Решено", "Закрыто без решения"].includes(process.stage);
+  if (!details.firstResponseAtISO && !terminal && age > sla.firstResponseMinutes) violations.push("Просрочен первый ответ");
+  if (!details.classifiedAt && !terminal && age > sla.classificationMinutes) violations.push("Не выполнена классификация");
+  if (details.classifiedAt && APPEAL_PROCESS_BY_CLASSIFICATION[details.topic] && !process.checks?.linked && minutesSince(details.classifiedAt) > sla.processCreationMinutes) {
+    violations.push("Нет связанного процесса");
+  }
+  if (details.missedCall && !details.callbackCompletedAt && age > sla.missedCallMinutes) violations.push("Пропущенный звонок без перезвона");
+  if (details.topic === "Консультация" && !terminal && age > sla.consultationHours * 60) violations.push("Консультация не закрыта");
+  if (process.stage === "В работе" && age > sla.consultationHours * 60) violations.push("Обращение зависло в работе");
+  if (process.stage === "Закрыто без решения" && !details.closeReason?.trim()) violations.push("Закрыто без причины");
+  const overdueTask = (process.tasks || []).some((task) => !task.done && task.dueAt && Date.parse(task.dueAt) < Date.now());
+  if (overdueTask) violations.push("Задача просрочена");
+
+  let nextMinutes = sla.firstResponseMinutes - age;
+  let label = `Первый ответ: ${Math.max(0, nextMinutes)} мин.`;
+  if (details.missedCall && !details.callbackCompletedAt) {
+    nextMinutes = sla.missedCallMinutes - age;
+    label = `Перезвон: ${Math.max(0, nextMinutes)} мин.`;
+  } else if (details.firstResponseAtISO && !details.classifiedAt) {
+    nextMinutes = sla.classificationMinutes - age;
+    label = `Классификация: ${Math.max(0, nextMinutes)} мин.`;
+  } else if (details.classifiedAt && APPEAL_PROCESS_BY_CLASSIFICATION[details.topic] && !process.checks?.linked) {
+    nextMinutes = sla.processCreationMinutes - minutesSince(details.classifiedAt);
+    label = `Создать процесс: ${Math.max(0, nextMinutes)} мин.`;
+  } else if (details.topic === "Консультация" && !terminal) {
+    nextMinutes = sla.consultationHours * 60 - age;
+    label = `Закрыть консультацию: ${Math.max(0, Math.ceil(nextMinutes / 60))} ч.`;
+  }
+  return { violations: [...new Set(violations)], nextMinutes, label };
+}
+
+function refreshAppealSla(process) {
+  if (process.type !== "appeals") return process;
+  const status = appealSlaStatus(process);
+  process.slaViolations = status.violations;
+  process.due = status.violations.length ? status.violations[0] : status.label;
+  if (["Решено", "Закрыто без решения"].includes(process.stage)) process.dueState = "ok";
+  else if (status.violations.length) process.dueState = "danger";
+  else if (status.nextMinutes <= 5) process.dueState = "warn";
+  else process.dueState = process.details?.firstResponseAtISO ? "progress" : "new";
+  return process;
+}
+
+function appealKanbanColumn(process) {
+  const violations = appealSlaStatus(process).violations;
+  if (violations.length) return "Просрочено";
+  if (process.stage === "Новое обращение" && process.details?.communicationStatus === "Входящий") return "Новое";
+  if (process.stage === "Новое обращение" && !process.details?.firstResponseAtISO) return "Требуется первый ответ";
+  if (process.stage === "Новое обращение" || process.stage === "Требуется классификация") return "Требуется классификация";
+  if (process.stage === "Передано в профильный процесс") return "Передано в процесс";
+  return process.stage;
+}
+
+function serviceManagers() {
+  return state.users.filter((user) => user.roleId === "SERVICE_MANAGER" && user.active !== false);
+}
+
+function nextServiceManager() {
+  const managers = serviceManagers();
+  if (!managers.length) return currentUser().name;
+  state.crmSettings ||= { sla: DEFAULT_SLA_SETTINGS, roundRobinIndex: 0 };
+  const index = Number(state.crmSettings.roundRobinIndex || 0) % managers.length;
+  state.crmSettings.roundRobinIndex = (index + 1) % managers.length;
+  return managers[index].name;
+}
+
+function findClientsByContact({ phone = "", email = "", bin = "", name = "", contact = "" } = {}) {
+  const normalizedPhone = phone.replace(/\D/g, "");
+  const normalizedBin = bin.replace(/\D/g, "");
+  const values = [name, contact].map((value) => value.trim().toLowerCase()).filter(Boolean);
+  return state.clients.filter((client) => {
+    const clientPhones = `${client.phone || ""} ${client.contacts || ""}`.replace(/\D/g, "");
+    const clientText = `${client.name || ""} ${client.contacts || ""}`.toLowerCase();
+    return Boolean(
+      normalizedPhone && clientPhones.includes(normalizedPhone) ||
+      email && `${client.email || ""} ${client.contacts || ""}`.toLowerCase().includes(email.trim().toLowerCase()) ||
+      normalizedBin && client.bin?.replace(/\D/g, "") === normalizedBin ||
+      values.some((value) => clientText.includes(value)),
+    );
+  });
 }
 
 function makeDemoSales() {
@@ -1165,6 +1431,17 @@ function runAutomations() {
   let changed = false;
   state.processes.forEach((process) => {
     process.automationFlags ||= {};
+    if (process.type === "appeals") {
+      const previousViolations = JSON.stringify(process.slaViolations || []);
+      refreshAppealSla(process);
+      if (JSON.stringify(process.slaViolations || []) !== previousViolations) changed = true;
+      if (process.slaViolations?.length && !process.automationFlags.appealSlaNotice) {
+        notify("diana", "Нарушение SLA входящего обращения", `${process.id}: ${process.slaViolations.join(", ")}`, "danger", process.id);
+        audit("Нарушение SLA обращения", process.type, process.id, "", process.slaViolations, { id: "system", name: "Система", role: "Автоматизация" });
+        process.automationFlags.appealSlaNotice = true;
+        changed = true;
+      }
+    }
     if (process.type === "contracts" && process.details?.endDate) {
       const end = new Date(`${process.details.endDate}T23:59:59`);
       const days = Math.ceil((end - now) / 86400000);
@@ -1342,7 +1619,7 @@ function supplyOptions(type, selected = "") {
       : type === "tenders"
         ? ["Госзакупка"]
         : type === "appeals"
-          ? ["WhatsApp", "Телефония", "Email", "Офис", "Руководитель", "Иное"]
+          ? ["WhatsApp", "Телефония", "Email", "Офис", "Сайт", "Руководитель", "Иное"]
           : CRM_DICTIONARIES.supplyMethods;
   return values.map((value) => `<option ${value === selected ? "selected" : ""}>${value}</option>`).join("");
 }
@@ -1360,7 +1637,7 @@ function allowedCreateTypes() {
   if (roleType === "procurementManager") return ["tenders", "contracts", "extensions", "refunds"];
   if (roleType === "salesManager") return ["appeals", "contracts", "orders"];
   if (roleType === "wholesaleManager") return ["appeals", "contracts", "orders"];
-  if (roleType === "assignedManager") return ["appeals", "contracts", "orders", "extensions", "refunds"];
+  if (roleType === "assignedManager") return ["appeals", "contracts", "orders", "extensions", "refunds", "tenders"];
   return [];
 }
 
@@ -1654,6 +1931,254 @@ function renderExecutiveDashboard() {
   renderFuelSalesToday();
   renderPeriodReport();
   renderSalesAlerts();
+}
+
+function crmChannelInfo(source = "") {
+  const normalized = source.toLowerCase();
+  if (normalized.includes("whatsapp")) return { key: "whatsapp", label: "WhatsApp", icon: "message-circle", tone: "is-green" };
+  if (normalized.includes("телефон") || normalized.includes("звон")) return { key: "phone", label: "Телефония", icon: "phone-call", tone: "is-blue" };
+  if (normalized.includes("email") || normalized.includes("почт")) return { key: "email", label: "Email", icon: "mail", tone: "is-amber" };
+  if (normalized.includes("сайт")) return { key: "site", label: "Сайт", icon: "globe-2", tone: "is-blue" };
+  return { key: "other", label: source || "Иное", icon: "inbox", tone: "is-blue" };
+}
+
+function crmInboxAppeals() {
+  return accessibleProcesses()
+    .filter((process) => process.type === "appeals")
+    .filter((process) => crmChannelFilter === "all" || crmChannelInfo(process.details?.source || process.supply).key === crmChannelFilter)
+    .sort((a, b) => {
+      const priority = { danger: 0, warn: 1, new: 2, progress: 3, ok: 4 };
+      return (priority[a.dueState] ?? 5) - (priority[b.dueState] ?? 5);
+    });
+}
+
+function renderServiceManagerDashboard() {
+  const user = currentUser();
+  const appeals = crmInboxAppeals();
+  const allAppeals = accessibleProcesses().filter((process) => process.type === "appeals");
+  const newAppeals = allAppeals.filter((process) => ["Новое обращение", "Требуется классификация"].includes(process.stage));
+  const overdue = allAppeals.filter((process) => process.dueState === "danger" || process.dueState === "warn");
+  const waiting = allAppeals.filter((process) => process.stage === "Ожидается клиент");
+  const answered = allAppeals.filter((process) => process.details?.firstResponseAt || process.comments?.some((comment) => !/WhatsApp|Email|Телефония/i.test(comment.author)));
+  const responseRate = allAppeals.length ? Math.round((answered.length / allAppeals.length) * 100) : 100;
+
+  $("#executiveHero").innerHTML = `
+    <div>
+      <span class="eyebrow">CRM · единая входящая линия</span>
+      <h2>${user.name}, ваши обращения клиентов в одном рабочем окне</h2>
+      <p>WhatsApp, телефония и корпоративная почта собираются в персональную очередь. Здесь можно ответить клиенту, классифицировать запрос и запустить профильный процесс.</p>
+      <div class="hero-inline-actions">
+        <button class="primary-button" data-open-omnichannel="incoming-call"><span data-lucide="phone-incoming"></span><span>Mock-звонок</span></button>
+        <button class="ghost-button" data-open-omnichannel="whatsapp"><span data-lucide="message-circle"></span><span>Mock-WhatsApp</span></button>
+        <button class="ghost-button" data-open-omnichannel="email"><span data-lucide="mail"></span><span>Mock-email</span></button>
+      </div>
+    </div>
+    <div class="hero-statuses">
+      <div class="hero-status"><span>Новые сегодня</span><strong>${newAppeals.length}</strong></div>
+      <div class="hero-status"><span>Требуют ответа</span><strong>${overdue.length}</strong></div>
+      <div class="hero-status"><span>Ожидают клиента</span><strong>${waiting.length}</strong></div>
+      <div class="hero-status"><span>Первый ответ</span><strong>${responseRate}%</strong></div>
+    </div>
+  `;
+
+  const channels = ["all", "whatsapp", "phone", "email"];
+  const channelLabels = {
+    all: ["inbox", "Все входящие"],
+    whatsapp: ["message-circle", "WhatsApp"],
+    phone: ["phone-call", "Телефония"],
+    email: ["mail", "Email"],
+  };
+  $(".metric-grid").innerHTML = channels
+    .map((key) => {
+      const items = key === "all" ? allAppeals : allAppeals.filter((process) => crmChannelInfo(process.details?.source || process.supply).key === key);
+      const urgent = items.filter((process) => process.dueState === "danger" || process.dueState === "warn").length;
+      return `
+        <article class="metric-card crm-channel-card ${crmChannelFilter === key ? "is-selected" : ""}" data-crm-channel="${key}" role="button" tabindex="0">
+          <span class="metric-icon ${key === "whatsapp" ? "is-green" : key === "phone" ? "is-blue" : key === "email" ? "is-amber" : "is-blue"}" data-lucide="${channelLabels[key][0]}"></span>
+          <div><p>${channelLabels[key][1]}</p><strong>${items.length}</strong><small>${urgent ? `${urgent} требуют быстрого ответа` : "очередь в норме"}</small></div>
+        </article>
+      `;
+    })
+    .join("");
+
+  $(".decision-panel .eyebrow").textContent = "Омниканальная линия";
+  $(".decision-panel h2").textContent = "Входящие обращения";
+  $(".decision-panel .text-button").textContent = "Открыть реестр";
+  $(".decision-panel .text-button").dataset.crmOpenAppeals = "true";
+  $("#managementQueue").innerHTML =
+    appeals
+      .slice(0, 7)
+      .map((process) => {
+        const client = clientById(process.clientId);
+        const channel = crmChannelInfo(process.details?.source || process.supply);
+        return `
+          <article class="crm-inbox-row">
+            <span class="crm-channel-icon ${channel.tone}" data-lucide="${channel.icon}"></span>
+            <div class="crm-inbox-copy">
+              <div><strong>${process.id} · ${client.name}</strong><span>${process.due}</span></div>
+              <p>${process.details?.customerMessage || process.comments?.[0]?.text || process.volume}</p>
+              <small>${channel.label} · ${process.details?.topic || "Другое"} · ${process.stage}</small>
+            </div>
+            <div class="crm-inbox-actions">
+              <span class="status-pill is-progress">${process.owner}</span>
+              <button class="row-action" data-open="${process.id}">Открыть</button>
+            </div>
+          </article>
+        `;
+      })
+      .join("") || '<div class="empty-state">В выбранном канале обращений нет</div>';
+
+  $(".team-panel").hidden = true;
+
+  $(".leader-summary-panel .eyebrow").textContent = "CRM-воронка";
+  $(".leader-summary-panel h2").textContent = "Движение входящих заявок";
+  $("#leaderSummary").innerHTML = `
+    <div class="crm-funnel">
+      ${[
+        ["Новые", newAppeals.length, "is-blue"],
+        ["В работе", allAppeals.filter((process) => process.stage === "В работе").length, "is-progress"],
+        ["Ожидают клиента", waiting.length, "is-warn"],
+        ["Переданы в процесс", allAppeals.filter((process) => process.stage === "Передано в профильный процесс").length, "is-green"],
+        ["Решены", allAppeals.filter((process) => process.stage === "Решено").length, "is-green"],
+      ].map(([label, value, tone]) => `<div class="crm-funnel-step ${tone}"><span>${label}</span><strong>${value}</strong></div>`).join("")}
+    </div>
+    <div class="crm-quality-row">
+      <div><span>Обращений всего</span><strong>${allAppeals.length}</strong></div>
+      <div><span>Первый ответ дан</span><strong>${responseRate}%</strong></div>
+      <div><span>Нарушение SLA</span><strong>${overdue.length}</strong></div>
+    </div>
+  `;
+
+  $(".fuel-sales-panel .eyebrow").textContent = "Каналы связи";
+  $(".fuel-sales-panel h2").textContent = "Нагрузка по источникам";
+  $(".fuel-sales-panel .text-button").hidden = true;
+  const maxChannel = Math.max(1, ...["whatsapp", "phone", "email", "other"].map((key) => allAppeals.filter((process) => crmChannelInfo(process.details?.source || process.supply).key === key).length));
+  $("#fuelSalesToday").innerHTML = ["whatsapp", "phone", "email", "other"]
+    .map((key) => {
+      const items = allAppeals.filter((process) => crmChannelInfo(process.details?.source || process.supply).key === key);
+      const sample = items[0] ? crmChannelInfo(items[0].details?.source || items[0].supply) : { label: key === "other" ? "Другие" : key, icon: "inbox" };
+      return `<article class="crm-channel-load" data-crm-channel="${key}"><div><span data-lucide="${sample.icon}"></span><strong>${sample.label}</strong></div><div class="fuel-bar"><span style="width:${Math.max(5, Math.round((items.length / maxChannel) * 100))}%"></span></div><b>${items.length}</b></article>`;
+    })
+    .join("");
+
+  $(".report-builder-panel .eyebrow").textContent = "Контроль SLA";
+  $(".report-builder-panel h2").textContent = "Скорость первого ответа";
+  $(".report-builder-panel .report-form").innerHTML = `
+    <div class="crm-sla-gauge"><strong>${responseRate}%</strong><span>обращений получили первый ответ</span></div>
+    <div class="crm-sla-legend"><span><i class="is-ok"></i> до 10 минут</span><span><i class="is-warn"></i> 10–20 минут</span><span><i class="is-danger"></i> более 20 минут</span></div>
+  `;
+  $("#periodReport").innerHTML = overdue.length
+    ? overdue.slice(0, 4).map((process) => `<button class="crm-sla-item" data-open="${process.id}"><strong>${process.id}</strong><span>${clientById(process.clientId).name}</span><b>${process.due}</b></button>`).join("")
+    : '<div class="empty-state">Все обращения обрабатываются в срок</div>';
+
+  $(".alerts-panel .eyebrow").textContent = "Контроль качества";
+  $(".alerts-panel h2").textContent = "Что требует внимания";
+  const qualityAlerts = [
+    ...newAppeals.map((process) => ({ tone: "warn", icon: "message-square-reply", title: "Нужно обработать", text: `${process.id} · ${clientById(process.clientId).name}`, id: process.id })),
+    ...overdue.map((process) => ({ tone: "danger", icon: "timer-reset", title: "Риск нарушения SLA", text: `${process.id} · ${process.due} · ${process.owner}`, id: process.id })),
+  ].slice(0, 6);
+  $("#alertCount").textContent = qualityAlerts.length;
+  $("#salesAlerts").innerHTML = qualityAlerts.map((alert) => `<article class="alert-item ${alert.tone}" data-open="${alert.id}" role="button"><span data-lucide="${alert.icon}"></span><div><strong>${alert.title}</strong><p>${alert.text}</p></div></article>`).join("") || '<div class="empty-state">Критичных сигналов нет</div>';
+
+  $(".process-panel").hidden = false;
+  $(".process-panel .eyebrow").textContent = "Канбан обращений";
+  $(".process-panel h2").textContent = "Воронка обработки";
+  const crmStages = ["Новое", "Требуется первый ответ", "Требуется классификация", "В работе", "Ожидается клиент", "Передано в процесс", "Решено", "Просрочено"];
+  $("#processBoard").innerHTML = crmStages
+    .map((stage) => {
+      const items = appeals.filter((process) => appealKanbanColumn(process) === stage);
+      return `
+        <div class="process-lane crm-lane">
+          <div class="lane-title"><span>${stage}</span><b>${items.length}</b></div>
+          ${items.map((process) => {
+            const client = clientById(process.clientId);
+            const channel = crmChannelInfo(process.details?.source || process.supply);
+            return `<article class="process-card crm-kanban-card">
+              <div class="crm-card-channel"><span data-lucide="${channel.icon}"></span>${channel.label}<b>${process.priority}</b></div>
+              <strong>${client.name}</strong>
+              <p>${process.details?.subject || process.details?.customerMessage || process.volume}</p>
+              <small>${process.details?.phone || process.details?.email || "Контакт уточняется"} · ${process.due}</small>
+              <div class="crm-card-actions">
+                <button data-open="${process.id}">Открыть</button>
+                ${!process.details?.firstResponseAtISO ? `<button data-open="${process.id}">Ответить</button>` : ""}
+                ${!process.checks?.classified ? `<button data-open="${process.id}">Классифицировать</button>` : ""}
+                <button data-transfer-diana="${process.id}">Диане</button>
+              </div>
+            </article>`;
+          }).join("") || '<div class="empty-state">Нет обращений</div>'}
+        </div>
+      `;
+    })
+    .join("");
+
+  $(".approvals-panel").hidden = false;
+  $(".approvals-panel .eyebrow").textContent = "Личная очередь";
+  $(".approvals-panel h2").textContent = "Требуют моего ответа";
+  $(".approvals-panel .text-button").hidden = true;
+  const personalUrgent = appeals.filter((process) => ["Новое обращение", "Требуется классификация"].includes(process.stage) || ["danger", "warn"].includes(process.dueState));
+  $("#approvalList").innerHTML = personalUrgent.map((process) => `<article class="approval-item"><header><strong>${process.id}</strong><span class="status-pill is-warn">${process.due}</span></header><p>${clientById(process.clientId).name} · ${crmChannelInfo(process.details?.source || process.supply).label}</p><button class="primary-button" data-open="${process.id}">Обработать</button></article>`).join("") || '<div class="empty-state">Срочных обращений нет</div>';
+
+  $(".operational-panel").hidden = false;
+  $(".operational-panel .eyebrow").textContent = "Журнал коммуникаций";
+  $(".operational-panel h2").textContent = "Все входящие обращения";
+  $("#requestTable").innerHTML = appeals
+    .map((process) => {
+      const client = clientById(process.clientId);
+      const channel = crmChannelInfo(process.details?.source || process.supply);
+      return `<tr><td><strong>${process.id}</strong></td><td>${client.name}</td><td><span class="crm-inline-channel"><i data-lucide="${channel.icon}"></i>${channel.label}</span></td><td>${companyLabel(process.companyKey)}</td><td><span class="status-pill ${statusClass(processTone(process))}">${process.stage}</span></td><td>${process.owner}</td><td>${process.due}</td><td><button class="row-action" data-open="${process.id}">Открыть</button></td></tr>`;
+    })
+    .join("") || '<tr><td colspan="8"><div class="empty-state">Обращений нет</div></td></tr>';
+  iconRefresh();
+}
+
+function renderSeniorManagerDashboard() {
+  renderServiceManagerDashboard();
+  const appeals = accessibleProcesses().filter((process) => process.type === "appeals").map(refreshAppealSla);
+  const unanswered = appeals.filter((process) => !process.details?.firstResponseAtISO && !["Решено", "Закрыто без решения"].includes(process.stage));
+  const unclassified = appeals.filter((process) => !process.checks?.classified && !["Решено", "Закрыто без решения"].includes(process.stage));
+  const withoutProcess = appeals.filter((process) => process.checks?.classified && APPEAL_PROCESS_BY_CLASSIFICATION[process.details?.topic] && !process.checks?.linked);
+  const overdue = appeals.filter((process) => process.slaViolations?.length);
+  const closedWithoutResult = appeals.filter((process) => process.stage === "Закрыто без решения");
+
+  $("#executiveHero").innerHTML = `
+    <div>
+      <span class="eyebrow">Контроль омниканальной CRM</span>
+      <h2>Диана, контроль сроков и качества входящих обращений</h2>
+      <p>Менеджеры обслуживания обрабатывают звонки, WhatsApp и email. Ваш кабинет показывает загрузку команды, нарушения SLA, неклассифицированные обращения и карточки без связанного процесса.</p>
+      <div class="hero-inline-actions">
+        <button class="primary-button" data-open-omnichannel="missed-call"><span data-lucide="phone-missed"></span><span>Mock-пропущенный звонок</span></button>
+        <button class="ghost-button" data-open-omnichannel="manual"><span data-lucide="square-pen"></span><span>Ручное обращение</span></button>
+      </div>
+    </div>
+    <div class="hero-statuses">
+      <div class="hero-status"><span>Без ответа</span><strong>${unanswered.length}</strong></div>
+      <div class="hero-status"><span>Не классифицировано</span><strong>${unclassified.length}</strong></div>
+      <div class="hero-status"><span>Без процесса</span><strong>${withoutProcess.length}</strong></div>
+      <div class="hero-status"><span>Нарушения SLA</span><strong>${overdue.length}</strong></div>
+    </div>
+  `;
+
+  $(".team-panel").hidden = false;
+  $(".team-panel .eyebrow").textContent = "Менеджеры обслуживания";
+  $(".team-panel h2").textContent = "Загрузка и качество";
+  $(".team-panel .status-pill").textContent = `${appeals.length} обращений`;
+  $("#teamLoad").innerHTML = SERVICE_MANAGER_NAMES.map((name) => {
+    const owned = appeals.filter((process) => process.owner === name);
+    const ownOverdue = owned.filter((process) => process.slaViolations?.length);
+    const ownUnclassified = owned.filter((process) => !process.checks?.classified);
+    return `<article class="team-row"><div><strong>${name}</strong><p>${owned.length} обращений · ${ownUnclassified.length} без классификации</p></div><span class="status-pill ${ownOverdue.length ? "is-danger" : "is-ok"}">${ownOverdue.length} просрочек</span></article>`;
+  }).join("");
+
+  $(".alerts-panel .eyebrow").textContent = "Контроль Дианы";
+  $(".alerts-panel h2").textContent = "Нарушения и исключения";
+  const controls = [
+    ...overdue.map((process) => ({ id: process.id, icon: "timer-reset", tone: "danger", title: process.slaViolations[0], text: `${process.owner} · ${clientById(process.clientId).name}` })),
+    ...withoutProcess.map((process) => ({ id: process.id, icon: "workflow", tone: "warn", title: "Нет связанного процесса", text: `${process.details?.topic} · ${process.owner}` })),
+    ...closedWithoutResult.map((process) => ({ id: process.id, icon: "circle-x", tone: "warn", title: "Закрыто без решения", text: process.details?.closeReason || "Причина не указана" })),
+  ].slice(0, 8);
+  $("#alertCount").textContent = controls.length;
+  $("#salesAlerts").innerHTML = controls.map((item) => `<article class="alert-item ${item.tone}" data-open="${item.id}" role="button"><span data-lucide="${item.icon}"></span><div><strong>${item.title}</strong><p>${item.id} · ${item.text}</p></div></article>`).join("") || '<div class="empty-state">Нарушений нет</div>';
+  iconRefresh();
 }
 
 function founderAnalytics() {
@@ -2135,8 +2660,11 @@ function renderFuelSalesToday() {
 
 function renderPeriodReport() {
   if (!$("#periodReport")) return;
-  $("#reportStart").value = state.reportPeriod.start;
-  $("#reportEnd").value = state.reportPeriod.end;
+  const reportStart = $("#reportStart");
+  const reportEnd = $("#reportEnd");
+  if (!reportStart || !reportEnd) return;
+  reportStart.value = state.reportPeriod.start;
+  reportEnd.value = state.reportPeriod.end;
   const period = aggregateSales(salesInPeriod(state.reportPeriod.start, state.reportPeriod.end));
   const fuels = Object.values(period.byFuel).sort((a, b) => b.revenue - a.revenue);
   $("#periodReport").innerHTML = `
@@ -2293,6 +2821,9 @@ function renderClientProfile() {
   const items = accessibleProcesses().filter((process) => process.clientId === client.id);
   const contracts = items.filter((item) => item.type === "contracts").length;
   const orders = items.filter((item) => item.type === "orders").length;
+  const communications = items
+    .filter((item) => item.type === "appeals")
+    .sort((a, b) => Date.parse(b.details?.createdAt || 0) - Date.parse(a.details?.createdAt || 0));
   const lastEvents = items.flatMap((item) => item.history.slice(-2).map((event) => [item.id, event])).slice(-5).reverse();
   profile.innerHTML = `
     <div class="profile-head">
@@ -2315,6 +2846,21 @@ function renderClientProfile() {
       <span>Ответственный: ${client.responsible || "Не назначен"}</span>
       <span>${client.legalAddress || "Юридический адрес не заполнен"}</span>
       <span>Поставка: ${(client.supplyMethods || []).join(", ") || "Не указана"}</span>
+    </div>
+    <div class="client-profile-tabs"><button class="is-selected">Коммуникации (${communications.length})</button><button>История процессов (${items.length})</button></div>
+    <div class="client-communications">
+      ${
+        communications.length
+          ? communications.map((appeal) => {
+              const channel = crmChannelInfo(appeal.details?.source || appeal.supply);
+              return `<article class="client-communication-row">
+                <span class="crm-channel-icon ${channel.tone}" data-lucide="${channel.icon}"></span>
+                <div><strong>${appeal.id} · ${channel.label}</strong><p>${appeal.details?.customerMessage || appeal.details?.subject || appeal.volume}</p><small>${appeal.stage} · ${appeal.details?.result || appeal.details?.topic || "Не классифицировано"}</small></div>
+                <button class="row-action" data-open="${appeal.id}">Открыть</button>
+              </article>`;
+            }).join("")
+          : '<div class="empty-state">Коммуникаций с клиентом пока нет</div>'
+      }
     </div>
     <div class="timeline">
       ${
@@ -2369,11 +2915,42 @@ function renderGeneric(viewName = activeView) {
       `;
     })
     .join("");
+  if (viewName === "appeals" && currentPolicy().canCreate) {
+    $("#stageColumn").insertAdjacentHTML(
+      "afterbegin",
+      `<div class="appeal-create-stack">
+        <button class="primary-button" data-open-omnichannel="incoming-call"><span data-lucide="phone-incoming"></span><span>Mock-звонок</span></button>
+        <button class="ghost-button" data-open-omnichannel="whatsapp"><span data-lucide="message-circle"></span><span>Mock-WhatsApp</span></button>
+        <button class="ghost-button" data-open-omnichannel="email"><span data-lucide="mail"></span><span>Mock-email</span></button>
+        <button class="ghost-button" data-open-omnichannel="manual"><span data-lucide="square-pen"></span><span>Ручное обращение</span></button>
+      </div>`,
+    );
+  }
   if (viewName === "tenders" && currentPolicy().canCreate) {
     $("#stageColumn").insertAdjacentHTML(
       "afterbegin",
       `<button class="primary-button tender-import-button" data-import-tenders><span data-lucide="cloud-download"></span><span>Импортировать тендеры</span></button>`,
     );
+  }
+
+  if (viewName === "appeals") {
+    setGenericColumns(["Номер / канал", "Клиент", "Классификация", "Стадия", "Ответственный", "SLA", ""]);
+    $("#genericTable").innerHTML =
+      all.map((process) => {
+        const client = clientById(process.clientId);
+        const channel = crmChannelInfo(process.details?.source || process.supply);
+        return `<tr>
+          <td data-label="Номер / канал"><strong>${process.id}</strong><br><small class="crm-inline-channel"><i data-lucide="${channel.icon}"></i>${channel.label}</small></td>
+          <td data-label="Клиент">${client.name}<br><small>${process.details?.phone || process.details?.email || "Контакт уточняется"}</small></td>
+          <td data-label="Классификация">${process.checks?.classified ? process.details?.topic : '<span class="status-pill is-warn">Не выполнена</span>'}</td>
+          <td data-label="Стадия"><span class="status-pill ${statusClass(processTone(process))}">${appealKanbanColumn(process)}</span></td>
+          <td data-label="Ответственный">${process.owner}</td>
+          <td data-label="SLA">${process.due}${process.slaViolations?.length ? `<br><small class="danger-text">${process.slaViolations.join(", ")}</small>` : ""}</td>
+          <td data-label=""><div class="inline-actions"><button class="row-action" data-open="${process.id}">Открыть</button>${currentPolicy().canReassign ? `<button class="row-action" data-assign-appeal="${process.id}">Назначить</button>` : ""}</div></td>
+        </tr>`;
+      }).join("") || `<tr><td colspan="7"><div class="empty-state">В этом разделе пока нет обращений</div></td></tr>`;
+    iconRefresh();
+    return;
   }
 
   $("#genericTable").innerHTML =
@@ -2972,7 +3549,18 @@ function renderSettingsModule() {
     ["Типы возврата", CRM_DICTIONARIES.refundTypes],
     ["Типы документов", ["Договор", "Счёт", "Акт", "Накладная", "ЭСФ", "Доверенность", "Письмо клиента", "Служебная записка", "Акт сверки", "Платёжное поручение", "Протокол тендера"]],
   ];
-  $("#stageColumn").innerHTML = dictionaries
+  const sla = crmSlaSettings();
+  $("#stageColumn").innerHTML = `
+    <article class="sla-settings-card">
+      <strong>Mock-SLA входящих</strong>
+      <label>Первый ответ, мин.<input id="slaFirstResponse" type="number" min="1" value="${sla.firstResponseMinutes}" /></label>
+      <label>Классификация, мин.<input id="slaClassification" type="number" min="1" value="${sla.classificationMinutes}" /></label>
+      <label>Создание процесса, мин.<input id="slaProcessCreation" type="number" min="1" value="${sla.processCreationMinutes}" /></label>
+      <label>Перезвон, мин.<input id="slaMissedCall" type="number" min="1" value="${sla.missedCallMinutes}" /></label>
+      <label>Консультация, часов<input id="slaConsultation" type="number" min="1" value="${sla.consultationHours}" /></label>
+      <button class="primary-button" data-save-sla-settings>Сохранить SLA</button>
+    </article>
+  ` + dictionaries
     .map(([title, items]) => `<article class="stage-item"><strong>${title}</strong><p>${items.length} значений</p></article>`)
     .join("");
   setGenericColumns(["Справочник", "Значения", "Количество", "Источник", "Статус", "Изменение", ""]);
@@ -2991,6 +3579,23 @@ function renderSettingsModule() {
       `,
     )
     .join("");
+}
+
+function saveSlaSettings() {
+  if (!["commercialDirector", "systemAdmin"].includes(currentPolicy().roleType)) return toast("Изменять SLA может только администратор.", "warn");
+  state.crmSettings ||= { sla: {}, roundRobinIndex: 0 };
+  state.crmSettings.sla = {
+    firstResponseMinutes: Math.max(1, Number($("#slaFirstResponse")?.value || 15)),
+    classificationMinutes: Math.max(1, Number($("#slaClassification")?.value || 30)),
+    processCreationMinutes: Math.max(1, Number($("#slaProcessCreation")?.value || 30)),
+    missedCallMinutes: Math.max(1, Number($("#slaMissedCall")?.value || 20)),
+    consultationHours: Math.max(1, Number($("#slaConsultation")?.value || 24)),
+  };
+  state.processes.filter((process) => process.type === "appeals").forEach(refreshAppealSla);
+  audit("Изменение настроек SLA", "settings", "appeal-sla", "", state.crmSettings.sla);
+  saveState();
+  renderAll();
+  toast("Настройки SLA сохранены", "ok");
 }
 
 function sumAmounts(type) {
@@ -3012,6 +3617,8 @@ function renderAll() {
   if (!["dashboard", "clients"].includes(activeView)) renderGeneric(activeView);
   applyLanguage();
   if (activeView === "dashboard" && currentPolicy().roleType === "founder") renderFounderDashboard();
+  if (activeView === "dashboard" && currentPolicy().roleType === "assignedManager") renderServiceManagerDashboard();
+  if (activeView === "dashboard" && currentPolicy().roleType === "seniorManager") renderSeniorManagerDashboard();
   iconRefresh();
 }
 
@@ -3044,8 +3651,8 @@ function availableTransitions(process) {
       return [
         transition("appeal-transfer", "Передать в профильный процесс", "Передано в профильный процесс", { requirements: ["linked"] }),
         transition("appeal-wait", "Ожидать клиента", "Ожидается клиент", { tone: "secondary" }),
-        transition("appeal-resolve", "Решить обращение", "Решено", { tone: "success" }),
-        transition("appeal-close-no-result", "Закрыть без решения", "Закрыто без решения", { requirements: ["closeReason"], tone: "secondary" }),
+        transition("appeal-resolve", "Решить обращение", "Решено", { requirements: ["classified", "result"], tone: "success" }),
+        transition("appeal-close-no-result", "Закрыть без решения", "Закрыто без решения", { requirements: ["classified", "closeReason"], tone: "secondary" }),
       ];
     }
     if (stage === "Ожидается клиент") return [transition("appeal-resume", "Ответ получен", "В работе", { requirements: ["clientAnswer"] })];
@@ -3191,6 +3798,7 @@ function validateTransition(process, target) {
     bidReady: "Заявка ещё не готова.",
     submitted: "Не зафиксированы дата, время и подтверждение подачи.",
     closeReason: "Для закрытия без решения укажите обязательную причину.",
+    result: "Укажите результат обработки обращения.",
     issuedWithinPaid: "Укажите выданный объём. Он не может превышать оплаченный объём.",
     tenderData: "Заполните площадку, номер объявления или лота, заказчика и срок подачи.",
     contract: "Для успешного закрытия нужен номер и файл подписанного договора.",
@@ -3221,6 +3829,10 @@ function createLinkedProcess(source, targetType) {
   state.counters[meta.prefix] = (state.counters[meta.prefix] || 0) + 1;
   const id = `${meta.prefix}-${String(state.counters[meta.prefix]).padStart(4, "0")}`;
   const clientType = source.clientType || clientById(source.clientId).type;
+  const numericVolume = Number(String(source.volume || "").replace(/[^\d]/g, "")) || 0;
+  const calculatedAmount = targetType === "orders" && numericVolume && FUEL_PRICE[source.fuel] ? `${(numericVolume * FUEL_PRICE[source.fuel]).toLocaleString("ru-RU")} ₸` : source.amount;
+  const orderSupply = source.details?.topic === "Топливная карта" ? "Товарная карта" : source.details?.topic === "Опт" ? "Опт" : "Талоны";
+  const linkedOwner = ["contracts", "orders"].includes(targetType) && SERVICE_MANAGER_NAMES.includes(source.owner) ? source.owner : defaultOwnerFor(targetType, clientType);
   const linked = {
     id,
     type: targetType,
@@ -3230,23 +3842,26 @@ function createLinkedProcess(source, targetType) {
     direction: source.companyKey,
     product: source.product,
     fuel: source.fuel,
-    supply: targetType === "refunds" ? (source.supply.includes("карт") ? "Товарная карта + деньги" : "Талоны + деньги") : source.supply,
+    supply: targetType === "refunds" ? (source.details?.topic === "Топливная карта" ? "Товарная карта + деньги" : "Талоны + деньги") : targetType === "orders" ? orderSupply : source.supply,
     stage: meta.stages[0],
-    owner: defaultOwnerFor(targetType, clientType),
+    owner: linkedOwner,
     due: "1 рабочий день",
     dueState: "new",
     priority: source.priority,
     volume: source.volume,
-    amount: source.amount,
+    amount: calculatedAmount,
     approvalState: "none",
     organizationLocked: true,
     overpayment: "unknown",
     linkedProcessIds: [source.id],
     integration: { source: "1С", invoiceNumber: "", invoiceDate: "", paymentStatus: "Ожидается", paymentDate: "" },
-    details: defaultProcessDetails(targetType, source),
+    details: {
+      ...defaultProcessDetails(targetType, source),
+      ...(targetType === "orders" ? { requestedVolume: numericVolume, unitPrice: FUEL_PRICE[source.fuel] || 0 } : {}),
+    },
     checks: defaultChecks(targetType),
     documents: [],
-    tasks: [{ id: uid("task"), title: `Проверить связанную карточку из ${source.id}`, owner: defaultOwnerFor(targetType, clientType), due: "Сегодня", done: false }],
+    tasks: [{ id: uid("task"), title: `Проверить связанную карточку из ${source.id}`, owner: linkedOwner, due: "Сегодня", done: false }],
     comments: [{ author: "Система", text: `Карточка создана автоматически из ${source.id}.`, time: "сейчас" }],
     history: [`Автоматически создано из ${source.id} без повторного ввода данных.`],
   };
@@ -3262,16 +3877,27 @@ function createLinkedProcess(source, targetType) {
 function createLinkedFromAppeal(sourceId, targetType) {
   const source = processById(sourceId);
   if (!source || source.type !== "appeals" || !canAccessProcess(source) || !currentPolicy().canEditProcesses) return toast("Преобразование обращения недоступно.", "warn");
+  if (!source.checks?.classified) return toast("Сначала классифицируйте обращение.", "warn");
   if (!allowedCreateTypes().includes(targetType) && !["commercialDirector", "seniorManager"].includes(currentPolicy().roleType)) return toast("Ваша роль не может создать этот тип процесса.", "warn");
   if (targetType === "orders" && !hasActiveContract(source)) return toast("Нельзя создать заказ: сначала нужен действующий договор по компании и продукту.", "warn");
   const linked = createLinkedProcess(source, targetType);
   source.stage = "Передано в профильный процесс";
+  source.details.linkedAt = new Date().toISOString();
+  source.details.nextStep = `Контролировать ${linked.id}`;
   source.organizationLocked = true;
   source.history.push(`Обращение преобразовано в ${linked.id}.`);
-  audit("Преобразование обращения", source.type, source.id, "", linked.id);
+  source.tasks.forEach((task) => {
+    if (!task.linkedProcessId) task.linkedProcessId = linked.id;
+  });
+  appealTask(source, targetType === "orders" ? "Проконтролировать оплату по созданному заказу" : `Проконтролировать процесс ${linked.id}`, source.owner, 30, `control-${linked.id}`);
+  refreshAppealSla(source);
+  const channel = crmChannelInfo(source.details?.source);
+  const linkedAuditAction = targetType === "orders" ? (channel.key === "phone" ? "Создан заказ из звонка" : channel.key === "whatsapp" ? "Создан заказ из WhatsApp" : `Создан заказ из ${channel.label}`) : "Создан связанный процесс";
+  audit(linkedAuditAction, source.type, source.id, "", linked.id);
   saveState();
   renderAll();
-  openProcessModal(linked.id, "data");
+  if (canAccessProcess(linked)) openProcessModal(linked.id, "data");
+  else openProcessModal(source.id, "tasks");
   toast(`Создана связанная карточка ${linked.id}`, "ok");
 }
 
@@ -3297,8 +3923,12 @@ function applyTransition(process, target) {
   if (target.action === "createRefund") createLinkedProcess(process, "refunds");
 
   if (target.to.toLowerCase().includes("закрыт") || target.to === "Решено") process.dueState = "ok";
+  if (process.type === "appeals" && ["Решено", "Закрыто без решения"].includes(target.to)) {
+    process.details.resolvedAt = new Date().toISOString();
+  }
   process.history.push(`Маршрут: «${previousStage}» → «${target.to}» (${target.label}).`);
-  audit("Изменение статуса", process.type, process.id, previousStage, target.to);
+  const appealAction = process.type === "appeals" && target.to === "Закрыто без решения" ? "Обращение закрыто без решения" : process.type === "appeals" && target.to === "Решено" ? "Обращение закрыто" : "Изменение статуса";
+  audit(appealAction, process.type, process.id, previousStage, target.to);
   const ownerUser = state.users.find((user) => user.name === process.owner);
   if (ownerUser) notify(ownerUser.id, "Изменение процесса", `${process.id}: ${target.to}`, process.dueState, process.id);
   if (target.to.toLowerCase().includes("директор")) {
@@ -3323,6 +3953,11 @@ function performTransition(id, key) {
     $$("[data-check]").forEach((checkbox) => {
       if (!checkbox.disabled) process.checks[checkbox.dataset.check] = checkbox.checked;
     });
+    if (process.type === "appeals") {
+      process.details.result = $("#appealResult")?.value.trim() || process.details.result || "";
+      process.details.problemDescription = $("#appealProblemDescription")?.value.trim() || process.details.problemDescription || "";
+      process.checks.result = Boolean(process.details.result);
+    }
     if (process.type === "orders") process.checks.esf = ["Оформлена", "Не требуется"].includes(process.details.esfStatus);
     if (process.type === "tenders") {
       process.checks.submitted = Boolean(process.details.bidSubmittedAt && process.documents.some((document) => document.type === "Подтверждение подачи заявки"));
@@ -3552,6 +4187,103 @@ function directorDecisionOptions(process) {
   return decisions.map((decision) => `<option>${decision}</option>`).join("");
 }
 
+function renderAppealCommunication(process, editable) {
+  if (process.type !== "appeals") return "";
+  const channel = crmChannelInfo(process.details?.source || process.supply);
+  const details = process.details || {};
+  const sla = appealSlaStatus(process);
+  return `
+    <section class="appeal-communication">
+      <header>
+        <span class="crm-channel-icon ${channel.tone}" data-lucide="${channel.icon}"></span>
+        <div><span class="eyebrow">${channel.label} · ${details.communicationId || process.id}</span><strong>${details.communicationStatus || "Входящее обращение"}</strong></div>
+        <span class="status-pill ${statusClass(processTone(process))}">${process.due}</span>
+      </header>
+      <div class="communication-meta">
+        <span><b>Контакт:</b> ${details.contactName || "не указан"}</span>
+        <span><b>Телефон:</b> ${details.phone || "не указан"}</span>
+        <span><b>Email:</b> ${details.email || "не указан"}</span>
+        ${channel.key === "phone" ? `<span><b>Длительность:</b> ${Math.floor((details.callDurationSeconds || 0) / 60)}:${String((details.callDurationSeconds || 0) % 60).padStart(2, "0")}</span>` : ""}
+      </div>
+      <div class="appeal-message-preview">
+        <small>Последнее сообщение клиента</small>
+        <p>${escapeAttr(process.details?.customerMessage || process.comments?.find((comment) => /WhatsApp|Email|Телефон/i.test(comment.author))?.text || "Сообщение не зафиксировано")}</p>
+      </div>
+      ${
+        process.details?.lastResponse
+          ? `<div class="appeal-message-preview is-response"><small>Последний ответ менеджера</small><p>${escapeAttr(process.details.lastResponse)}</p></div>`
+          : ""
+      }
+      ${sla.violations.length ? `<div class="appeal-sla-warning"><strong>Нарушения SLA</strong><span>${sla.violations.join(" · ")}</span></div>` : ""}
+      ${
+        editable
+          ? `<div class="appeal-reply-box">
+              <textarea id="appealReplyText" placeholder="Напишите ответ клиенту через ${channel.label}"></textarea>
+              <button class="primary-button" data-send-appeal-reply="${process.id}"><span data-lucide="send"></span><span>Отправить ответ</span></button>
+            </div>`
+          : ""
+      }
+    </section>
+  `;
+}
+
+function renderAppealWorkflow(process, editable) {
+  if (process.type !== "appeals") return "";
+  const details = process.details || {};
+  const suggestedType = APPEAL_PROCESS_BY_CLASSIFICATION[details.topic];
+  const canCloseConsultation = details.topic === "Консультация";
+  const isComplaint = details.topic === "Жалоба / проблема";
+  return `
+    <section class="appeal-workflow">
+      <div class="checklist-header">
+        <div><strong>Классификация и следующее действие</strong><small>Перед закрытием или передачей обращение должно быть классифицировано</small></div>
+        <span class="status-pill ${process.checks?.classified ? "is-ok" : "is-warn"}">${process.checks?.classified ? "Классифицировано" : "Требуется классификация"}</span>
+      </div>
+      <div class="appeal-workflow-grid">
+        <label>Классификация
+          <select id="appealClassification" ${editable ? "" : "disabled"}>
+            ${APPEAL_CLASSIFICATIONS.map((item) => `<option ${item === details.topic ? "selected" : ""}>${item}</option>`).join("")}
+          </select>
+        </label>
+        <label>Следующий шаг<input value="${escapeAttr(details.nextStep || (suggestedType ? `Создать ${processName(suggestedType).toLowerCase()}` : canCloseConsultation ? "Закрыть консультацией" : isComplaint ? "Передать Диане" : "Создать задачу"))}" readonly /></label>
+        <label class="field-wide">Описание проблемы${isComplaint ? " (обязательно)" : " (если есть)"}<textarea id="appealProblemDescription" ${editable ? "" : "disabled"} placeholder="Для жалобы или проблемы опишите, что произошло">${escapeAttr(details.problemDescription || "")}</textarea></label>
+        <label class="field-wide">Результат / комментарий менеджера<textarea id="appealResult" ${editable ? "" : "disabled"}>${escapeAttr(details.result || "")}</textarea></label>
+      </div>
+      ${
+        editable
+          ? `<div class="inline-actions appeal-quick-actions">
+              <button class="primary-button" data-classify-appeal="${process.id}"><span data-lucide="tags"></span><span>Сохранить классификацию</span></button>
+              ${details.communicationStatus === "Входящий" ? `<button class="ghost-button" data-finish-mock-call="${process.id}"><span data-lucide="phone-off"></span><span>Завершить звонок</span></button>` : ""}
+              ${details.missedCall && !details.callbackCompletedAt ? `<button class="ghost-button" data-complete-callback="${process.id}"><span data-lucide="phone-call"></span><span>Перезвонил клиенту</span></button>` : ""}
+              ${suggestedType ? `<button class="ghost-button is-success" data-create-linked="${suggestedType}" data-source-process="${process.id}"><span data-lucide="workflow"></span><span>Создать ${processName(suggestedType).toLowerCase()}</span></button>` : ""}
+              ${canCloseConsultation ? `<button class="ghost-button is-success" data-close-consultation="${process.id}"><span data-lucide="circle-check"></span><span>Решено консультацией</span></button>` : ""}
+              ${!suggestedType && !canCloseConsultation ? `<button class="ghost-button" data-create-appeal-task="${process.id}"><span data-lucide="list-plus"></span><span>Создать задачу</span></button>` : ""}
+              <button class="ghost-button" data-transfer-diana="${process.id}"><span data-lucide="shield-alert"></span><span>Передать Диане</span></button>
+            </div>`
+          : ""
+      }
+    </section>
+  `;
+}
+
+function renderAppealClientContext(process) {
+  if (process.type !== "appeals") return "";
+  const client = clientById(process.clientId);
+  const related = state.processes.filter((item) => item.clientId === client.id && item.id !== process.id);
+  const contracts = related.filter((item) => item.type === "contracts" && ["Действует", "Скоро истекает"].includes(item.stage));
+  const recentOrders = related.filter((item) => item.type === "orders").slice(0, 3);
+  const recentAppeals = related.filter((item) => item.type === "appeals").slice(0, 3);
+  return `
+    <section class="appeal-client-context">
+      <div><span>Клиент</span><strong>${client.name}</strong><small>БИН ${client.bin} · ${client.status || "Активный"}</small></div>
+      <div><span>Ответственный</span><strong>${client.responsible || "Не закреплён"}</strong><small>${client.contacts || "Контакты не заполнены"}</small></div>
+      <div><span>Активные договоры</span><strong>${contracts.length}</strong><small>${contracts.map((item) => item.id).join(", ") || "Нет действующего договора"}</small></div>
+      <div><span>Последние заказы</span><strong>${recentOrders.length}</strong><small>${recentOrders.map((item) => `${item.id} · ${item.stage}`).join("; ") || "Заказов нет"}</small></div>
+      <div><span>Задолженность mock</span><strong>${client.debt || "Не проверено"}</strong><small>${recentAppeals.length} предыдущих обращений</small></div>
+    </section>
+  `;
+}
+
 function renderDataTab(process) {
   const client = clientById(process.clientId);
   const editable = currentPolicy().canEditProcesses;
@@ -3579,7 +4311,15 @@ function renderDataTab(process) {
       <div><span>Доступ</span><strong>${locked ? "Юрлицо зафиксировано" : "Стартовая стадия"}</strong></div>
     </section>
     <div class="detail-grid">
-      <label>Клиент<input id="modalClientName" value="${escapeAttr(client.name)}" ${editable ? "" : "readonly"} /></label>
+      ${
+        process.type === "appeals"
+          ? `<label>Клиент
+              <select id="modalAppealClient" ${editable ? "" : "disabled"}>
+                ${state.clients.map((item) => `<option value="${item.id}" ${item.id === process.clientId ? "selected" : ""}>${item.name} · ${item.bin}</option>`).join("")}
+              </select>
+            </label>`
+          : `<label>Клиент<input id="modalClientName" value="${escapeAttr(client.name)}" ${editable ? "" : "readonly"} /></label>`
+      }
       <label>Тип клиента
         <select id="modalClientType" ${editable ? "" : "disabled"}>
           ${CRM_DICTIONARIES.clientTypes.map((type) => `<option ${type === process.clientType ? "selected" : ""}>${type}</option>`).join("")}
@@ -3623,7 +4363,10 @@ function renderDataTab(process) {
           : ""
       }
     </div>
+    ${renderAppealClientContext(process)}
     ${renderProcessFields(process, editable)}
+    ${renderAppealCommunication(process, editable)}
+    ${renderAppealWorkflow(process, editable)}
     ${
       process.type === "appeals" && editable
         ? `<section class="linked-process-panel">
@@ -3792,8 +4535,11 @@ function checkLabel(key) {
     requisites: "Реквизиты получены",
     project: "Проект подготовлен",
     expiryTask: "Задача на перезаключение создана",
+    firstResponse: "Первый ответ зафиксирован",
     classified: "Обращение классифицировано",
     linked: "Связанный процесс создан",
+    callback: "Перезвон выполнен",
+    result: "Результат обработки заполнен",
   }[key] || key;
 }
 
@@ -3801,6 +4547,14 @@ function saveProcessFromModal(id) {
   const process = processById(id);
   if (!process || !canAccessProcess(process) || !currentPolicy().canEditProcesses) return toast("Редактирование недоступно для вашей роли.", "warn");
   const before = { companyKey: process.companyKey, owner: process.owner, volume: process.volume, amount: process.amount, priority: process.priority };
+  const appealClientId = $("#modalAppealClient")?.value;
+  if (process.type === "appeals" && appealClientId && appealClientId !== process.clientId) {
+    const previousClient = process.clientId;
+    process.clientId = appealClientId;
+    process.clientType = clientById(appealClientId).type;
+    process.history.push(`Клиент обращения изменён: ${clientById(previousClient).name} → ${clientById(appealClientId).name}.`);
+    audit("Обращение привязано к клиенту", process.type, process.id, previousClient, appealClientId);
+  }
   const client = clientById(process.clientId);
   const locked = isOrganizationLocked(process);
   const name = $("#modalClientName")?.value.trim();
@@ -3832,6 +4586,12 @@ function saveProcessFromModal(id) {
   $$("[data-detail-field]").forEach((field) => {
     process.details[field.dataset.detailField] = field.value;
   });
+  if (process.type === "appeals") {
+    process.details.result = $("#appealResult")?.value.trim() || process.details.result || "";
+    process.details.problemDescription = $("#appealProblemDescription")?.value.trim() || process.details.problemDescription || "";
+    process.checks.result = Boolean(process.details.result);
+    refreshAppealSla(process);
+  }
   if (process.type === "orders") {
     process.checks.esf = process.details.esfStatus === "Оформлена" || process.details.esfStatus === "Не требуется";
   }
@@ -3981,6 +4741,203 @@ function addComment(id) {
   openProcessModal(id, "comments");
 }
 
+function sendAppealReply(id) {
+  const process = processById(id);
+  if (!process || process.type !== "appeals" || !canAccessProcess(process) || !currentPolicy().canEditProcesses) return toast("Ответ недоступен для вашей роли.", "warn");
+  const text = $("#appealReplyText")?.value.trim();
+  if (!text) return toast("Введите текст ответа клиенту.", "warn");
+  const channel = crmChannelInfo(process.details?.source || process.supply);
+  process.details ||= defaultProcessDetails("appeals", process);
+  process.details.firstResponseAt ||= new Date().toLocaleTimeString("ru-RU", { hour: "2-digit", minute: "2-digit" });
+  process.details.firstResponseAtISO ||= new Date().toISOString();
+  process.details.lastResponse = text;
+  process.details.lastResponseAt = new Date().toISOString();
+  process.comments.unshift({ author: currentUser().name, text: `[${channel.label}] ${text}`, time: "сейчас" });
+  if (process.stage === "Новое обращение") process.stage = "Требуется классификация";
+  process.checks.firstResponse = true;
+  const responseTask = process.tasks.find((task) => task.automationKey === "first-response" && !task.done);
+  if (responseTask) {
+    responseTask.done = true;
+    responseTask.status = "Выполнена";
+    responseTask.closedAt = new Date().toISOString();
+  }
+  appealTask(process, "Классифицировать обращение", process.owner, crmSlaSettings().classificationMinutes, "classification");
+  refreshAppealSla(process);
+  process.history.push(`Ответ клиенту отправлен через ${channel.label}.`);
+  audit("Зафиксирован первый ответ", process.type, process.id, "", { channel: channel.label, text });
+  saveState();
+  renderAll();
+  openProcessModal(id, "data");
+  toast(`Ответ отправлен через ${channel.label}`, "ok");
+}
+
+function appealTask(process, title, owner = process.owner, dueMinutes = 30, automationKey = "") {
+  if (automationKey && process.tasks.some((task) => task.automationKey === automationKey && !task.done)) return;
+  const dueAt = new Date(Date.now() + dueMinutes * 60000).toISOString();
+  const task = {
+    id: uid("task"),
+    automationKey,
+    title,
+    owner,
+    due: dueMinutes < 60 ? `Через ${dueMinutes} мин.` : `Через ${Math.ceil(dueMinutes / 60)} ч.`,
+    dueAt,
+    priority: process.priority,
+    status: "Новая",
+    createdBy: currentUser().name,
+    createdAt: new Date().toISOString(),
+    result: "",
+    done: false,
+    appealId: process.id,
+    clientId: process.clientId,
+    linkedProcessId: process.linkedProcessIds?.[0] || "",
+  };
+  process.tasks.unshift(task);
+  audit("Создана задача из обращения", "task", task.id, "", { appealId: process.id, owner, title });
+  notify(state.users.find((user) => user.name === owner)?.id || "", "Новая задача по обращению", `${process.id}: ${title}`, process.dueState, process.id);
+  return task;
+}
+
+function classifyAppeal(id) {
+  const process = processById(id);
+  if (!process || process.type !== "appeals" || !canAccessProcess(process) || !currentPolicy().canEditProcesses) return toast("Классификация недоступна.", "warn");
+  const topic = $("#appealClassification")?.value || process.details?.topic || "Другое";
+  const result = $("#appealResult")?.value.trim() || "";
+  const problemDescription = $("#appealProblemDescription")?.value.trim() || process.details?.problemDescription || "";
+  if (topic === "Жалоба / проблема" && !problemDescription) return toast("Опишите жалобу или проблему клиента.", "warn");
+  process.details.topic = topic;
+  process.details.result = result;
+  process.details.problemDescription = problemDescription;
+  process.details.classifiedAt = new Date().toISOString();
+  process.checks.classified = true;
+  process.stage = "В работе";
+  process.tasks.filter((task) => task.automationKey === "classification" && !task.done).forEach((task) => {
+    task.done = true;
+    task.status = "Выполнена";
+    task.closedAt = new Date().toISOString();
+  });
+  const targetType = APPEAL_PROCESS_BY_CLASSIFICATION[topic];
+  process.details.nextStep = targetType ? `Создать ${processName(targetType).toLowerCase()}` : topic === "Консультация" ? "Закрыть консультацией" : topic === "Жалоба / проблема" ? "Контроль Дианы" : "Создать задачу";
+
+  if (topic === "Жалоба / проблема") {
+    process.priority = "Критическая";
+    process.owner = process.owner || currentUser().name;
+    appealTask(process, "Разобрать жалобу клиента и зафиксировать результат", "Диана", 30, "complaint-diana");
+    notify("diana", "Новая жалоба клиента", `${process.id}: ${problemDescription}`, "danger", process.id);
+  } else if (topic === "Другое") {
+    appealTask(process, APPEAL_TASK_BY_CLASSIFICATION.Другое, "Диана", 30, "other-diana");
+  } else if (APPEAL_TASK_BY_CLASSIFICATION[topic]) {
+    const owner = topic === "Госзакупки" ? "Ольга" : process.owner;
+    appealTask(process, APPEAL_TASK_BY_CLASSIFICATION[topic], owner, 30, `classification-${topic}`);
+  }
+
+  process.history.push(`Обращение классифицировано: ${topic}.`);
+  audit("Выполнена классификация", process.type, process.id, "", { topic, nextStep: process.details.nextStep });
+  refreshAppealSla(process);
+  saveState();
+  renderAll();
+  openProcessModal(id, "data");
+  toast(`Классификация сохранена: ${topic}`, "ok");
+}
+
+function finishMockCall(id) {
+  const process = processById(id);
+  if (!process || process.type !== "appeals" || process.details?.source !== "Телефония") return;
+  process.details.communicationStatus = "Завершён";
+  process.details.callDurationSeconds = process.details.callDurationSeconds || 186;
+  process.details.callRecordingUrl ||= `mock://recordings/${process.id}.mp3`;
+  process.details.firstResponseAt ||= new Date().toLocaleTimeString("ru-RU", { hour: "2-digit", minute: "2-digit" });
+  process.details.firstResponseAtISO ||= new Date().toISOString();
+  process.checks.firstResponse = true;
+  const responseTask = process.tasks.find((task) => task.automationKey === "first-response" && !task.done);
+  if (responseTask) {
+    responseTask.done = true;
+    responseTask.status = "Выполнена";
+    responseTask.closedAt = new Date().toISOString();
+  }
+  appealTask(process, "Классифицировать завершённый звонок", process.owner, crmSlaSettings().classificationMinutes, "classification");
+  process.stage = "Требуется классификация";
+  process.history.push("Входящий звонок завершён. Требуется классификация.");
+  audit("Завершён звонок", process.type, process.id, "Входящий", "Требуется классификация");
+  refreshAppealSla(process);
+  saveState();
+  renderAll();
+  openProcessModal(id, "data");
+  toast("Звонок завершён — классифицируйте обращение", "ok");
+}
+
+function completeMissedCallback(id) {
+  const process = processById(id);
+  if (!process || process.type !== "appeals" || !process.details?.missedCall) return;
+  const callbackAt = new Date();
+  process.details.callbackCompletedAt = callbackAt.toISOString();
+  process.details.communicationStatus = "Перезвон выполнен";
+  process.details.firstResponseAt ||= callbackAt.toLocaleTimeString("ru-RU", { hour: "2-digit", minute: "2-digit" });
+  process.details.firstResponseAtISO ||= callbackAt.toISOString();
+  process.checks.callback = true;
+  process.checks.firstResponse = true;
+  process.stage = "Требуется классификация";
+  const callbackTask = process.tasks.find((task) => task.automationKey === "missed-call-callback" && !task.done);
+  if (callbackTask) {
+    callbackTask.done = true;
+    callbackTask.status = "Выполнена";
+    callbackTask.closedAt = new Date().toISOString();
+  }
+  process.history.push("Менеджер перезвонил клиенту.");
+  audit("Выполнен перезвон по пропущенному звонку", process.type, process.id, "", process.owner);
+  refreshAppealSla(process);
+  saveState();
+  renderAll();
+  openProcessModal(id, "data");
+  toast("Перезвон зафиксирован", "ok");
+}
+
+function closeConsultation(id) {
+  const process = processById(id);
+  if (!process || process.type !== "appeals" || !currentPolicy().canEditProcesses) return;
+  const result = $("#appealResult")?.value.trim() || process.details?.result?.trim();
+  if (!process.checks?.classified || process.details?.topic !== "Консультация") return toast("Сначала классифицируйте обращение как консультацию.", "warn");
+  if (!result) return toast("Укажите результат консультации.", "warn");
+  process.details.result = result;
+  process.details.resolvedAt = new Date().toISOString();
+  process.checks.result = true;
+  process.stage = "Решено";
+  process.dueState = "ok";
+  process.history.push(`Решено консультацией: ${result}`);
+  audit("Обращение закрыто консультацией", process.type, process.id, "В работе", result);
+  saveState();
+  renderAll();
+  openProcessModal(id, "data");
+  toast("Обращение решено консультацией", "ok");
+}
+
+function transferAppealToDiana(id) {
+  const process = processById(id);
+  if (!process || process.type !== "appeals" || !currentPolicy().canEditProcesses) return;
+  const previousOwner = process.owner;
+  appealTask(process, "Проконтролировать входящее обращение", "Диана", 30, "manual-diana-control");
+  process.priority = process.priority === "Обычная" ? "Высокая" : process.priority;
+  process.history.push(`Обращение передано на контроль Диане пользователем ${currentUser().name}.`);
+  audit("Обращение передано Диане", process.type, process.id, previousOwner, "Диана");
+  notify("diana", "Обращение требует контроля", `${process.id}: ${clientById(process.clientId).name}`, "warn", process.id);
+  refreshAppealSla(process);
+  saveState();
+  renderAll();
+  openProcessModal(id, "tasks");
+  toast("Диана получила задачу на контроль", "ok");
+}
+
+function createAppealActionTask(id) {
+  const process = processById(id);
+  if (!process || process.type !== "appeals" || !currentPolicy().canEditProcesses) return;
+  const title = APPEAL_TASK_BY_CLASSIFICATION[process.details?.topic] || "Уточнить обращение и выполнить следующее действие";
+  const owner = process.details?.topic === "Госзакупки" ? "Ольга" : process.owner;
+  appealTask(process, title, owner, 30, `manual-${process.details?.topic || "appeal"}`);
+  saveState();
+  renderAll();
+  openProcessModal(id, "tasks");
+  toast("Задача создана", "ok");
+}
+
 function toggleTask(processId, taskId, done) {
   const process = processById(processId);
   if (!process || !canAccessProcess(process) || !currentPolicy().canEditProcesses) return toast("Изменение задач недоступно.", "warn");
@@ -4011,6 +4968,248 @@ function reassignTask(processId, taskId, owner) {
   renderAll();
   openProcessModal(processId, "tasks");
   toast(`Задача передана: ${owner}`, "ok");
+}
+
+function ensureUnknownClient(phone = "", email = "") {
+  let client = state.clients.find((item) => item.id === "cli-unidentified");
+  if (client) return client;
+  client = {
+    id: "cli-unidentified",
+    name: "Неразобранный контакт",
+    bin: "Не указан",
+    type: "Обычный юридический клиент",
+    contacts: [phone, email].filter(Boolean).join(", ") || "Контакты уточняются",
+    phone,
+    email,
+    products: "Не определено",
+    debt: "Не проверено",
+    powerUntil: "Не проверено",
+    status: "Неразобранный",
+    responsible: "",
+    supplyMethods: [],
+  };
+  state.clients.push(client);
+  return client;
+}
+
+function inferAppealClassification(text = "") {
+  const normalized = text.toLowerCase();
+  if (/жалоб|проблем|не работает|не сработ|отклон|ошибк/.test(normalized)) return "Жалоба / проблема";
+  if (/сч[её]т|выстав|купить|литр|топливн.*карт|талон|дизел|аи-?92|аи-?95|газ/.test(normalized)) return "Счёт";
+  if (/договор/.test(normalized)) return "Договор";
+  if (/продлен|продлить/.test(normalized)) return "Продление";
+  if (/возврат/.test(normalized)) return "Возврат";
+  if (/тендер|госзакуп/.test(normalized)) return "Госзакупки";
+  if (/акт свер/.test(normalized)) return "Акт сверки";
+  if (/документ|доверенн|эсф/.test(normalized)) return "Документы";
+  return "Другое";
+}
+
+function openOmnichannelCreateModal(defaultKind = "whatsapp") {
+  if (!currentPolicy().canCreate || !allowedCreateTypes().includes("appeals")) return toast("Создание входящих обращений недоступно.", "warn");
+  const clients = state.clients.filter((client) => client.id !== "cli-unidentified");
+  const modal = $("#requestModal");
+  modal.innerHTML = `
+    <article class="modal is-wide" role="dialog" aria-modal="true" aria-labelledby="omniCreateTitle">
+      <header class="modal-header">
+        <div><span class="eyebrow">Mock-омниканальная линия</span><h2 id="omniCreateTitle">Новое входящее обращение</h2></div>
+        <button class="icon-button" data-close-modal title="Закрыть" aria-label="Закрыть"><span data-lucide="x"></span></button>
+      </header>
+      <div class="omni-kind-grid">
+        ${[
+          ["incoming-call", "phone-incoming", "Входящий звонок"],
+          ["completed-call", "phone-off", "Завершённый звонок"],
+          ["missed-call", "phone-missed", "Пропущенный звонок"],
+          ["whatsapp", "message-circle", "WhatsApp"],
+          ["email", "mail", "Email"],
+          ["manual", "square-pen", "Ручное обращение"],
+        ].map(([kind, icon, label]) => `<button class="omni-kind ${kind === defaultKind ? "is-selected" : ""}" data-omni-kind="${kind}"><span data-lucide="${icon}"></span><b>${label}</b></button>`).join("")}
+      </div>
+      <input id="omniKind" type="hidden" value="${defaultKind}" />
+      <div class="detail-grid">
+        <label>Найденный клиент
+          <select id="omniClient"><option value="">Определить по контактам / не найден</option>${clients.map((client) => `<option value="${client.id}">${client.name} · БИН ${client.bin}</option>`).join("")}<option value="new">+ Создать нового клиента</option></select>
+        </label>
+        <label>Контактное лицо<input id="omniContactName" placeholder="Имя клиента" /></label>
+        <label>Телефон<input id="omniPhone" placeholder="+7 700 000 00 00" /></label>
+        <label>Email<input id="omniEmail" type="email" placeholder="client@company.kz" /></label>
+        <label>БИН<input id="omniBin" inputmode="numeric" placeholder="Поиск существующего клиента" /></label>
+        <label>Компания / название<input id="omniCompanyName" placeholder="Поиск по названию" /></label>
+        <label class="field-wide">Тема<input id="omniSubject" placeholder="Краткая тема обращения" /></label>
+        <label class="field-wide">Сообщение / результат разговора<textarea id="omniMessage" placeholder="Например: Нужен счёт на 3000 литров АИ-92"></textarea></label>
+        <label>Распределение
+          <select id="omniDistribution">
+            <option value="client">По закреплённому клиенту, иначе по очереди</option>
+            <option value="round-robin">Автоматически по очереди</option>
+            <option value="current">Назначить мне</option>
+          </select>
+        </label>
+        <label>Ручной канал
+          <select id="omniManualSource"><option>Офис</option><option>Сайт</option><option>Руководитель</option><option>Другое</option></select>
+        </label>
+        <label>Срочность<select id="omniPriority"><option>Обычная</option><option>Высокая</option><option>Критическая</option></select></label>
+      </div>
+      <section class="route-panel">
+        <div><span class="eyebrow">Поиск и защита от дублей</span><strong>Телефон, email, БИН, название и контактное лицо</strong></div>
+        <p id="omniMatchHint">Если найден существующий клиент, обращение будет привязано к нему и назначено закреплённому менеджеру. Иначе попадёт в неразобранные.</p>
+      </section>
+      <footer class="modal-footer">
+        <button class="ghost-button" data-close-modal>Отмена</button>
+        <button class="primary-button" data-create-inbound-appeal><span data-lucide="inbox"></span><span>Создать обращение</span></button>
+      </footer>
+    </article>
+  `;
+  modal.classList.add("is-open");
+  modal.setAttribute("aria-hidden", "false");
+  iconRefresh();
+}
+
+function updateOmniClientMatch() {
+  if (!$("#omniMatchHint")) return;
+  const matches = findClientsByContact({
+    phone: $("#omniPhone")?.value || "",
+    email: $("#omniEmail")?.value || "",
+    bin: $("#omniBin")?.value || "",
+    name: $("#omniCompanyName")?.value || "",
+    contact: $("#omniContactName")?.value || "",
+  });
+  if (matches.length === 1) {
+    $("#omniClient").value = matches[0].id;
+    $("#omniMatchHint").innerHTML = `<b>Найден клиент:</b> ${matches[0].name} · БИН ${matches[0].bin} · ответственный ${matches[0].responsible || "не закреплён"}`;
+  } else if (matches.length > 1) {
+    $("#omniMatchHint").innerHTML = `<b>Найдено несколько вариантов:</b> ${matches.map((client) => client.name).join(", ")}. Выберите клиента в списке.`;
+  } else {
+    $("#omniMatchHint").textContent = "Клиент не найден — обращение будет создано как неразобранное. После создания можно привязать существующего или завести нового клиента.";
+  }
+}
+
+function createInboundAppeal() {
+  if (!currentPolicy().canCreate || !allowedCreateTypes().includes("appeals")) return toast("Создание обращения недоступно.", "warn");
+  const kind = $("#omniKind")?.value || "manual";
+  const phone = $("#omniPhone")?.value.trim() || "";
+  const email = $("#omniEmail")?.value.trim() || "";
+  const bin = $("#omniBin")?.value.trim() || "";
+  const companyName = $("#omniCompanyName")?.value.trim() || "";
+  const contactName = $("#omniContactName")?.value.trim() || "";
+  const message = $("#omniMessage")?.value.trim() || "";
+  const subject = $("#omniSubject")?.value.trim() || "";
+  const selectedClientValue = $("#omniClient")?.value || "";
+  const selectedClient = state.clients.find((client) => client.id === selectedClientValue);
+  const matches = selectedClient ? [selectedClient] : findClientsByContact({ phone, email, bin, name: companyName, contact: contactName });
+  let client;
+  if (selectedClientValue === "new") {
+    if (!companyName && !contactName) return toast("Укажите название компании или контактное лицо для нового клиента.", "warn");
+    const duplicate = bin && state.clients.find((item) => item.bin?.replace(/\D/g, "") === bin.replace(/\D/g, ""));
+    if (duplicate) return toast(`Клиент с таким БИН уже существует: ${duplicate.name}`, "warn");
+    client = {
+      id: uid("cli"),
+      name: companyName || contactName,
+      bin: bin || "Не указан",
+      type: "Обычный юридический клиент",
+      contacts: contactName || "Не заполнено",
+      phone,
+      email,
+      products: "Не определено",
+      debt: "0 ₸",
+      powerUntil: "Нет",
+      status: "Новый",
+      responsible: "",
+      supplyMethods: [],
+    };
+    state.clients.unshift(client);
+    audit("Создание клиента из входящего обращения", "client", client.id, "", { name: client.name, bin: client.bin });
+  } else {
+    client = matches.length === 1 ? matches[0] : ensureUnknownClient(phone, email);
+  }
+  const distribution = $("#omniDistribution")?.value || "client";
+  let owner = currentUser().name;
+  if (distribution === "round-robin") owner = nextServiceManager();
+  else if (distribution === "client") owner = SERVICE_MANAGER_NAMES.includes(client.responsible) ? client.responsible : nextServiceManager();
+  if (!SERVICE_MANAGER_NAMES.includes(owner)) owner = nextServiceManager();
+  if (client.id !== "cli-unidentified" && !SERVICE_MANAGER_NAMES.includes(client.responsible)) client.responsible = owner;
+
+  const source = kind.includes("call") ? "Телефония" : kind === "whatsapp" ? "WhatsApp" : kind === "email" ? "Email" : $("#omniManualSource")?.value || "Офис";
+  const missedCall = kind === "missed-call";
+  const completedCall = kind === "completed-call";
+  const incomingCall = kind === "incoming-call";
+  const communicationStatus = missedCall ? "Пропущенный" : completedCall ? "Завершён" : incomingCall ? "Входящий" : "Получено";
+  const inferredTopic = inferAppealClassification(`${subject} ${message}`);
+  const fuelText = `${subject} ${message}`.toLowerCase();
+  const inferredFuel = fuelText.includes("аи-95") ? "АИ-95" : fuelText.includes("аи-98") ? "АИ-98" : /дизел|дт/.test(fuelText) ? "ДТ лето" : /газ/.test(fuelText) ? "Автогаз" : "АИ-92";
+  const volumeMatch = `${subject} ${message}`.match(/(\d[\d\s]*)\s*(?:л|литр)/i);
+  const inferredVolume = volumeMatch ? `${volumeMatch[1].replace(/\s/g, "")} л` : subject || `${source}: входящее обращение`;
+  const companyKey = companyByFuel(inferredFuel);
+  state.counters.APP = (state.counters.APP || 0) + 1;
+  const id = `APP-${String(state.counters.APP).padStart(4, "0")}`;
+  const priority = missedCall ? "Высокая" : $("#omniPriority")?.value || "Обычная";
+  const process = {
+    id,
+    type: "appeals",
+    clientId: client.id,
+    clientType: client.type,
+    companyKey,
+    direction: companyKey,
+    product: productByFuel(inferredFuel),
+    fuel: inferredFuel,
+    supply: source,
+    stage: completedCall ? "Требуется классификация" : "Новое обращение",
+    owner,
+    due: "",
+    dueState: "new",
+    priority,
+    volume: inferredVolume,
+    amount: "Не указано",
+    approvalState: "none",
+    organizationLocked: false,
+    overpayment: "unknown",
+    linkedProcessIds: [],
+    integration: { source: "Омниканал mock", importedAt: new Date().toISOString() },
+    details: {
+      ...defaultProcessDetails("appeals", { supply: source }),
+      communicationId: `COM-${Date.now().toString().slice(-8)}`,
+      source,
+      communicationStatus,
+      callDurationSeconds: completedCall ? 186 : 0,
+      callRecordingUrl: completedCall ? `mock://recordings/${id}.mp3` : "",
+      contactName,
+      phone,
+      email,
+      subject,
+      topic: inferredTopic,
+      customerMessage: message || (missedCall ? `Пропущенный звонок с номера ${phone || "не определён"}` : subject),
+      missedCall,
+      firstResponseAt: completedCall ? new Date().toLocaleTimeString("ru-RU", { hour: "2-digit", minute: "2-digit" }) : "",
+      firstResponseAtISO: completedCall ? new Date().toISOString() : "",
+      matchedClientIds: matches.map((item) => item.id),
+      multipleMatches: matches.length > 1,
+    },
+    checks: defaultChecks("appeals"),
+    documents: [],
+    tasks: [],
+    comments: [{ author: source, text: message || subject || communicationStatus, time: "сейчас" }],
+    history: [`Создано входящее обращение из канала ${source}.`],
+  };
+  if (completedCall) process.checks.firstResponse = true;
+  if (completedCall) process.history.push("Звонок завершён — требуется классификация.");
+  state.processes.unshift(process);
+  state.selectedClientId = client.id;
+  if (missedCall) {
+    appealTask(process, "Перезвонить клиенту", owner, crmSlaSettings().missedCallMinutes, "missed-call-callback");
+    process.history.push("Автоматически создана задача «Перезвонить клиенту».");
+  } else if (completedCall) {
+    appealTask(process, "Классифицировать завершённый звонок", owner, crmSlaSettings().classificationMinutes, "classification");
+  } else {
+    appealTask(process, "Дать первый ответ и классифицировать обращение", owner, crmSlaSettings().firstResponseMinutes, "first-response");
+  }
+  refreshAppealSla(process);
+  audit(missedCall ? "Пропущен звонок" : "Создано входящее обращение", process.type, id, "", { source, owner, clientId: client.id, communicationStatus });
+  notify(state.users.find((user) => user.name === owner)?.id || "", "Новое входящее обращение", `${id}: ${source} · ${client.name}`, process.dueState, id);
+  if (missedCall) notify("diana", "Пропущенный звонок", `${id}: требуется перезвон`, "warn", id);
+  saveState();
+  closeModal();
+  switchView("appeals");
+  openProcessModal(id, "data");
+  toast(`Создано обращение ${id}`, "ok");
 }
 
 function openCreateModal(defaultType = activeView) {
@@ -4230,7 +5429,7 @@ function importDemoTenders() {
 
 function defaultChecks(type) {
   return {
-    appeals: { classified: false, linked: false, clientAnswer: false },
+    appeals: { firstResponse: false, classified: false, linked: false, clientAnswer: false, callback: false, result: false },
     contracts: { requisites: false, project: false, signed: false, expiryTask: false },
     orders: { contract: false, invoice: false, payment: false, power: false, docs: false, esf: false },
     extensions: { clientLetter: false, contractData: false, director: false, clientAnswer: false, extensionDone: false, cash: true },
@@ -4240,7 +5439,33 @@ function defaultChecks(type) {
 }
 
 function defaultProcessDetails(type, process = {}) {
-  if (type === "appeals") return { source: process.supply || "WhatsApp", topic: "Другое", closeReason: "" };
+  if (type === "appeals") {
+    return {
+      communicationId: `COM-${Date.now().toString().slice(-8)}`,
+      source: process.supply || "WhatsApp",
+      communicationStatus: "Получено",
+      callDurationSeconds: 0,
+      callRecordingUrl: "",
+      contactName: "",
+      phone: "",
+      email: "",
+      subject: "",
+      topic: "Другое",
+      closeReason: "",
+      result: "",
+      problemDescription: "",
+      customerMessage: "",
+      firstResponseAt: "",
+      firstResponseAtISO: "",
+      classifiedAt: "",
+      linkedAt: "",
+      resolvedAt: "",
+      createdAt: new Date().toISOString(),
+      missedCall: false,
+      callbackCompletedAt: "",
+      nextStep: "",
+    };
+  }
   if (type === "contracts") return { contractNumber: "", contractDate: "", startDate: "", endDate: "", paymentTerms: "", pricing: "" };
   if (type === "orders") {
     const volume = Number(String(process.volume || "").replace(/[^\d]/g, "")) || 0;
@@ -4305,6 +5530,7 @@ function loginAs(userId) {
   currentCompany = currentPolicy().companies.length === 1 ? currentPolicy().companies[0] : "all";
   slaOnly = false;
   activeStage = "";
+  crmChannelFilter = "all";
   applySessionState();
   switchView("dashboard");
   audit("Вход пользователя", "user", user.id, "", { login: user.login });
@@ -4425,6 +5651,71 @@ function openCreateClientModal() {
   modal.classList.add("is-open");
   modal.setAttribute("aria-hidden", "false");
   iconRefresh();
+}
+
+function openAssignAppealModal(processId) {
+  const process = processById(processId);
+  if (!process || process.type !== "appeals" || !canAccessProcess(process) || !currentPolicy().canReassign) return toast("Распределение обращения недоступно.", "warn");
+  const managers = state.users.filter((user) => ["SENIOR_MANAGER", "SERVICE_MANAGER"].includes(user.roleId) && user.active !== false);
+  const modal = $("#requestModal");
+  modal.innerHTML = `
+    <article class="modal profile-modal" role="dialog" aria-modal="true" aria-labelledby="assignAppealTitle">
+      <header class="modal-header">
+        <div><span class="eyebrow">Распределение входящего обращения</span><h2 id="assignAppealTitle">${process.id} · ${clientById(process.clientId).name}</h2></div>
+        <button class="icon-button" data-close-modal title="Закрыть" aria-label="Закрыть"><span data-lucide="x"></span></button>
+      </header>
+      <section class="assignment-preview">
+        <span class="crm-channel-icon ${crmChannelInfo(process.details?.source || process.supply).tone}" data-lucide="${crmChannelInfo(process.details?.source || process.supply).icon}"></span>
+        <div><strong>${process.details?.topic || "Обращение клиента"}</strong><p>${process.details?.customerMessage || process.comments?.[0]?.text || process.volume}</p></div>
+      </section>
+      <div class="detail-grid">
+        <label>Ответственный
+          <select id="assignAppealOwner">${managers.map((user) => `<option value="${user.name}" ${user.name === process.owner ? "selected" : ""}>${user.name} — ${user.role}</option>`).join("")}</select>
+        </label>
+        <label>Приоритет
+          <select id="assignAppealPriority">${["Обычная", "Высокая", "Критическая"].map((priority) => `<option ${priority === process.priority ? "selected" : ""}>${priority}</option>`).join("")}</select>
+        </label>
+        <label>Срок первого действия<input id="assignAppealDue" value="${escapeAttr(process.due)}" /></label>
+      </div>
+      <footer class="modal-footer">
+        <button class="ghost-button" data-close-modal>Отмена</button>
+        <button class="primary-button" data-save-appeal-assignment="${process.id}"><span data-lucide="user-check"></span><span>Назначить</span></button>
+      </footer>
+    </article>
+  `;
+  modal.classList.add("is-open");
+  modal.setAttribute("aria-hidden", "false");
+  iconRefresh();
+}
+
+function saveAppealAssignment(processId) {
+  const process = processById(processId);
+  if (!process || process.type !== "appeals" || !canAccessProcess(process) || !currentPolicy().canReassign) return toast("Распределение недоступно.", "warn");
+  const previousOwner = process.owner;
+  process.owner = $("#assignAppealOwner")?.value || process.owner;
+  process.priority = $("#assignAppealPriority")?.value || process.priority;
+  process.due = $("#assignAppealDue")?.value.trim() || process.due;
+  process.dueState = process.priority === "Критическая" ? "danger" : process.priority === "Высокая" ? "warn" : "new";
+  if (process.stage === "Новое обращение") process.stage = "Требуется классификация";
+  process.tasks.unshift({
+    id: uid("task"),
+    title: `Обработать входящее обращение ${process.id}`,
+    owner: process.owner,
+    due: process.due,
+    priority: process.priority,
+    status: "Новая",
+    createdBy: currentUser().name,
+    createdAt: new Date().toISOString(),
+    result: "",
+    done: false,
+  });
+  process.history.push(`Обращение распределено: ${previousOwner} → ${process.owner}.`);
+  audit("Распределение обращения", process.type, process.id, previousOwner, process.owner);
+  notify(state.users.find((user) => user.name === process.owner)?.id || "", "Новое входящее обращение", `${process.id}: ${clientById(process.clientId).name}`, process.dueState, process.id);
+  saveState();
+  closeModal();
+  renderAll();
+  toast(`Обращение назначено: ${process.owner}`, "ok");
 }
 
 function saveClient() {
@@ -4742,6 +6033,14 @@ function updateViewTitle() {
     $("#viewTitle").textContent = currentLanguage === "kk" ? "Құрылтайшы кабинеті" : "Кабинет учредителя";
     return;
   }
+  if (activeView === "dashboard" && currentPolicy().roleType === "assignedManager") {
+    $("#viewTitle").textContent = currentLanguage === "kk" ? "Кіріс өтінімдер CRM" : "CRM входящих обращений";
+    return;
+  }
+  if (activeView === "dashboard" && currentPolicy().roleType === "seniorManager") {
+    $("#viewTitle").textContent = currentLanguage === "kk" ? "CRM мерзімдерін бақылау" : "Контроль CRM и SLA";
+    return;
+  }
   const keys = {
     dashboard: "dashboardTitle",
     assistant: "assistantTitle",
@@ -4857,9 +6156,29 @@ function enhanceStaticControls() {
 
 document.addEventListener("click", (event) => {
   const target = event.target;
-  const button = target.closest("button, .client-card, .stage-item, [data-dashboard-queue], [data-founder-signal]");
+  const button = target.closest("button, .client-card, .stage-item, [data-dashboard-queue], [data-founder-signal], [data-crm-channel]");
   if (!button) return;
 
+  if (button.matches("[data-crm-channel]")) {
+    crmChannelFilter = button.dataset.crmChannel;
+    renderAll();
+  }
+  if (button.matches("[data-crm-open-appeals]")) switchView("appeals");
+  if (button.matches("[data-open-omnichannel]")) openOmnichannelCreateModal(button.dataset.openOmnichannel);
+  if (button.matches("[data-omni-kind]")) {
+    $("#omniKind").value = button.dataset.omniKind;
+    $$("[data-omni-kind]").forEach((item) => item.classList.toggle("is-selected", item === button));
+  }
+  if (button.matches("[data-create-inbound-appeal]")) createInboundAppeal();
+  if (button.matches("[data-assign-appeal]")) openAssignAppealModal(button.dataset.assignAppeal);
+  if (button.matches("[data-save-appeal-assignment]")) saveAppealAssignment(button.dataset.saveAppealAssignment);
+  if (button.matches("[data-send-appeal-reply]")) sendAppealReply(button.dataset.sendAppealReply);
+  if (button.matches("[data-classify-appeal]")) classifyAppeal(button.dataset.classifyAppeal);
+  if (button.matches("[data-finish-mock-call]")) finishMockCall(button.dataset.finishMockCall);
+  if (button.matches("[data-complete-callback]")) completeMissedCallback(button.dataset.completeCallback);
+  if (button.matches("[data-close-consultation]")) closeConsultation(button.dataset.closeConsultation);
+  if (button.matches("[data-transfer-diana]")) transferAppealToDiana(button.dataset.transferDiana);
+  if (button.matches("[data-create-appeal-task]")) createAppealActionTask(button.dataset.createAppealTask);
   if (button.matches("[data-founder-signal]")) openFounderSignalModal(button.dataset.founderSignal);
   if (button.matches("[data-ai-prompt]")) sendAiPrompt(button.dataset.aiPrompt);
   if (button.matches("[data-send-ai]")) sendAiPrompt();
@@ -4907,6 +6226,7 @@ document.addEventListener("click", (event) => {
   if (button.matches("[data-save-password]")) saveOwnPassword();
   if (button.matches("[data-save-new-user]")) saveNewUser();
   if (button.matches("[data-save-client]")) saveClient();
+  if (button.matches("[data-save-sla-settings]")) saveSlaSettings();
   if (button.matches("[data-save-founder-task]")) saveFounderTask();
   if (button.matches("[data-complete-founder-task]")) completeFounderTask(button.dataset.completeFounderTask);
   if (button.matches("[data-edit-user]")) openEditUserModal(button.dataset.editUser);
@@ -4971,6 +6291,10 @@ document.addEventListener("change", (event) => {
   }
 });
 
+document.addEventListener("input", (event) => {
+  if (event.target.matches("#omniPhone, #omniEmail, #omniBin, #omniCompanyName, #omniContactName")) updateOmniClientMatch();
+});
+
 $$(".nav-item").forEach((button) => {
   button.addEventListener("click", () => switchView(button.dataset.view));
 });
@@ -4991,10 +6315,14 @@ $("#slaOnly").addEventListener("click", () => {
   renderAll();
 });
 
-$("#newRequestBtn").addEventListener("click", () => openCreateModal(activeView));
+$("#newRequestBtn").addEventListener("click", () => {
+  if (["assignedManager", "seniorManager"].includes(currentPolicy().roleType) || activeView === "appeals") return openOmnichannelCreateModal("whatsapp");
+  openCreateModal(activeView);
+});
 $("#genericAction").addEventListener("click", () => {
   if (activeView === "users") return openCreateUserModal();
   if (activeView === "messages") return openCreateChatGroupModal();
+  if (activeView === "appeals") return openOmnichannelCreateModal("manual");
   openCreateModal(activeView);
 });
 
@@ -5020,6 +6348,13 @@ $("#sidebarClose")?.addEventListener("click", closeSidebar);
 $("#mobileBackdrop")?.addEventListener("click", closeSidebar);
 
 document.addEventListener("keydown", (event) => {
+  const crmChannel = event.target.closest?.("[data-crm-channel]");
+  if (crmChannel && ["Enter", " "].includes(event.key)) {
+    event.preventDefault();
+    crmChannelFilter = crmChannel.dataset.crmChannel;
+    renderAll();
+    return;
+  }
   if ((event.metaKey || event.ctrlKey) && event.key === "Enter" && event.target.matches("#assistantPrompt")) {
     event.preventDefault();
     sendAiPrompt();

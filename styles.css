@@ -962,6 +962,371 @@ body[data-role-type="founder"] .alerts-panel {
   }
 }
 
+body[data-role-type="assignedManager"][data-active-view="dashboard"] .metric-grid {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+
+body[data-role-type="assignedManager"][data-active-view="dashboard"] .management-grid {
+  grid-template-columns: 1fr;
+}
+
+.crm-channel-card {
+  cursor: pointer;
+}
+
+.crm-channel-card.is-selected {
+  border-color: rgba(0, 113, 227, 0.38);
+  background: linear-gradient(145deg, rgba(232, 242, 255, 0.86), white);
+  box-shadow: 0 10px 28px rgba(0, 113, 227, 0.1);
+}
+
+.crm-inbox-row {
+  display: grid;
+  grid-template-columns: 42px minmax(0, 1fr) auto;
+  gap: 11px;
+  align-items: center;
+  padding: 11px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: rgba(255, 255, 255, 0.82);
+}
+
+.crm-channel-icon {
+  display: grid;
+  width: 40px;
+  height: 40px;
+  flex: 0 0 auto;
+  place-items: center;
+  border-radius: 12px;
+  background: var(--blue-soft);
+  color: var(--blue);
+}
+
+.crm-channel-icon.is-green {
+  background: var(--green-soft);
+  color: var(--green);
+}
+
+.crm-channel-icon.is-amber {
+  background: var(--amber-soft);
+  color: var(--amber);
+}
+
+.crm-inbox-copy {
+  min-width: 0;
+}
+
+.crm-inbox-copy > div {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.crm-inbox-copy > div span {
+  color: var(--muted);
+  font-size: 11px;
+  font-weight: 750;
+}
+
+.crm-inbox-copy p {
+  overflow: hidden;
+  margin-top: 4px;
+  color: var(--ink);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.crm-inbox-copy small {
+  display: block;
+  margin-top: 4px;
+  color: var(--muted);
+}
+
+.crm-inbox-actions {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+}
+
+.crm-funnel {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 7px;
+}
+
+.crm-funnel-step {
+  position: relative;
+  min-height: 84px;
+  padding: 13px;
+  overflow: hidden;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: rgba(245, 245, 247, 0.7);
+}
+
+.crm-funnel-step::after {
+  position: absolute;
+  right: -8px;
+  bottom: -18px;
+  width: 58px;
+  height: 58px;
+  border-radius: 50%;
+  background: rgba(0, 113, 227, 0.09);
+  content: "";
+}
+
+.crm-funnel-step span {
+  display: block;
+  color: var(--muted);
+  font-size: 11px;
+}
+
+.crm-funnel-step strong {
+  display: block;
+  margin-top: 8px;
+  font-size: 26px;
+}
+
+.crm-quality-row {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.crm-quality-row > div {
+  padding: 12px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: white;
+}
+
+.crm-quality-row span {
+  display: block;
+  color: var(--muted);
+  font-size: 11px;
+}
+
+.crm-quality-row strong {
+  display: block;
+  margin-top: 5px;
+  font-size: 21px;
+}
+
+.crm-channel-load {
+  display: grid;
+  grid-template-columns: 120px minmax(0, 1fr) 28px;
+  gap: 10px;
+  align-items: center;
+  padding: 10px 0;
+  border-bottom: 1px solid var(--line);
+  cursor: pointer;
+}
+
+.crm-channel-load:last-child {
+  border-bottom: 0;
+}
+
+.crm-channel-load > div:first-child {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.crm-channel-load svg {
+  color: var(--blue);
+}
+
+.crm-sla-gauge {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+}
+
+.crm-sla-gauge strong {
+  color: var(--blue);
+  font-size: 42px;
+}
+
+.crm-sla-gauge span {
+  color: var(--muted);
+}
+
+.crm-sla-legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.crm-sla-legend span {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  color: var(--muted);
+  font-size: 11px;
+}
+
+.crm-sla-legend i {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--green);
+}
+
+.crm-sla-legend i.is-warn {
+  background: var(--amber);
+}
+
+.crm-sla-legend i.is-danger {
+  background: var(--red);
+}
+
+.crm-sla-item {
+  display: grid;
+  grid-template-columns: 86px minmax(0, 1fr) auto;
+  gap: 10px;
+  align-items: center;
+  width: 100%;
+  padding: 9px;
+  border-bottom: 1px solid var(--line);
+  background: transparent;
+  text-align: left;
+}
+
+.crm-sla-item b {
+  color: var(--red);
+}
+
+body[data-role-type="assignedManager"] .process-board {
+  grid-template-columns: repeat(6, minmax(215px, 1fr));
+  overflow-x: auto;
+}
+
+.crm-lane {
+  min-width: 215px;
+}
+
+.crm-kanban-card {
+  cursor: pointer;
+}
+
+.crm-kanban-card p {
+  display: -webkit-box;
+  margin: 7px 0;
+  overflow: hidden;
+  color: var(--muted);
+  font-size: 11px;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+}
+
+.crm-card-channel,
+.crm-inline-channel {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  color: var(--blue);
+  font-size: 10px;
+  font-weight: 800;
+}
+
+.crm-inline-channel i {
+  width: 14px;
+  height: 14px;
+}
+
+.appeal-communication {
+  display: grid;
+  gap: 12px;
+  margin-top: 18px;
+  padding: 15px;
+  border: 1px solid rgba(0, 113, 227, 0.18);
+  border-radius: var(--radius);
+  background: rgba(232, 242, 255, 0.56);
+}
+
+.appeal-communication > header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.appeal-communication > header > .status-pill {
+  margin-left: auto;
+}
+
+.appeal-message-preview {
+  padding: 12px;
+  border-radius: var(--radius);
+  background: white;
+}
+
+.appeal-message-preview small {
+  color: var(--muted);
+}
+
+.appeal-message-preview p {
+  margin-top: 5px;
+  line-height: 1.45;
+}
+
+.appeal-message-preview.is-response {
+  margin-left: 42px;
+  border: 1px solid rgba(0, 113, 227, 0.16);
+  background: var(--blue-soft);
+}
+
+.appeal-reply-box {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 9px;
+}
+
+.appeal-reply-box textarea {
+  min-height: 64px;
+  resize: vertical;
+}
+
+.assignment-preview {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 18px;
+  padding: 14px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: rgba(245, 245, 247, 0.7);
+}
+
+.assignment-preview p {
+  margin-top: 4px;
+  color: var(--muted);
+  line-height: 1.4;
+}
+
+@media (max-width: 1100px) {
+  body[data-role-type="assignedManager"][data-active-view="dashboard"] .metric-grid,
+  .crm-funnel {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 700px) {
+  .crm-inbox-row,
+  .appeal-reply-box {
+    grid-template-columns: 1fr;
+  }
+
+  .crm-inbox-actions {
+    justify-content: flex-start;
+  }
+
+  .crm-quality-row,
+  .crm-funnel {
+    grid-template-columns: 1fr;
+  }
+}
+
 .sidebar-user {
   width: 100%;
   padding: 10px;
@@ -2723,5 +3088,223 @@ body.sidebar-open .mobile-backdrop {
 
   .check-row em {
     grid-column: 2;
+  }
+}
+
+.hero-inline-actions,
+.appeal-quick-actions,
+.crm-card-actions,
+.appeal-create-stack {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.hero-inline-actions {
+  margin-top: 18px;
+}
+
+.communication-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 16px;
+  color: var(--muted);
+  font-size: 12px;
+}
+
+.appeal-sla-warning {
+  display: grid;
+  gap: 4px;
+  padding: 12px 14px;
+  border: 1px solid #fecaca;
+  border-radius: 12px;
+  color: #991b1b;
+  background: #fff1f2;
+}
+
+.appeal-workflow,
+.appeal-client-context {
+  margin-top: 16px;
+  padding: 16px;
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  background: #f8fbff;
+}
+
+.appeal-workflow-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+  margin-top: 14px;
+}
+
+.appeal-workflow-grid label,
+.sla-settings-card label {
+  display: grid;
+  gap: 6px;
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.appeal-workflow-grid .field-wide {
+  grid-column: 1 / -1;
+}
+
+.appeal-client-context {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.appeal-client-context > div {
+  display: grid;
+  gap: 4px;
+  padding: 12px;
+  border-radius: 12px;
+  background: #fff;
+}
+
+.appeal-client-context span,
+.appeal-client-context small {
+  color: var(--muted);
+  font-size: 11px;
+}
+
+.crm-card-channel b {
+  margin-left: auto;
+  color: var(--muted);
+  font-size: 10px;
+}
+
+.crm-card-actions {
+  margin-top: 10px;
+}
+
+.crm-card-actions button {
+  padding: 6px 8px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  color: var(--blue);
+  background: #fff;
+  font-size: 11px;
+  font-weight: 700;
+}
+
+.omni-kind-grid {
+  display: grid;
+  grid-template-columns: repeat(6, minmax(0, 1fr));
+  gap: 8px;
+  margin-bottom: 18px;
+}
+
+.omni-kind {
+  display: grid;
+  place-items: center;
+  gap: 7px;
+  min-height: 86px;
+  padding: 10px;
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  color: var(--muted);
+  background: #fff;
+  text-align: center;
+}
+
+.omni-kind svg {
+  width: 22px;
+  height: 22px;
+}
+
+.omni-kind.is-selected {
+  border-color: var(--blue);
+  color: var(--blue);
+  background: #eff6ff;
+  box-shadow: 0 0 0 2px rgb(0 111 214 / 10%);
+}
+
+.appeal-create-stack {
+  margin-bottom: 12px;
+}
+
+.client-profile-tabs {
+  display: flex;
+  gap: 6px;
+  margin-top: 18px;
+  border-bottom: 1px solid var(--line);
+}
+
+.client-profile-tabs button {
+  padding: 10px 12px;
+  border-bottom: 2px solid transparent;
+  color: var(--muted);
+  font-weight: 700;
+}
+
+.client-profile-tabs button.is-selected {
+  border-color: var(--blue);
+  color: var(--blue);
+}
+
+.client-communications {
+  display: grid;
+  gap: 8px;
+  margin: 12px 0 18px;
+}
+
+.client-communication-row {
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  align-items: center;
+  gap: 12px;
+  padding: 10px;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: #fff;
+}
+
+.client-communication-row p,
+.client-communication-row small {
+  margin: 3px 0 0;
+  color: var(--muted);
+}
+
+.sla-settings-card {
+  display: grid;
+  gap: 10px;
+  margin-bottom: 14px;
+  padding: 14px;
+  border: 1px solid #bfdbfe;
+  border-radius: 14px;
+  background: #eff6ff;
+}
+
+.sla-settings-card input {
+  width: 100%;
+}
+
+.danger-text {
+  color: var(--red);
+}
+
+@media (max-width: 900px) {
+  .omni-kind-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  .appeal-client-context {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 700px) {
+  .appeal-workflow-grid,
+  .appeal-client-context,
+  .client-communication-row {
+    grid-template-columns: 1fr;
+  }
+
+  .omni-kind-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 }

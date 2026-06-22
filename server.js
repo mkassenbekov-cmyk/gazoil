@@ -12,6 +12,7 @@ const DATA_DIR = process.env.GAZOIL_DATA_DIR || path.join(__dirname, "data");
 const DB_PATH = process.env.GAZOIL_DB_PATH || path.join(DATA_DIR, "gazoil-crm.sqlite");
 
 const SERVICE_MANAGER_NAMES = ["Ельжан", "Жанара", "Екатерина"];
+const SERVICE_QUEUE_OWNER = "Очередь обслуживания";
 const SERVICE_MANAGER_STATUSES = ["На работе / активен", "Занят", "На звонке", "Отошёл", "Обед", "Завершил смену", "Не в сети"];
 const SERVICE_AUTO_ASSIGN_STATUSES = ["На работе / активен"];
 const SERVICE_BUSY_FALLBACK_STATUSES = ["Занят", "На звонке"];
@@ -576,7 +577,7 @@ function selectServiceManagerForAppeal(state, client) {
   }
   const owner = chooseLeastLoadedServiceManager(state);
   if (owner) return { owner, previousOwner, reason: "Распределено по минимальной нагрузке" };
-  return { owner: "Диана", previousOwner, reason: "Нет активных менеджеров обслуживания" };
+  return { owner: SERVICE_QUEUE_OWNER, previousOwner, reason: "Нет активных менеджеров обслуживания" };
 }
 
 function findClientsByContact(state, { phone = "", email = "", bin = "", name = "", contact = "" } = {}) {

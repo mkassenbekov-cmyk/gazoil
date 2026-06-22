@@ -494,6 +494,7 @@ const FUEL_PRICE = {
 };
 
 const SERVICE_MANAGER_NAMES = ["Ельжан", "Жанара", "Екатерина"];
+const SERVICE_QUEUE_OWNER = "Очередь обслуживания";
 const SERVICE_MANAGER_STATUSES = ["На работе / активен", "Занят", "На звонке", "Отошёл", "Обед", "Завершил смену", "Не в сети"];
 const SERVICE_AUTO_ASSIGN_STATUSES = ["На работе / активен"];
 const SERVICE_BUSY_FALLBACK_STATUSES = ["Занят", "На звонке"];
@@ -1194,7 +1195,10 @@ function migrateState(saved) {
   next.processes = processSource.map((process) => {
     const fuel = process.fuel || inferFuel(process);
     const migrateEmailAppealOwner = process.id === "APP-5522" && process.owner === "Диана";
-    const owner = migrateEmailAppealOwner ? "Екатерина" : ownerMap[process.owner] || process.owner || defaultOwnerFor(process.type);
+    const rawOwner = migrateEmailAppealOwner ? "Екатерина" : ownerMap[process.owner] || process.owner || defaultOwnerFor(process.type);
+    const owner = process.type === "appeals" && rawOwner === "Диана" && process.details?.assignmentReason === "Нет активных менеджеров обслуживания"
+      ? SERVICE_QUEUE_OWNER
+      : rawOwner;
     const client = next.clients.find((item) => item.id === process.clientId);
     const migrateTenderApproval = process.id === "TEN-0188" && process.stage === "Подготовка заявки" && process.approvalState === "approved";
     const stage = migrateTenderApproval ? "На решении директора" : process.stage;
@@ -1393,6 +1397,10 @@ function managerStatusTone(status) {
   return "is-progress";
 }
 
+function serviceOwnerTone(owner) {
+  return owner === SERVICE_QUEUE_OWNER ? "is-warn" : managerStatusTone(managerWorkStatus(owner));
+}
+
 function serviceStatusOptions(selected = "Не в сети") {
   return SERVICE_MANAGER_STATUSES.map((status) => `<option value="${status}" ${status === selected ? "selected" : ""}>${status}</option>`).join("");
 }
@@ -1502,7 +1510,7 @@ function selectServiceManagerForAppeal(client) {
   if (SERVICE_MANAGER_NAMES.includes(current.name) && SERVICE_BUSY_FALLBACK_STATUSES.includes(managerWorkStatus(current.name))) {
     return { owner: current.name, previousOwner, reason: "Назначено текущему менеджеру как резерв" };
   }
-  return { owner: "Диана", previousOwner, reason: "Нет активных менеджеров обслуживания" };
+  return { owner: SERVICE_QUEUE_OWNER, previousOwner, reason: "Нет активных менеджеров обслуживания" };
 }
 
 function nextServiceManager() {
@@ -2259,7 +2267,7 @@ function renderServiceKanbanCard(process) {
         <span>${process.due}</span>
       </div>
       <div class="service-card-footer">
-        <span class="status-pill ${managerStatusTone(managerWorkStatus(process.owner))}">${process.owner}</span>
+        <span class="status-pill ${serviceOwnerTone(process.owner)}">${process.owner}</span>
         ${details.repeatAppeal ? '<span class="status-pill is-warn">Повторное</span>' : ""}
       </div>
       <small>Тема: ${details.topic || "Другое"} · Следующий шаг: ${nextStep}</small>
@@ -2451,7 +2459,7 @@ function renderServiceManagerWorkspace() {
   $(".operational-panel h2").textContent = "Все мои обращения";
   $("#requestTable").innerHTML = allAppeals.map((process) => {
     const channel = crmChannelInfo(process.details?.source || process.supply);
-    return `<tr><td data-label="Заявка"><strong>${process.id}</strong></td><td data-label="Клиент">${clientById(process.clientId).name}</td><td data-label="Канал"><span class="crm-inline-channel"><i data-lucide="${channel.icon}"></i>${channel.label}</span></td><td data-label="Компания">${companyLabel(process.companyKey)}</td><td data-label="Стадия"><span class="status-pill ${statusClass(processTone(process))}">${appealKanbanColumn(process)}</span></td><td data-label="Ответственный">${process.owner}</td><td data-label="SLA">${process.due}</td><td data-label=""><button class="row-action" data-open="${process.id}">Открыть</button></td></tr>`;
+    return `<tr><td data-label="Заявка"><strong>${process.id}</strong></td><td data-label="Клиент">${clientById(process.clientId).name}</td><td data-label="Канал"><span class="crm-inline-channel"><i data-lucide="${channel.icon}"></i>${channel.label}</span></td><td data-label="Компания">${companyLabel(process.companyKey)}</td><td data-label="Стадия"><span class="status-pill ${statusClass(processTone(process))}">${appealKanbanColumn(process)}</span></td><td data-label="Ответственный"><span class="status-pill ${serviceOwnerTone(process.owner)}">${process.owner}</span></td><td data-label="SLA">${process.due}</td><td data-label=""><button class="row-action" data-open="${process.id}">Открыть</button></td></tr>`;
   }).join("") || '<tr><td colspan="8"><div class="empty-state">Обращений нет</div></td></tr>';
   iconRefresh();
 }
@@ -2631,7 +2639,7 @@ function renderServiceManagerDashboard() {
     .map((process) => {
       const client = clientById(process.clientId);
       const channel = crmChannelInfo(process.details?.source || process.supply);
-      return `<tr><td><strong>${process.id}</strong></td><td>${client.name}</td><td><span class="crm-inline-channel"><i data-lucide="${channel.icon}"></i>${channel.label}</span></td><td>${companyLabel(process.companyKey)}</td><td><span class="status-pill ${statusClass(processTone(process))}">${process.stage}</span></td><td>${process.owner}</td><td>${process.due}</td><td><button class="row-action" data-open="${process.id}">Открыть</button></td></tr>`;
+      return `<tr><td><strong>${process.id}</strong></td><td>${client.name}</td><td><span class="crm-inline-channel"><i data-lucide="${channel.icon}"></i>${channel.label}</span></td><td>${companyLabel(process.companyKey)}</td><td><span class="status-pill ${statusClass(processTone(process))}">${process.stage}</span></td><td><span class="status-pill ${serviceOwnerTone(process.owner)}">${process.owner}</span></td><td>${process.due}</td><td><button class="row-action" data-open="${process.id}">Открыть</button></td></tr>`;
     })
     .join("") || '<tr><td colspan="8"><div class="empty-state">Обращений нет</div></td></tr>';
   iconRefresh();
@@ -6257,7 +6265,7 @@ function openCreateClientModal() {
 function openAssignAppealModal(processId) {
   const process = processById(processId);
   if (!canTransferAppeal(process)) return toast("Распределение обращения недоступно.", "warn");
-  const managers = state.users.filter((user) => ["SENIOR_MANAGER", "SERVICE_MANAGER"].includes(user.roleId) && user.active !== false);
+  const managers = state.users.filter((user) => user.roleId === "SERVICE_MANAGER" && user.active !== false);
   const loads = Object.fromEntries(SERVICE_MANAGER_NAMES.map((name) => [name, serviceManagerLoad(name)]));
   const modal = $("#requestModal");
   modal.innerHTML = `

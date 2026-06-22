@@ -1053,6 +1053,10 @@ let currentFounderSignalKey = "";
 let activeChatType = "group";
 let activeChatId = "group-general";
 let crmChannelFilter = "all";
+let backendHydrationDone = false;
+let backendAvailable = false;
+let backendSaveTimer = 0;
+let backendSaveInFlight = false;
 
 const $ = (selector) => document.querySelector(selector);
 const $$ = (selector) => Array.from(document.querySelectorAll(selector));
@@ -1548,8 +1552,74 @@ function makeDemoSales() {
   return rows;
 }
 
+function shouldUseBackend() {
+  return location.protocol.startsWith("http");
+}
+
+async function fetchJson(path, options = {}) {
+  const response = await fetch(path, {
+    ...options,
+    headers: {
+      Accept: "application/json",
+      ...(options.body ? { "Content-Type": "application/json" } : {}),
+      ...(options.headers || {}),
+    },
+  });
+  const contentType = response.headers.get("content-type") || "";
+  if (!response.ok || !contentType.includes("application/json")) throw new Error(`API unavailable: ${response.status}`);
+  return response.json();
+}
+
 function saveState() {
   localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+  scheduleBackendSave();
+}
+
+function scheduleBackendSave() {
+  if (!shouldUseBackend() || !backendHydrationDone) return;
+  clearTimeout(backendSaveTimer);
+  backendSaveTimer = setTimeout(saveStateToBackend, 450);
+}
+
+async function saveStateToBackend() {
+  if (backendSaveInFlight) return scheduleBackendSave();
+  backendSaveInFlight = true;
+  try {
+    await fetchJson("/api/state", {
+      method: "PUT",
+      body: JSON.stringify({ state, actor: currentUser()?.name || "frontend" }),
+    });
+    backendAvailable = true;
+  } catch (error) {
+    backendAvailable = false;
+    console.warn("Backend save skipped", error.message);
+  } finally {
+    backendSaveInFlight = false;
+  }
+}
+
+async function hydrateStateFromBackend() {
+  if (!shouldUseBackend()) {
+    backendHydrationDone = true;
+    return;
+  }
+  try {
+    const payload = await fetchJson("/api/state");
+    backendAvailable = true;
+    backendHydrationDone = true;
+    if (payload.state?.clients && payload.state?.processes) {
+      state = migrateState(payload.state);
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+      renderAll();
+      toast("Данные загружены из локальной базы CRM", "ok");
+    } else {
+      scheduleBackendSave();
+    }
+  } catch (error) {
+    backendAvailable = false;
+    backendHydrationDone = true;
+    console.warn("Backend state unavailable", error.message);
+  }
 }
 
 function audit(action, objectType, objectId, oldValue = "", newValue = "", actor = currentUser()) {
@@ -6867,4 +6937,5 @@ enhanceStaticControls();
 setupMobileGestures();
 runAutomations();
 renderAll();
+hydrateStateFromBackend();
 applySessionState();

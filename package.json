@@ -1,0 +1,16 @@
+{
+  "name": "gazoil-crm-prototype",
+  "version": "0.2.0",
+  "private": true,
+  "type": "module",
+  "description": "GAZOIL CRM prototype with local backend persistence",
+  "scripts": {
+    "dev": "node server.js",
+    "start": "node server.js",
+    "check": "node --check app.js && node --check server.js"
+  },
+  "dependencies": {
+    "better-sqlite3": "^11.8.1",
+    "express": "^4.18.3"
+  }
+}

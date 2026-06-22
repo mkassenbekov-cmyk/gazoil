@@ -493,6 +493,29 @@ const FUEL_PRICE = {
 };
 
 const SERVICE_MANAGER_NAMES = ["Ельжан", "Жанара", "Екатерина"];
+const SERVICE_MANAGER_STATUSES = ["На работе / активен", "Занят", "На звонке", "Отошёл", "Обед", "Завершил смену", "Не в сети"];
+const SERVICE_AUTO_ASSIGN_STATUSES = ["На работе / активен"];
+const SERVICE_BUSY_FALLBACK_STATUSES = ["Занят", "На звонке"];
+const SERVICE_TRANSFER_REASONS = [
+  "менеджер занят",
+  "менеджер на звонке",
+  "клиент ошибочно попал не тому менеджеру",
+  "клиент закреплён за другим менеджером",
+  "менеджер уходит со смены",
+  "высокая нагрузка",
+  "решение Дианы",
+  "решение Мади",
+];
+const SERVICE_DASHBOARD_MODULES = [
+  ["clients", "Мои клиенты", "users-round"],
+  ["appeals", "Мои обращения", "inbox"],
+  ["contracts", "Мои договоры", "file-signature"],
+  ["orders", "Мои заказы", "fuel"],
+  ["extensions", "Мои продления", "refresh-cw"],
+  ["refunds", "Мои возвраты", "wallet-cards"],
+  ["tasks", "Мои задачи", "list-checks"],
+  ["documents", "Мои документы", "folder-open"],
+];
 const APPEAL_CLASSIFICATIONS = [
   "Договор",
   "Счёт",
@@ -673,6 +696,11 @@ const DEFAULT_STATE = {
   selectedClientId: "cli-1",
   counters: { APP: 5524, AGR: 713, ORD: 1290, EXT: 337, REF: 441, TEN: 188 },
   crmSettings: { sla: DEFAULT_SLA_SETTINGS, roundRobinIndex: 0 },
+  serviceDesk: {
+    managerStatuses: Object.fromEntries(SERVICE_MANAGER_NAMES.map((name) => [name, "Не в сети"])),
+    lastShiftAt: {},
+    emptyStartApplied: false,
+  },
   dictionaries: CRM_DICTIONARIES,
   users: STAFF,
   fuels: FUEL_TYPES,
@@ -1100,6 +1128,14 @@ function migrateState(saved) {
     sla: { ...DEFAULT_SLA_SETTINGS, ...(saved.crmSettings?.sla || {}) },
     roundRobinIndex: Number(saved.crmSettings?.roundRobinIndex || 0),
   };
+  next.serviceDesk = {
+    managerStatuses: {
+      ...Object.fromEntries(SERVICE_MANAGER_NAMES.map((name) => [name, "Не в сети"])),
+      ...(saved.serviceDesk?.managerStatuses || {}),
+    },
+    lastShiftAt: saved.serviceDesk?.lastShiftAt || {},
+    emptyStartApplied: Boolean(saved.serviceDesk?.emptyStartApplied),
+  };
   next.communications = {
     groups: Array.isArray(saved.communications?.groups) ? saved.communications.groups : structuredClone(DEFAULT_STATE.communications.groups),
     messages: Array.isArray(saved.communications?.messages) ? saved.communications.messages : structuredClone(DEFAULT_STATE.communications.messages),
@@ -1212,6 +1248,9 @@ function migrateState(saved) {
         missedCall: Boolean(migrated.details.missedCall),
         callbackCompletedAt: migrated.details.callbackCompletedAt || "",
         nextStep: migrated.details.nextStep || "",
+        repeatAppeal: Boolean(migrated.details.repeatAppeal),
+        previousOwner: migrated.details.previousOwner || "",
+        assignmentReason: migrated.details.assignmentReason || "",
         ...migrated.details,
       };
       if (migrated.details.firstResponseAt && !migrated.details.firstResponseAtISO) {
@@ -1223,6 +1262,10 @@ function migrateState(saved) {
     }
     return migrated;
   });
+  if (!next.serviceDesk.emptyStartApplied) {
+    next.processes = next.processes.filter((process) => process.type !== "appeals");
+    next.serviceDesk.emptyStartApplied = true;
+  }
   return next;
 }
 
@@ -1320,13 +1363,141 @@ function serviceManagers() {
   return state.users.filter((user) => user.roleId === "SERVICE_MANAGER" && user.active !== false);
 }
 
+function ensureServiceDeskState() {
+  state.serviceDesk ||= {};
+  state.serviceDesk.managerStatuses ||= {};
+  state.serviceDesk.lastShiftAt ||= {};
+  SERVICE_MANAGER_NAMES.forEach((name) => {
+    if (!SERVICE_MANAGER_STATUSES.includes(state.serviceDesk.managerStatuses[name])) state.serviceDesk.managerStatuses[name] = "Не в сети";
+  });
+  return state.serviceDesk;
+}
+
+function managerWorkStatus(name) {
+  return ensureServiceDeskState().managerStatuses[name] || "Не в сети";
+}
+
+function managerStatusTone(status) {
+  if (status === "На работе / активен") return "is-ok";
+  if (["Занят", "На звонке"].includes(status)) return "is-warn";
+  if (["Завершил смену", "Не в сети"].includes(status)) return "is-danger";
+  return "is-progress";
+}
+
+function serviceStatusOptions(selected = "Не в сети") {
+  return SERVICE_MANAGER_STATUSES.map((status) => `<option value="${status}" ${status === selected ? "selected" : ""}>${status}</option>`).join("");
+}
+
+function setServiceManagerStatus(name, status, shouldSave = true) {
+  if (!SERVICE_MANAGER_NAMES.includes(name) || !SERVICE_MANAGER_STATUSES.includes(status)) return false;
+  const desk = ensureServiceDeskState();
+  const previous = desk.managerStatuses[name] || "Не в сети";
+  if (previous === status) return false;
+  desk.managerStatuses[name] = status;
+  desk.lastShiftAt[name] = new Date().toISOString();
+  audit("Изменение рабочего статуса менеджера", "service-manager", name, previous, status);
+  if (shouldSave) {
+    saveState();
+    renderAll();
+  }
+  return true;
+}
+
+function activateCurrentServiceManager(shouldSave = false, force = false) {
+  const user = currentUser();
+  if (!SERVICE_MANAGER_NAMES.includes(user.name)) return false;
+  const currentStatus = managerWorkStatus(user.name);
+  if (currentStatus === "На работе / активен") return false;
+  if (!force && currentStatus === "Завершил смену") return false;
+  return setServiceManagerStatus(user.name, "На работе / активен", shouldSave);
+}
+
+function serviceTaskPool() {
+  return state.processes.flatMap((process) => (process.tasks || []).map((task) => ({ ...task, processId: process.id, processType: process.type })));
+}
+
+function taskIsOverdue(task) {
+  if (task.done) return false;
+  const dueAt = Date.parse(task.dueAt || "");
+  return Number.isFinite(dueAt) ? dueAt < Date.now() : /вчера|просроч/i.test(task.due || "");
+}
+
+function taskIsToday(task) {
+  if (task.done) return false;
+  const dueAt = Date.parse(task.dueAt || "");
+  if (Number.isFinite(dueAt)) return new Date(dueAt).toDateString() === new Date().toDateString();
+  return /сегодня|через/i.test(task.due || "");
+}
+
+function serviceManagerLoad(name) {
+  const status = managerWorkStatus(name);
+  const appeals = state.processes.filter((process) => process.type === "appeals" && process.owner === name).map(refreshAppealSla);
+  const openAppeals = appeals.filter((process) => !["Решено", "Закрыто без решения"].includes(process.stage));
+  const newAppeals = openAppeals.filter((process) => ["Новое обращение", "Требуется классификация"].includes(process.stage) && !process.details?.firstResponseAtISO);
+  const inWork = openAppeals.filter((process) => ["Требуется классификация", "В работе", "Ожидается клиент", "Передано в профильный процесс"].includes(process.stage));
+  const unclassified = openAppeals.filter((process) => !process.checks?.classified);
+  const overdueAppeals = openAppeals.filter((process) => process.slaViolations?.length || process.dueState === "danger");
+  const tasks = serviceTaskPool().filter((task) => task.owner === name && !task.done);
+  const todayTasks = tasks.filter(taskIsToday);
+  const overdueTasks = tasks.filter(taskIsOverdue);
+  const statusPenalty = status === "На работе / активен" ? 0 : SERVICE_BUSY_FALLBACK_STATUSES.includes(status) ? 4 : 1000;
+  const score = newAppeals.length * 2 + inWork.length * 1.5 + todayTasks.length + overdueTasks.length * 3 + unclassified.length * 2 + statusPenalty;
+  return {
+    name,
+    status,
+    score,
+    appeals,
+    openAppeals,
+    newAppeals,
+    inWork,
+    unclassified,
+    overdueAppeals,
+    tasks,
+    todayTasks,
+    overdueTasks,
+  };
+}
+
+function isManagerAssignable(name, allowBusy = false) {
+  const status = managerWorkStatus(name);
+  return SERVICE_AUTO_ASSIGN_STATUSES.includes(status) || allowBusy && SERVICE_BUSY_FALLBACK_STATUSES.includes(status);
+}
+
+function lastResponsibleServiceManager(clientId) {
+  if (!clientId || clientId === "cli-unidentified") return "";
+  return state.processes
+    .filter((process) => process.type === "appeals" && process.clientId === clientId && SERVICE_MANAGER_NAMES.includes(process.owner))
+    .sort((a, b) => Date.parse(b.details?.createdAt || b.createdAt || 0) - Date.parse(a.details?.createdAt || a.createdAt || 0))[0]?.owner || "";
+}
+
+function chooseLeastLoadedServiceManager(allowBusy = false) {
+  const candidates = SERVICE_MANAGER_NAMES.filter((name) => isManagerAssignable(name, allowBusy));
+  if (!candidates.length && !allowBusy) return chooseLeastLoadedServiceManager(true);
+  if (!candidates.length) return "";
+  return candidates
+    .map(serviceManagerLoad)
+    .sort((a, b) => a.score - b.score || a.openAppeals.length - b.openAppeals.length || a.name.localeCompare(b.name, "ru"))[0]?.name || "";
+}
+
+function selectServiceManagerForAppeal(client) {
+  const previousOwner = lastResponsibleServiceManager(client?.id);
+  if (previousOwner && isManagerAssignable(previousOwner)) {
+    return { owner: previousOwner, previousOwner, reason: "Повторное обращение клиента" };
+  }
+  if (SERVICE_MANAGER_NAMES.includes(client?.responsible) && isManagerAssignable(client.responsible)) {
+    return { owner: client.responsible, previousOwner, reason: "Закреплённый менеджер клиента" };
+  }
+  const owner = chooseLeastLoadedServiceManager();
+  if (owner) return { owner, previousOwner, reason: "Распределено по минимальной нагрузке" };
+  const current = currentUser();
+  if (SERVICE_MANAGER_NAMES.includes(current.name) && SERVICE_BUSY_FALLBACK_STATUSES.includes(managerWorkStatus(current.name))) {
+    return { owner: current.name, previousOwner, reason: "Назначено текущему менеджеру как резерв" };
+  }
+  return { owner: "Диана", previousOwner, reason: "Нет активных менеджеров обслуживания" };
+}
+
 function nextServiceManager() {
-  const managers = serviceManagers();
-  if (!managers.length) return currentUser().name;
-  state.crmSettings ||= { sla: DEFAULT_SLA_SETTINGS, roundRobinIndex: 0 };
-  const index = Number(state.crmSettings.roundRobinIndex || 0) % managers.length;
-  state.crmSettings.roundRobinIndex = (index + 1) % managers.length;
-  return managers[index].name;
+  return chooseLeastLoadedServiceManager() || currentUser().name;
 }
 
 function findClientsByContact({ phone = "", email = "", bin = "", name = "", contact = "" } = {}) {
@@ -1952,7 +2123,244 @@ function crmInboxAppeals() {
     });
 }
 
+function serviceKanbanStages() {
+  return [
+    ["Новое", "Новые"],
+    ["Требуется первый ответ", "Требуется первый ответ"],
+    ["Требуется классификация", "Требуется классификация"],
+    ["В работе", "В работе"],
+    ["Ожидается клиент", "Ожидается клиент"],
+    ["Передано в процесс", "Передано в процесс"],
+    ["Просрочено", "Просрочено"],
+    ["Решено", "Решено"],
+  ];
+}
+
+function appealArrivalLabel(process) {
+  const createdAt = Date.parse(process.details?.createdAt || process.createdAt || "");
+  return Number.isFinite(createdAt) ? new Date(createdAt).toLocaleString("ru-RU", { day: "2-digit", month: "short", hour: "2-digit", minute: "2-digit" }) : "сейчас";
+}
+
+function renderServiceKanbanCard(process) {
+  const client = clientById(process.clientId);
+  const channel = crmChannelInfo(process.details?.source || process.supply);
+  const details = process.details || {};
+  const suggestedType = APPEAL_PROCESS_BY_CLASSIFICATION[details.topic];
+  const nextStep = details.nextStep || (suggestedType ? `Создать ${processName(suggestedType).toLowerCase()}` : !details.firstResponseAtISO ? "Первый ответ" : !process.checks?.classified ? "Классификация" : "Следующее действие");
+  return `
+    <article class="process-card crm-kanban-card service-appeal-card">
+      <div class="crm-card-channel">
+        <span data-lucide="${channel.icon}"></span><span>${channel.label}</span>
+        <b>${process.priority}</b>
+      </div>
+      <strong>${client.name}</strong>
+      <p>${details.subject || details.customerMessage || process.volume}</p>
+      <div class="service-card-meta">
+        <span>${details.phone || details.email || "Контакт уточняется"}</span>
+        <span>${appealArrivalLabel(process)}</span>
+        <span>${process.due}</span>
+      </div>
+      <div class="service-card-footer">
+        <span class="status-pill ${managerStatusTone(managerWorkStatus(process.owner))}">${process.owner}</span>
+        ${details.repeatAppeal ? '<span class="status-pill is-warn">Повторное</span>' : ""}
+      </div>
+      <small>Тема: ${details.topic || "Другое"} · Следующий шаг: ${nextStep}</small>
+      <div class="crm-card-actions service-card-actions">
+        <button data-open="${process.id}">Ответ</button>
+        <button data-open="${process.id}">Класс.</button>
+        <button data-create-linked="orders" data-source-process="${process.id}">Заказ</button>
+        <button data-create-linked="contracts" data-source-process="${process.id}">Договор</button>
+        <button data-create-linked="extensions" data-source-process="${process.id}">Продл.</button>
+        <button data-create-linked="refunds" data-source-process="${process.id}">Возврат</button>
+        <button data-create-appeal-task="${process.id}">Задача</button>
+        <button data-assign-appeal="${process.id}">Передать</button>
+      </div>
+    </article>
+  `;
+}
+
+function renderServiceKanban(appeals) {
+  return `
+    <div class="service-kanban-scroll">
+      <div class="process-board service-kanban-board">
+        ${serviceKanbanStages().map(([key, label]) => {
+          const items = appeals.filter((process) => appealKanbanColumn(process) === key);
+          return `
+            <div class="process-lane crm-lane service-lane">
+              <div class="lane-title"><span>${label}</span><b>${items.length}</b></div>
+              ${items.map(renderServiceKanbanCard).join("") || '<div class="empty-state">Пусто</div>'}
+            </div>
+          `;
+        }).join("")}
+      </div>
+    </div>
+  `;
+}
+
+function serviceModuleStats(view) {
+  const userName = currentUser().name;
+  const userPolicy = currentPolicy();
+  const myProcesses = accessibleProcesses().filter((process) => process.owner === userName || process.tasks?.some((task) => task.owner === userName) || userPolicy.roleType === "seniorManager");
+  if (view === "clients") {
+    const clientIds = new Set(myProcesses.map((process) => process.clientId));
+    state.clients.filter((client) => client.responsible === userName).forEach((client) => clientIds.add(client.id));
+    const clients = state.clients.filter((client) => clientIds.has(client.id));
+    const needsAction = clients.filter((client) => myProcesses.some((process) => process.clientId === client.id && ["danger", "warn"].includes(process.dueState))).length;
+    return { total: clients.length, inWork: myProcesses.filter((process) => clientIds.has(process.clientId) && !["Решено", "Закрыто"].some((stage) => process.stage.includes(stage))).length, overdue: needsAction, needsAction };
+  }
+  if (view === "tasks") {
+    const tasks = serviceTaskPool().filter((task) => task.owner === userName || userPolicy.roleType === "seniorManager");
+    return { total: tasks.length, inWork: tasks.filter((task) => !task.done).length, overdue: tasks.filter(taskIsOverdue).length, needsAction: tasks.filter((task) => !task.done && task.status !== "Выполнена").length };
+  }
+  if (view === "documents") {
+    const docs = myProcesses.flatMap((process) => process.documents || []);
+    return { total: docs.length, inWork: docs.filter((doc) => !/получен|прикреплен|действует|оформлена/i.test(doc.status || "")).length, overdue: 0, needsAction: docs.filter((doc) => /ошибка|ожидается|не/i.test(doc.status || "")).length };
+  }
+  const items = myProcesses.filter((process) => process.type === view);
+  return {
+    total: items.length,
+    inWork: items.filter((process) => !["Решено", "Закрыто без решения", "Закрыт", "Выиграли", "Проиграли"].includes(process.stage)).length,
+    overdue: items.filter((process) => process.dueState === "danger" || process.slaViolations?.length).length,
+    needsAction: items.filter((process) => ["Новое обращение", "Требуется классификация"].includes(process.stage) || process.tasks?.some((task) => !task.done)).length,
+  };
+}
+
+function renderServiceModuleCards() {
+  return SERVICE_DASHBOARD_MODULES.map(([view, title, icon]) => {
+    const stats = serviceModuleStats(view);
+    return `
+      <article class="service-module-card">
+        <header><span data-lucide="${icon}"></span><strong>${title}</strong></header>
+        <div class="service-module-stats">
+          <div><span>Всего</span><b>${stats.total}</b></div>
+          <div><span>В работе</span><b>${stats.inWork}</b></div>
+          <div><span>Просрочено</span><b>${stats.overdue}</b></div>
+          <div><span>Действие</span><b>${stats.needsAction}</b></div>
+        </div>
+        <button class="row-action" data-service-open-section="${view}">Открыть полный раздел</button>
+      </article>
+    `;
+  }).join("");
+}
+
+function renderServiceManagerWorkspace() {
+  const user = currentUser();
+  const allAppeals = crmInboxAppeals().map(refreshAppealSla);
+  const openAppeals = allAppeals.filter((process) => !["Решено", "Закрыто без решения"].includes(process.stage));
+  const unanswered = openAppeals.filter((process) => !process.details?.firstResponseAtISO);
+  const unclassified = openAppeals.filter((process) => !process.checks?.classified);
+  const overdue = openAppeals.filter((process) => process.slaViolations?.length || process.dueState === "danger");
+  const repeated = openAppeals.filter((process) => process.details?.repeatAppeal);
+  const userStatus = managerWorkStatus(user.name);
+  const isServiceUser = SERVICE_MANAGER_NAMES.includes(user.name);
+
+  $("#executiveHero").innerHTML = `
+    <div>
+      <span class="eyebrow">CRM · рабочее окно обслуживания</span>
+      <h2>${isServiceUser ? `${user.name}, ваша очередь входящих обращений` : "Воронка входящих обращений обслуживания"}</h2>
+      <p>Звонки, WhatsApp, email, заявки сайта и ручные обращения собраны в одной рабочей воронке с SLA, быстрыми действиями и связью с профильными процессами.</p>
+      <div class="hero-inline-actions">
+        <button class="primary-button" data-open-omnichannel="incoming-call"><span data-lucide="phone-incoming"></span><span>Mock-звонок</span></button>
+        <button class="ghost-button" data-open-omnichannel="missed-call"><span data-lucide="phone-missed"></span><span>Mock-пропущенный</span></button>
+        <button class="ghost-button" data-open-omnichannel="whatsapp"><span data-lucide="message-circle"></span><span>Mock-WhatsApp</span></button>
+        <button class="ghost-button" data-open-omnichannel="email"><span data-lucide="mail"></span><span>Mock-email</span></button>
+      </div>
+      ${
+        isServiceUser
+          ? `<div class="service-status-control">
+              <span>Статус смены</span>
+              <select data-service-status-picker="${escapeAttr(user.name)}">${serviceStatusOptions(userStatus)}</select>
+            </div>`
+          : ""
+      }
+    </div>
+    <div class="hero-statuses">
+      <div class="hero-status"><span>Открыто</span><strong>${openAppeals.length}</strong></div>
+      <div class="hero-status"><span>Первый ответ</span><strong>${unanswered.length}</strong></div>
+      <div class="hero-status"><span>Классификация</span><strong>${unclassified.length}</strong></div>
+      <div class="hero-status"><span>SLA риск</span><strong>${overdue.length}</strong></div>
+    </div>
+  `;
+
+  $(".metric-grid").innerHTML = [
+    ["inbox", "is-blue", "Мои новые", unanswered.length, "ожидают первого ответа"],
+    ["tags", "is-amber", "Без классификации", unclassified.length, "нужно определить процесс"],
+    ["timer-reset", "is-red", "Просрочки SLA", overdue.length, "контроль сроков"],
+    ["repeat-2", "is-green", "Повторные", repeated.length, "клиент уже обращался"],
+  ].map(([icon, tone, label, value, hint]) => `
+    <article class="metric-card">
+      <span class="metric-icon ${tone}" data-lucide="${icon}"></span>
+      <div><p>${label}</p><strong>${value}</strong><small>${hint}</small></div>
+    </article>
+  `).join("");
+
+  $(".decision-panel .eyebrow").textContent = "Главная воронка";
+  $(".decision-panel h2").textContent = "Входящие обращения";
+  $(".decision-panel .text-button").textContent = "Полный реестр";
+  $(".decision-panel .text-button").dataset.crmOpenAppeals = "true";
+  $("#managementQueue").innerHTML = `
+    ${!allAppeals.length ? '<div class="empty-state service-empty-state"><strong>Очередь пустая</strong><span>Создайте mock-звонок, WhatsApp или email, чтобы пройти процесс от входящего до заказа.</span></div>' : ""}
+    ${renderServiceKanban(allAppeals)}
+  `;
+
+  $(".team-panel").hidden = true;
+
+  $(".leader-summary-panel .eyebrow").textContent = "Краткие разделы";
+  $(".leader-summary-panel h2").textContent = "Рабочий обзор менеджера";
+  $("#leaderSummary").innerHTML = `<div class="service-module-grid">${renderServiceModuleCards()}</div>`;
+
+  $(".fuel-sales-panel .eyebrow").textContent = "Каналы";
+  $(".fuel-sales-panel h2").textContent = "Нагрузка по источникам";
+  $(".fuel-sales-panel .text-button").hidden = true;
+  const channelKeys = ["whatsapp", "phone", "email", "site", "other"];
+  const maxChannel = Math.max(1, ...channelKeys.map((key) => allAppeals.filter((process) => crmChannelInfo(process.details?.source || process.supply).key === key).length));
+  $("#fuelSalesToday").innerHTML = channelKeys.map((key) => {
+    const items = allAppeals.filter((process) => crmChannelInfo(process.details?.source || process.supply).key === key);
+    const sample = items[0] ? crmChannelInfo(items[0].details?.source || items[0].supply) : { label: key === "site" ? "Сайт" : key === "other" ? "Иное" : key, icon: key === "site" ? "globe-2" : "inbox" };
+    return `<article class="crm-channel-load" data-crm-channel="${key}"><div><span data-lucide="${sample.icon}"></span><strong>${sample.label}</strong></div><div class="fuel-bar"><span style="width:${Math.max(5, Math.round((items.length / maxChannel) * 100))}%"></span></div><b>${items.length}</b></article>`;
+  }).join("");
+
+  $(".report-builder-panel .eyebrow").textContent = "SLA";
+  $(".report-builder-panel h2").textContent = "Ближайшие действия";
+  $(".report-builder-panel .report-form").innerHTML = `
+    <div class="crm-sla-gauge"><strong>${openAppeals.length ? Math.max(0, Math.round(((openAppeals.length - overdue.length) / openAppeals.length) * 100)) : 100}%</strong><span>обращений без нарушения SLA</span></div>
+    <div class="crm-sla-legend"><span><i></i>в срок</span><span><i class="is-warn"></i>риск</span><span><i class="is-danger"></i>просрочено</span></div>
+  `;
+  $("#periodReport").innerHTML = openAppeals.slice(0, 6).map((process) => `<button class="crm-sla-item" data-open="${process.id}"><strong>${process.id}</strong><span>${clientById(process.clientId).name}</span><b>${process.due}</b></button>`).join("") || '<div class="empty-state">Нет активных SLA</div>';
+
+  $(".alerts-panel .eyebrow").textContent = "Уведомления";
+  $(".alerts-panel h2").textContent = "Что требует внимания";
+  const alerts = [
+    ...overdue.map((process) => ({ tone: "danger", icon: "timer-reset", title: process.slaViolations?.[0] || "SLA риск", text: `${process.id} · ${clientById(process.clientId).name}`, id: process.id })),
+    ...unanswered.map((process) => ({ tone: "warn", icon: "message-square-reply", title: "Требуется первый ответ", text: `${process.id} · ${crmChannelInfo(process.details?.source || process.supply).label}`, id: process.id })),
+  ].slice(0, 6);
+  $("#alertCount").textContent = alerts.length;
+  $("#salesAlerts").innerHTML = alerts.map((alert) => `<article class="alert-item ${alert.tone}" data-open="${alert.id}" role="button"><span data-lucide="${alert.icon}"></span><div><strong>${alert.title}</strong><p>${alert.text}</p></div></article>`).join("") || '<div class="empty-state">Критичных уведомлений нет</div>';
+
+  $(".process-panel").hidden = true;
+  $(".approvals-panel").hidden = false;
+  $(".approvals-panel .eyebrow").textContent = "Личная очередь";
+  $(".approvals-panel h2").textContent = "Требуют моего ответа";
+  $(".approvals-panel .text-button").hidden = true;
+  $("#approvalList").innerHTML = [...unanswered, ...unclassified, ...overdue]
+    .filter((process, index, list) => list.findIndex((item) => item.id === process.id) === index)
+    .slice(0, 6)
+    .map((process) => `<article class="approval-item"><header><strong>${process.id}</strong><span class="status-pill ${statusClass(processTone(process))}">${process.due}</span></header><p>${clientById(process.clientId).name} · ${process.details?.topic || "Другое"}</p><button class="primary-button" data-open="${process.id}">Обработать</button></article>`)
+    .join("") || '<div class="empty-state">Срочных обращений нет</div>';
+
+  $(".operational-panel").hidden = false;
+  $(".operational-panel .eyebrow").textContent = "Журнал входящих";
+  $(".operational-panel h2").textContent = "Все мои обращения";
+  $("#requestTable").innerHTML = allAppeals.map((process) => {
+    const channel = crmChannelInfo(process.details?.source || process.supply);
+    return `<tr><td data-label="Заявка"><strong>${process.id}</strong></td><td data-label="Клиент">${clientById(process.clientId).name}</td><td data-label="Канал"><span class="crm-inline-channel"><i data-lucide="${channel.icon}"></i>${channel.label}</span></td><td data-label="Компания">${companyLabel(process.companyKey)}</td><td data-label="Стадия"><span class="status-pill ${statusClass(processTone(process))}">${appealKanbanColumn(process)}</span></td><td data-label="Ответственный">${process.owner}</td><td data-label="SLA">${process.due}</td><td data-label=""><button class="row-action" data-open="${process.id}">Открыть</button></td></tr>`;
+  }).join("") || '<tr><td colspan="8"><div class="empty-state">Обращений нет</div></td></tr>';
+  iconRefresh();
+}
+
 function renderServiceManagerDashboard() {
+  renderServiceManagerWorkspace();
+  return;
   const user = currentUser();
   const appeals = crmInboxAppeals();
   const allAppeals = accessibleProcesses().filter((process) => process.type === "appeals");
@@ -2163,10 +2571,21 @@ function renderSeniorManagerDashboard() {
   $(".team-panel h2").textContent = "Загрузка и качество";
   $(".team-panel .status-pill").textContent = `${appeals.length} обращений`;
   $("#teamLoad").innerHTML = SERVICE_MANAGER_NAMES.map((name) => {
-    const owned = appeals.filter((process) => process.owner === name);
-    const ownOverdue = owned.filter((process) => process.slaViolations?.length);
-    const ownUnclassified = owned.filter((process) => !process.checks?.classified);
-    return `<article class="team-row"><div><strong>${name}</strong><p>${owned.length} обращений · ${ownUnclassified.length} без классификации</p></div><span class="status-pill ${ownOverdue.length ? "is-danger" : "is-ok"}">${ownOverdue.length} просрочек</span></article>`;
+    const load = serviceManagerLoad(name);
+    const missed = load.appeals.filter((process) => process.details?.missedCall && !process.details?.callbackCompletedAt).length;
+    return `
+      <article class="team-row service-load-row">
+        <div>
+          <strong>${name}</strong>
+          <p>${load.openAppeals.length} активных · ${load.unclassified.length} без классификации · ${missed} пропущенных без перезвона</p>
+          <small>Задачи сегодня: ${load.todayTasks.length} · просроченные задачи: ${load.overdueTasks.length} · нагрузка: ${Math.round(load.score)}</small>
+        </div>
+        <div class="service-load-actions">
+          <select data-service-status-picker="${escapeAttr(name)}">${serviceStatusOptions(load.status)}</select>
+          <span class="status-pill ${load.overdueAppeals.length || load.overdueTasks.length ? "is-danger" : managerStatusTone(load.status)}">${load.status}</span>
+        </div>
+      </article>
+    `;
   }).join("");
 
   $(".alerts-panel .eyebrow").textContent = "Контроль Дианы";
@@ -2177,7 +2596,16 @@ function renderSeniorManagerDashboard() {
     ...closedWithoutResult.map((process) => ({ id: process.id, icon: "circle-x", tone: "warn", title: "Закрыто без решения", text: process.details?.closeReason || "Причина не указана" })),
   ].slice(0, 8);
   $("#alertCount").textContent = controls.length;
-  $("#salesAlerts").innerHTML = controls.map((item) => `<article class="alert-item ${item.tone}" data-open="${item.id}" role="button"><span data-lucide="${item.icon}"></span><div><strong>${item.title}</strong><p>${item.id} · ${item.text}</p></div></article>`).join("") || '<div class="empty-state">Нарушений нет</div>';
+  $("#salesAlerts").innerHTML = controls.map((item) => `
+    <article class="alert-item ${item.tone}">
+      <span data-lucide="${item.icon}"></span>
+      <div><strong>${item.title}</strong><p>${item.id} · ${item.text}</p></div>
+      <div class="service-alert-actions">
+        <button class="row-action" data-open="${item.id}">Открыть</button>
+        <button class="row-action" data-assign-appeal="${item.id}">Передать</button>
+      </div>
+    </article>
+  `).join("") || '<div class="empty-state">Нарушений нет</div>';
   iconRefresh();
 }
 
@@ -4203,6 +4631,8 @@ function renderAppealCommunication(process, editable) {
         <span><b>Контакт:</b> ${details.contactName || "не указан"}</span>
         <span><b>Телефон:</b> ${details.phone || "не указан"}</span>
         <span><b>Email:</b> ${details.email || "не указан"}</span>
+        <span><b>Назначение:</b> ${details.assignmentReason || "ручное"}</span>
+        ${details.repeatAppeal ? `<span class="danger-text"><b>Повторное обращение клиента</b>${details.previousOwner ? ` · ранее ${details.previousOwner}` : ""}</span>` : ""}
         ${channel.key === "phone" ? `<span><b>Длительность:</b> ${Math.floor((details.callDurationSeconds || 0) / 60)}:${String((details.callDurationSeconds || 0) % 60).padStart(2, "0")}</span>` : ""}
       </div>
       <div class="appeal-message-preview">
@@ -4279,7 +4709,7 @@ function renderAppealClientContext(process) {
       <div><span>Ответственный</span><strong>${client.responsible || "Не закреплён"}</strong><small>${client.contacts || "Контакты не заполнены"}</small></div>
       <div><span>Активные договоры</span><strong>${contracts.length}</strong><small>${contracts.map((item) => item.id).join(", ") || "Нет действующего договора"}</small></div>
       <div><span>Последние заказы</span><strong>${recentOrders.length}</strong><small>${recentOrders.map((item) => `${item.id} · ${item.stage}`).join("; ") || "Заказов нет"}</small></div>
-      <div><span>Задолженность mock</span><strong>${client.debt || "Не проверено"}</strong><small>${recentAppeals.length} предыдущих обращений</small></div>
+      <div><span>Коммуникации</span><strong>${process.details?.repeatAppeal ? "Повторное" : recentAppeals.length}</strong><small>${recentAppeals.map((item) => `${item.id} · ${item.owner}`).join("; ") || "Истории обращений нет"}</small></div>
     </section>
   `;
 }
@@ -5037,13 +5467,7 @@ function openOmnichannelCreateModal(defaultKind = "whatsapp") {
         <label>Компания / название<input id="omniCompanyName" placeholder="Поиск по названию" /></label>
         <label class="field-wide">Тема<input id="omniSubject" placeholder="Краткая тема обращения" /></label>
         <label class="field-wide">Сообщение / результат разговора<textarea id="omniMessage" placeholder="Например: Нужен счёт на 3000 литров АИ-92"></textarea></label>
-        <label>Распределение
-          <select id="omniDistribution">
-            <option value="client">По закреплённому клиенту, иначе по очереди</option>
-            <option value="round-robin">Автоматически по очереди</option>
-            <option value="current">Назначить мне</option>
-          </select>
-        </label>
+        <label>Автораспределение<input value="Повторный клиент → прежний активный менеджер, иначе минимальная нагрузка" readonly /></label>
         <label>Ручной канал
           <select id="omniManualSource"><option>Офис</option><option>Сайт</option><option>Руководитель</option><option>Другое</option></select>
         </label>
@@ -5051,7 +5475,7 @@ function openOmnichannelCreateModal(defaultKind = "whatsapp") {
       </div>
       <section class="route-panel">
         <div><span class="eyebrow">Поиск и защита от дублей</span><strong>Телефон, email, БИН, название и контактное лицо</strong></div>
-        <p id="omniMatchHint">Если найден существующий клиент, обращение будет привязано к нему и назначено закреплённому менеджеру. Иначе попадёт в неразобранные.</p>
+        <p id="omniMatchHint">Если найден существующий клиент, система проверит последнего ответственного менеджера. Если он активен, обращение вернётся к нему, иначе уйдёт свободному менеджеру с меньшей нагрузкой.</p>
       </section>
       <footer class="modal-footer">
         <button class="ghost-button" data-close-modal>Отмена</button>
@@ -5075,7 +5499,9 @@ function updateOmniClientMatch() {
   });
   if (matches.length === 1) {
     $("#omniClient").value = matches[0].id;
-    $("#omniMatchHint").innerHTML = `<b>Найден клиент:</b> ${matches[0].name} · БИН ${matches[0].bin} · ответственный ${matches[0].responsible || "не закреплён"}`;
+    const previousOwner = lastResponsibleServiceManager(matches[0].id);
+    const ownerHint = previousOwner || matches[0].responsible || "не закреплён";
+    $("#omniMatchHint").innerHTML = `<b>Найден клиент:</b> ${matches[0].name} · БИН ${matches[0].bin} · ответственный ${ownerHint}${SERVICE_MANAGER_NAMES.includes(ownerHint) ? ` · статус ${managerWorkStatus(ownerHint)}` : ""}`;
   } else if (matches.length > 1) {
     $("#omniMatchHint").innerHTML = `<b>Найдено несколько вариантов:</b> ${matches.map((client) => client.name).join(", ")}. Выберите клиента в списке.`;
   } else {
@@ -5121,11 +5547,8 @@ function createInboundAppeal() {
   } else {
     client = matches.length === 1 ? matches[0] : ensureUnknownClient(phone, email);
   }
-  const distribution = $("#omniDistribution")?.value || "client";
-  let owner = currentUser().name;
-  if (distribution === "round-robin") owner = nextServiceManager();
-  else if (distribution === "client") owner = SERVICE_MANAGER_NAMES.includes(client.responsible) ? client.responsible : nextServiceManager();
-  if (!SERVICE_MANAGER_NAMES.includes(owner)) owner = nextServiceManager();
+  const assignment = selectServiceManagerForAppeal(client);
+  let owner = assignment.owner || currentUser().name;
   if (client.id !== "cli-unidentified" && !SERVICE_MANAGER_NAMES.includes(client.responsible)) client.responsible = owner;
 
   const source = kind.includes("call") ? "Телефония" : kind === "whatsapp" ? "WhatsApp" : kind === "email" ? "Email" : $("#omniManualSource")?.value || "Офис";
@@ -5142,6 +5565,7 @@ function createInboundAppeal() {
   state.counters.APP = (state.counters.APP || 0) + 1;
   const id = `APP-${String(state.counters.APP).padStart(4, "0")}`;
   const priority = missedCall ? "Высокая" : $("#omniPriority")?.value || "Обычная";
+  const repeatAppeal = client.id !== "cli-unidentified" && Boolean(assignment.previousOwner || state.processes.some((item) => item.type === "appeals" && item.clientId === client.id));
   const process = {
     id,
     type: "appeals",
@@ -5182,13 +5606,17 @@ function createInboundAppeal() {
       firstResponseAtISO: completedCall ? new Date().toISOString() : "",
       matchedClientIds: matches.map((item) => item.id),
       multipleMatches: matches.length > 1,
+      repeatAppeal,
+      previousOwner: assignment.previousOwner || "",
+      assignmentReason: assignment.reason,
     },
     checks: defaultChecks("appeals"),
     documents: [],
     tasks: [],
     comments: [{ author: source, text: message || subject || communicationStatus, time: "сейчас" }],
-    history: [`Создано входящее обращение из канала ${source}.`],
+    history: [`Создано входящее обращение из канала ${source}.`, `Назначено: ${owner}. Основание: ${assignment.reason}.`],
   };
+  if (repeatAppeal) process.history.push(`Повторное обращение клиента. Предыдущий ответственный: ${assignment.previousOwner || client.responsible || "не определён"}.`);
   if (completedCall) process.checks.firstResponse = true;
   if (completedCall) process.history.push("Звонок завершён — требуется классификация.");
   state.processes.unshift(process);
@@ -5202,12 +5630,13 @@ function createInboundAppeal() {
     appealTask(process, "Дать первый ответ и классифицировать обращение", owner, crmSlaSettings().firstResponseMinutes, "first-response");
   }
   refreshAppealSla(process);
-  audit(missedCall ? "Пропущен звонок" : "Создано входящее обращение", process.type, id, "", { source, owner, clientId: client.id, communicationStatus });
+  audit(missedCall ? "Пропущен звонок" : "Создано входящее обращение", process.type, id, "", { source, owner, clientId: client.id, communicationStatus, assignmentReason: assignment.reason, repeatAppeal });
   notify(state.users.find((user) => user.name === owner)?.id || "", "Новое входящее обращение", `${id}: ${source} · ${client.name}`, process.dueState, id);
   if (missedCall) notify("diana", "Пропущенный звонок", `${id}: требуется перезвон`, "warn", id);
   saveState();
   closeModal();
-  switchView("appeals");
+  if (["assignedManager", "seniorManager"].includes(currentPolicy().roleType) && activeView === "dashboard") renderAll();
+  else switchView("appeals");
   openProcessModal(id, "data");
   toast(`Создано обращение ${id}`, "ok");
 }
@@ -5464,6 +5893,9 @@ function defaultProcessDetails(type, process = {}) {
       missedCall: false,
       callbackCompletedAt: "",
       nextStep: "",
+      repeatAppeal: false,
+      previousOwner: "",
+      assignmentReason: "",
     };
   }
   if (type === "contracts") return { contractNumber: "", contractDate: "", startDate: "", endDate: "", paymentTerms: "", pricing: "" };
@@ -5479,7 +5911,10 @@ function defaultProcessDetails(type, process = {}) {
 
 function applySessionState() {
   document.body.classList.toggle("session-locked", !currentUserId);
-  if (currentUserId) renderUserShell();
+  if (currentUserId) {
+    activateCurrentServiceManager(false);
+    renderUserShell();
+  }
   else {
     $("#loginForm")?.reset();
     $("#loginError").textContent = "";
@@ -5531,6 +5966,7 @@ function loginAs(userId) {
   slaOnly = false;
   activeStage = "";
   crmChannelFilter = "all";
+  activateCurrentServiceManager(false, true);
   applySessionState();
   switchView("dashboard");
   audit("Вход пользователя", "user", user.id, "", { login: user.login });
@@ -5540,6 +5976,10 @@ function loginAs(userId) {
 }
 
 function logout() {
+  const user = currentUser();
+  if (SERVICE_MANAGER_NAMES.includes(user.name) && managerWorkStatus(user.name) === "На работе / активен") {
+    setServiceManagerStatus(user.name, "Не в сети", false);
+  }
   audit("Выход пользователя", "user", currentUserId);
   saveState();
   currentUserId = "";
@@ -5614,6 +6054,11 @@ function roleOptions(selected = "") {
     .join("");
 }
 
+function canTransferAppeal(process) {
+  if (!process || process.type !== "appeals" || !canAccessProcess(process)) return false;
+  return currentPolicy().canReassign || ["seniorManager", "commercialDirector"].includes(currentPolicy().roleType) || process.owner === currentUser().name;
+}
+
 function openCreateClientModal() {
   if (!currentPolicy().canCreate) return toast("Создание клиентов недоступно.", "warn");
   const modal = $("#requestModal");
@@ -5655,8 +6100,9 @@ function openCreateClientModal() {
 
 function openAssignAppealModal(processId) {
   const process = processById(processId);
-  if (!process || process.type !== "appeals" || !canAccessProcess(process) || !currentPolicy().canReassign) return toast("Распределение обращения недоступно.", "warn");
+  if (!canTransferAppeal(process)) return toast("Распределение обращения недоступно.", "warn");
   const managers = state.users.filter((user) => ["SENIOR_MANAGER", "SERVICE_MANAGER"].includes(user.roleId) && user.active !== false);
+  const loads = Object.fromEntries(SERVICE_MANAGER_NAMES.map((name) => [name, serviceManagerLoad(name)]));
   const modal = $("#requestModal");
   modal.innerHTML = `
     <article class="modal profile-modal" role="dialog" aria-modal="true" aria-labelledby="assignAppealTitle">
@@ -5670,12 +6116,23 @@ function openAssignAppealModal(processId) {
       </section>
       <div class="detail-grid">
         <label>Ответственный
-          <select id="assignAppealOwner">${managers.map((user) => `<option value="${user.name}" ${user.name === process.owner ? "selected" : ""}>${user.name} — ${user.role}</option>`).join("")}</select>
+          <select id="assignAppealOwner">${managers.map((user) => {
+            const load = loads[user.name];
+            const hint = load ? `${load.status}, ${load.openAppeals.length} активных, ${load.overdueAppeals.length} просрочек` : user.role;
+            return `<option value="${user.name}" ${user.name === process.owner ? "selected" : ""}>${user.name} — ${hint}</option>`;
+          }).join("")}</select>
+        </label>
+        <label>Причина передачи
+          <select id="assignAppealReason">
+            <option value="">Выберите причину</option>
+            ${SERVICE_TRANSFER_REASONS.map((reason) => `<option>${reason}</option>`).join("")}
+          </select>
         </label>
         <label>Приоритет
           <select id="assignAppealPriority">${["Обычная", "Высокая", "Критическая"].map((priority) => `<option ${priority === process.priority ? "selected" : ""}>${priority}</option>`).join("")}</select>
         </label>
         <label>Срок первого действия<input id="assignAppealDue" value="${escapeAttr(process.due)}" /></label>
+        <label class="field-wide">Комментарий к передаче<textarea id="assignAppealComment" placeholder="Коротко зафиксируйте контекст для нового менеджера"></textarea></label>
       </div>
       <footer class="modal-footer">
         <button class="ghost-button" data-close-modal>Отмена</button>
@@ -5690,16 +6147,27 @@ function openAssignAppealModal(processId) {
 
 function saveAppealAssignment(processId) {
   const process = processById(processId);
-  if (!process || process.type !== "appeals" || !canAccessProcess(process) || !currentPolicy().canReassign) return toast("Распределение недоступно.", "warn");
+  if (!canTransferAppeal(process)) return toast("Распределение недоступно.", "warn");
   const previousOwner = process.owner;
-  process.owner = $("#assignAppealOwner")?.value || process.owner;
+  const nextOwner = $("#assignAppealOwner")?.value || process.owner;
+  const reason = $("#assignAppealReason")?.value || "";
+  const comment = $("#assignAppealComment")?.value.trim() || "";
+  if (!reason) return toast("Укажите причину передачи обращения.", "warn");
+  process.owner = nextOwner;
   process.priority = $("#assignAppealPriority")?.value || process.priority;
   process.due = $("#assignAppealDue")?.value.trim() || process.due;
   process.dueState = process.priority === "Критическая" ? "danger" : process.priority === "Высокая" ? "warn" : "new";
   if (process.stage === "Новое обращение") process.stage = "Требуется классификация";
+  process.details ||= defaultProcessDetails("appeals", process);
+  process.details.lastTransferReason = reason;
+  process.details.lastTransferBy = currentUser().name;
+  process.details.lastTransferAt = new Date().toISOString();
+  process.tasks.filter((task) => !task.done && task.owner === previousOwner).forEach((task) => {
+    task.owner = process.owner;
+  });
   process.tasks.unshift({
     id: uid("task"),
-    title: `Обработать входящее обращение ${process.id}`,
+    title: `Принять переданное обращение ${process.id}`,
     owner: process.owner,
     due: process.due,
     priority: process.priority,
@@ -5709,9 +6177,10 @@ function saveAppealAssignment(processId) {
     result: "",
     done: false,
   });
-  process.history.push(`Обращение распределено: ${previousOwner} → ${process.owner}.`);
-  audit("Распределение обращения", process.type, process.id, previousOwner, process.owner);
-  notify(state.users.find((user) => user.name === process.owner)?.id || "", "Новое входящее обращение", `${process.id}: ${clientById(process.clientId).name}`, process.dueState, process.id);
+  if (comment) process.comments.unshift({ author: currentUser().name, text: `Передача: ${comment}`, time: "сейчас" });
+  process.history.push(`Обращение передано: ${previousOwner} → ${process.owner}. Причина: ${reason}.`);
+  audit("Передача обращения другому менеджеру", process.type, process.id, previousOwner, { owner: process.owner, reason, comment });
+  notify(state.users.find((user) => user.name === process.owner)?.id || "", "Вам передано обращение", `${process.id}: ${clientById(process.clientId).name} · ${reason}`, process.dueState, process.id);
   saveState();
   closeModal();
   renderAll();
@@ -6163,6 +6632,7 @@ document.addEventListener("click", (event) => {
     crmChannelFilter = button.dataset.crmChannel;
     renderAll();
   }
+  if (button.matches("[data-service-open-section]")) switchView(button.dataset.serviceOpenSection);
   if (button.matches("[data-crm-open-appeals]")) switchView("appeals");
   if (button.matches("[data-open-omnichannel]")) openOmnichannelCreateModal(button.dataset.openOmnichannel);
   if (button.matches("[data-omni-kind]")) {
@@ -6259,6 +6729,16 @@ document.addEventListener("click", (event) => {
 });
 
 document.addEventListener("change", (event) => {
+  if (event.target.matches("[data-service-status-picker]")) {
+    const name = event.target.dataset.serviceStatusPicker;
+    const canChange = name === currentUser().name || ["seniorManager", "commercialDirector"].includes(currentPolicy().roleType);
+    if (!canChange) {
+      event.target.value = managerWorkStatus(name);
+      return toast("Изменять этот статус недоступно.", "warn");
+    }
+    setServiceManagerStatus(name, event.target.value);
+    toast(`Статус ${name}: ${event.target.value}`, "ok");
+  }
   if (event.target.matches("[data-task-done]")) {
     toggleTask(event.target.dataset.taskDone, event.target.dataset.taskId, event.target.checked);
   }

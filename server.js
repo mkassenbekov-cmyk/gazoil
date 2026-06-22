@@ -1,5 +1,6 @@
 import express from "express";
 import Database from "better-sqlite3";
+import crypto from "node:crypto";
 import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
@@ -139,10 +140,21 @@ db.exec(`
     updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
   );
 
+  CREATE TABLE IF NOT EXISTS auth_sessions (
+    token TEXT PRIMARY KEY,
+    user_id TEXT NOT NULL,
+    user_name TEXT NOT NULL,
+    role_id TEXT,
+    created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    expires_at TEXT NOT NULL,
+    last_seen_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
+  );
+
   CREATE INDEX IF NOT EXISTS idx_process_type_owner ON crm_processes(process_type, owner);
   CREATE INDEX IF NOT EXISTS idx_process_client ON crm_processes(client_id);
   CREATE INDEX IF NOT EXISTS idx_task_owner ON crm_tasks(owner, done);
   CREATE INDEX IF NOT EXISTS idx_client_contacts ON crm_clients(phone, email, bin);
+  CREATE INDEX IF NOT EXISTS idx_auth_sessions_user ON auth_sessions(user_id, expires_at);
 `);
 
 const stateSelect = db.prepare("SELECT version, state_json, updated_at FROM app_state WHERE id = 1");
@@ -187,10 +199,77 @@ const serviceStatusInsert = db.prepare(`
   INSERT INTO service_manager_statuses (manager_name, status, last_shift_at)
   VALUES (@managerName, @status, @lastShiftAt)
 `);
+const sessionInsert = db.prepare(`
+  INSERT INTO auth_sessions (token, user_id, user_name, role_id, expires_at)
+  VALUES (@token, @userId, @userName, @roleId, @expiresAt)
+`);
+const sessionSelect = db.prepare("SELECT token, user_id, user_name, role_id, expires_at FROM auth_sessions WHERE token = ?");
+const sessionTouch = db.prepare("UPDATE auth_sessions SET last_seen_at = CURRENT_TIMESTAMP WHERE token = ?");
+const sessionDelete = db.prepare("DELETE FROM auth_sessions WHERE token = ?");
 
 const uid = (prefix) => `${prefix}-${Date.now()}-${Math.floor(Math.random() * 1000)}`;
 const normalizePhone = (value = "") => String(value).replace(/\D/g, "");
 const json = (value) => JSON.stringify(value ?? null);
+const sha256 = (value) => crypto.createHash("sha256").update(String(value)).digest("hex");
+const publicUser = (user) => {
+  if (!user) return null;
+  const { passwordHash, ...rest } = user;
+  return rest;
+};
+
+function usersFromState() {
+  const state = readState().state;
+  if (state?.users?.length) return state.users;
+  return db.prepare("SELECT payload_json FROM crm_users").all().map((row) => JSON.parse(row.payload_json));
+}
+
+function authenticateUser(username = "", password = "") {
+  const normalizedUsername = username.trim().toLowerCase();
+  const passwordHash = sha256(password);
+  return usersFromState().find((account) => {
+    const logins = [account.login, ...(account.loginAliases || [])].filter(Boolean).map((value) => value.trim().toLowerCase());
+    return account.active !== false && logins.includes(normalizedUsername) && account.passwordHash === passwordHash;
+  });
+}
+
+function createSession(user) {
+  const token = crypto.randomBytes(32).toString("hex");
+  const expiresAt = new Date(Date.now() + 12 * 60 * 60 * 1000).toISOString();
+  sessionInsert.run({
+    token,
+    userId: user.id,
+    userName: user.name,
+    roleId: user.roleId || "",
+    expiresAt,
+  });
+  return { token, expiresAt };
+}
+
+function currentSession(request) {
+  const header = request.get("authorization") || "";
+  const token = header.startsWith("Bearer ") ? header.slice(7) : request.get("x-session-token") || "";
+  if (!token) return null;
+  const session = sessionSelect.get(token);
+  if (!session || Date.parse(session.expires_at) < Date.now()) {
+    if (session) sessionDelete.run(token);
+    return null;
+  }
+  sessionTouch.run(token);
+  return {
+    token,
+    userId: session.user_id,
+    userName: session.user_name,
+    roleId: session.role_id,
+    expiresAt: session.expires_at,
+  };
+}
+
+function requireSession(request, response, next) {
+  const session = currentSession(request);
+  if (!session) return response.status(401).json({ ok: false, error: "Authentication required" });
+  request.session = session;
+  next();
+}
 
 function saveEntitySnapshots(state) {
   const entities = [
@@ -785,6 +864,44 @@ app.get("/api/health", (_request, response) => {
   });
 });
 
+app.post("/api/auth/login", (request, response) => {
+  const { username = "", password = "", state: bootstrapState } = request.body || {};
+  if (!readState().state && bootstrapState?.users?.length && bootstrapState?.clients && bootstrapState?.processes) {
+    persistState(bootstrapState, "auth-bootstrap");
+  }
+  const user = authenticateUser(username, password);
+  if (!user) return response.status(401).json({ ok: false, error: "Неверный логин или пароль" });
+  const session = createSession(user);
+  const stored = readState();
+  let state = stored.state;
+  if (state?.users?.length && SERVICE_MANAGER_NAMES.includes(user.name)) {
+    state = structuredClone(state);
+    state.serviceDesk ||= {};
+    state.serviceDesk.managerStatuses ||= {};
+    state.serviceDesk.lastShiftAt ||= {};
+    const previous = state.serviceDesk.managerStatuses[user.name] || "Не в сети";
+    if (previous !== "На работе / активен") {
+      state.serviceDesk.managerStatuses[user.name] = "На работе / активен";
+      state.serviceDesk.lastShiftAt[user.name] = new Date().toISOString();
+      auditState(state, "Изменение рабочего статуса менеджера", "service-manager", user.name, previous, "На работе / активен", user.name);
+      persistState(state, user.name);
+    }
+  }
+  eventInsert.run({ eventType: "auth_login", actor: user.name, payloadJson: json({ userId: user.id, roleId: user.roleId }) });
+  response.json({ ok: true, user: publicUser(user), session, state: readState().state });
+});
+
+app.get("/api/auth/me", requireSession, (request, response) => {
+  const user = usersFromState().find((item) => item.id === request.session.userId);
+  response.json({ ok: true, user: publicUser(user), session: request.session });
+});
+
+app.post("/api/auth/logout", requireSession, (request, response) => {
+  sessionDelete.run(request.session.token);
+  eventInsert.run({ eventType: "auth_logout", actor: request.session.userName, payloadJson: json({ userId: request.session.userId }) });
+  response.json({ ok: true });
+});
+
 app.get("/api/state", (_request, response) => {
   response.json(readState());
 });
@@ -860,6 +977,33 @@ app.post("/api/events", (request, response) => {
     payloadJson: json(request.body?.payload || {}),
   });
   response.json({ ok: true });
+});
+
+app.post("/api/test/reset", (_request, response) => {
+  const reset = db.transaction(() => {
+    db.exec(`
+      DELETE FROM app_state;
+      DELETE FROM api_events;
+      DELETE FROM crm_entities;
+      DELETE FROM crm_tasks;
+      DELETE FROM crm_processes;
+      DELETE FROM crm_clients;
+      DELETE FROM crm_users;
+      DELETE FROM crm_audit_log;
+      DELETE FROM service_manager_statuses;
+      DELETE FROM auth_sessions;
+    `);
+  });
+  reset();
+  response.json({ ok: true, state: null, version: 0 });
+});
+
+app.post("/api/test/bootstrap", (request, response) => {
+  const state = request.body?.state;
+  if (!state || !Array.isArray(state.clients) || !Array.isArray(state.processes)) {
+    return response.status(400).json({ ok: false, error: "Invalid CRM state payload" });
+  }
+  response.json({ ok: true, ...persistState(state, request.body?.actor || "test-bootstrap") });
 });
 
 app.get("/api/entities/:type", (request, response) => {

@@ -1,5 +1,6 @@
 const STORAGE_KEY = "gazoil-crm-state-v2";
 const SESSION_KEY = "gazoil-crm-session-v2";
+const AUTH_TOKEN_KEY = "gazoil-crm-auth-token-v1";
 const LANGUAGE_KEY = "gazoil-crm-language-v1";
 const DEFAULT_PASSWORD_HASH = "c4318372f98f4c46ed3a32c16ee4d7a76c832886d887631c0294b3314f34edf1";
 
@@ -1057,6 +1058,8 @@ let backendHydrationDone = false;
 let backendAvailable = false;
 let backendSaveTimer = 0;
 let backendSaveInFlight = false;
+let backendSavePromise = null;
+let backendSaveEpoch = 0;
 
 const $ = (selector) => document.querySelector(selector);
 const $$ = (selector) => Array.from(document.querySelectorAll(selector));
@@ -1183,9 +1186,11 @@ function migrateState(saved) {
     responsible: client.responsible || "",
     supplyMethods: client.supplyMethods || String(client.products || "").split(",").map((item) => item.trim()).filter(Boolean),
   }));
-  const savedProcesses = saved.processes?.length ? saved.processes : structuredClone(DEFAULT_STATE.processes);
+  const hasExplicitProcesses = Array.isArray(saved.processes);
+  const savedProcesses = hasExplicitProcesses ? saved.processes : structuredClone(DEFAULT_STATE.processes);
   const savedProcessIds = new Set(savedProcesses.map((process) => process.id));
-  const processSource = savedProcesses.concat(structuredClone(DEFAULT_STATE.processes).filter((process) => !savedProcessIds.has(process.id)));
+  const defaultBackfillProcesses = hasExplicitProcesses && next.serviceDesk.emptyStartApplied ? [] : structuredClone(DEFAULT_STATE.processes);
+  const processSource = savedProcesses.concat(defaultBackfillProcesses.filter((process) => !savedProcessIds.has(process.id)));
   next.processes = processSource.map((process) => {
     const fuel = process.fuel || inferFuel(process);
     const migrateEmailAppealOwner = process.id === "APP-5522" && process.owner === "Диана";
@@ -1557,10 +1562,12 @@ function shouldUseBackend() {
 }
 
 async function fetchJson(path, options = {}) {
+  const token = localStorage.getItem(AUTH_TOKEN_KEY);
   const response = await fetch(path, {
     ...options,
     headers: {
       Accept: "application/json",
+      ...(token ? { Authorization: `Bearer ${token}` } : {}),
       ...(options.body ? { "Content-Type": "application/json" } : {}),
       ...(options.headers || {}),
     },
@@ -1578,23 +1585,44 @@ function saveState() {
 function scheduleBackendSave() {
   if (!shouldUseBackend() || !backendHydrationDone) return;
   clearTimeout(backendSaveTimer);
-  backendSaveTimer = setTimeout(saveStateToBackend, 450);
+  const saveEpoch = backendSaveEpoch;
+  backendSaveTimer = setTimeout(() => saveStateToBackend(saveEpoch), 450);
 }
 
-async function saveStateToBackend() {
+function cancelPendingBackendSave() {
+  backendSaveEpoch += 1;
+  clearTimeout(backendSaveTimer);
+  backendSaveTimer = 0;
+}
+
+async function waitForBackendSaveIdle() {
+  if (!backendSavePromise) return;
+  try {
+    await backendSavePromise;
+  } catch (error) {
+    console.warn("Backend save wait skipped", error.message);
+  }
+}
+
+async function saveStateToBackend(epoch = backendSaveEpoch) {
+  if (epoch !== backendSaveEpoch) return;
   if (backendSaveInFlight) return scheduleBackendSave();
   backendSaveInFlight = true;
-  try {
+  backendSavePromise = (async () => {
     await fetchJson("/api/state", {
       method: "PUT",
       body: JSON.stringify({ state, actor: currentUser()?.name || "frontend" }),
     });
+  })();
+  try {
+    await backendSavePromise;
     backendAvailable = true;
   } catch (error) {
     backendAvailable = false;
     console.warn("Backend save skipped", error.message);
   } finally {
     backendSaveInFlight = false;
+    backendSavePromise = null;
   }
 }
 
@@ -6034,6 +6062,24 @@ async function hashPassword(password) {
 }
 
 async function authenticate(username, password) {
+  if (shouldUseBackend() && backendHydrationDone) {
+    try {
+      const result = await fetchJson("/api/auth/login", {
+        method: "POST",
+        body: JSON.stringify({ username, password, state }),
+      });
+      if (result?.session?.token) localStorage.setItem(AUTH_TOKEN_KEY, result.session.token);
+      if (result?.state?.clients && result?.state?.processes) {
+        state = migrateState(result.state);
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+        backendAvailable = true;
+      }
+      if (result?.user?.id) return result.user.id;
+    } catch (error) {
+      backendAvailable = false;
+      console.warn("Backend login fallback", error.message);
+    }
+  }
   const normalizedUsername = username.trim().toLowerCase();
   const passwordHash = await hashPassword(password);
   const user = state.users.find((account) => {
@@ -6079,15 +6125,21 @@ function loginAs(userId) {
   if (user.mustChangePassword) toast("Используется временный пароль. Его нужно сменить в профиле.", "warn");
 }
 
-function logout() {
+async function logout() {
   const user = currentUser();
   if (SERVICE_MANAGER_NAMES.includes(user.name) && managerWorkStatus(user.name) === "На работе / активен") {
     setServiceManagerStatus(user.name, "Не в сети", false);
   }
   audit("Выход пользователя", "user", currentUserId);
   saveState();
+  try {
+    if (localStorage.getItem(AUTH_TOKEN_KEY)) await fetchJson("/api/auth/logout", { method: "POST" });
+  } catch (error) {
+    console.warn("Backend logout skipped", error.message);
+  }
   currentUserId = "";
   localStorage.removeItem(SESSION_KEY);
+  localStorage.removeItem(AUTH_TOKEN_KEY);
   closeModal();
   applySessionState();
 }
@@ -6644,9 +6696,39 @@ function exportState() {
   URL.revokeObjectURL(link.href);
 }
 
-function resetDemo() {
+async function resetDemo() {
+  cancelPendingBackendSave();
+  await waitForBackendSaveIdle();
+  try {
+    if (shouldUseBackend() && backendHydrationDone) await fetchJson("/api/test/reset", { method: "POST" });
+    backendAvailable = true;
+  } catch (error) {
+    backendAvailable = false;
+    console.warn("Backend reset skipped", error.message);
+  }
   state = migrateState(structuredClone(DEFAULT_STATE));
-  saveState();
+  state.processes = state.processes.filter((process) => process.type !== "appeals");
+  state.serviceDesk ||= {};
+  state.serviceDesk.emptyStartApplied = true;
+  state.serviceDesk.managerStatuses = Object.fromEntries(SERVICE_MANAGER_NAMES.map((name) => [name, "Не в сети"]));
+  state.serviceDesk.lastShiftAt = {};
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+  try {
+    if (shouldUseBackend() && backendHydrationDone) {
+      const result = await fetchJson("/api/test/bootstrap", {
+        method: "POST",
+        body: JSON.stringify({ state, actor: currentUser()?.name || "test-reset" }),
+      });
+      if (result?.state?.clients) state = migrateState(result.state);
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+      backendAvailable = true;
+      backendHydrationDone = true;
+    }
+  } catch (error) {
+    backendAvailable = false;
+    console.warn("Backend bootstrap skipped", error.message);
+    saveState();
+  }
   renderAll();
   toast("Демо-данные восстановлены", "ok");
 }

@@ -5579,17 +5579,51 @@ function updateOmniClientMatch() {
   }
 }
 
-function createInboundAppeal() {
+function inboundAppealPayloadFromForm() {
+  return {
+    kind: $("#omniKind")?.value || "manual",
+    phone: $("#omniPhone")?.value.trim() || "",
+    email: $("#omniEmail")?.value.trim() || "",
+    bin: $("#omniBin")?.value.trim() || "",
+    companyName: $("#omniCompanyName")?.value.trim() || "",
+    contactName: $("#omniContactName")?.value.trim() || "",
+    message: $("#omniMessage")?.value.trim() || "",
+    subject: $("#omniSubject")?.value.trim() || "",
+    selectedClientValue: $("#omniClient")?.value || "",
+    manualSource: $("#omniManualSource")?.value || "Офис",
+    priority: $("#omniPriority")?.value || "Обычная",
+  };
+}
+
+async function createInboundAppealOnBackend(payload) {
+  if (!shouldUseBackend() || !backendHydrationDone || !backendAvailable) return false;
+  const result = await fetchJson("/api/appeals/inbound", {
+    method: "POST",
+    body: JSON.stringify({ state, payload, actor: currentUser().name }),
+  });
+  if (!result?.state?.clients || !result?.appealId) throw new Error(result?.error || "Backend did not return CRM state");
+  state = migrateState(result.state);
+  backendAvailable = true;
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+  closeModal();
+  if (["assignedManager", "seniorManager"].includes(currentPolicy().roleType) && activeView === "dashboard") renderAll();
+  else switchView("appeals");
+  openProcessModal(result.appealId, "data");
+  toast(`Создано обращение ${result.appealId}`, "ok");
+  return true;
+}
+
+async function createInboundAppeal() {
   if (!currentPolicy().canCreate || !allowedCreateTypes().includes("appeals")) return toast("Создание обращения недоступно.", "warn");
-  const kind = $("#omniKind")?.value || "manual";
-  const phone = $("#omniPhone")?.value.trim() || "";
-  const email = $("#omniEmail")?.value.trim() || "";
-  const bin = $("#omniBin")?.value.trim() || "";
-  const companyName = $("#omniCompanyName")?.value.trim() || "";
-  const contactName = $("#omniContactName")?.value.trim() || "";
-  const message = $("#omniMessage")?.value.trim() || "";
-  const subject = $("#omniSubject")?.value.trim() || "";
-  const selectedClientValue = $("#omniClient")?.value || "";
+  const payload = inboundAppealPayloadFromForm();
+  try {
+    if (await createInboundAppealOnBackend(payload)) return;
+  } catch (error) {
+    backendAvailable = false;
+    console.warn("Backend appeal creation failed", error.message);
+    toast("Backend недоступен, обращение создано локально.", "warn");
+  }
+  const { kind, phone, email, bin, companyName, contactName, message, subject, selectedClientValue } = payload;
   const selectedClient = state.clients.find((client) => client.id === selectedClientValue);
   const matches = selectedClient ? [selectedClient] : findClientsByContact({ phone, email, bin, name: companyName, contact: contactName });
   let client;
